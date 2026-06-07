@@ -8,4 +8,5 @@ export const authService = {
   verifyOtp: (payload) => httpClient.post(endpoints.auth.verifyOtp, payload),
   resetPassword: (payload) => httpClient.post(endpoints.auth.resetPassword, payload),
   me: () => httpClient.get(endpoints.auth.me),
+  checkTelegram: (phone) => httpClient.get(endpoints.auth.checkTelegram, { params: { phone } }),
 }

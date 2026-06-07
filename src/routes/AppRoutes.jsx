@@ -9,70 +9,35 @@ import { Login } from '../pages/auth/Login.jsx'
 import { OtpVerification } from '../pages/auth/OtpVerification.jsx'
 import { Register } from '../pages/auth/Register.jsx'
 import { ResetPassword } from '../pages/auth/ResetPassword.jsx'
+import { TelegramLinkPage } from '../pages/auth/TelegramLinkPage.jsx'
 import {
-  AdminAuditLog,
-  AdminChatMonitoring,
-  AdminDashboard,
-  AdminDriverRequests,
-  AdminFarmRequests,
-  AdminOrders,
-  AdminSettings,
-  AdminUsers,
+  AdminAuditLog, AdminChatMonitoring, AdminDashboard, AdminDriverRequests,
+  AdminFarmRequests, AdminOrders, AdminSettings, AdminUsers,
 } from '../pages/admin/AdminPages.jsx'
 import {
-  CustomerCart,
-  CustomerChat,
-  CustomerDashboard,
-  CustomerFarms,
-  CustomerFishCatalog,
-  CustomerOrders,
-  CustomerProductDetail,
-  CustomerProfile,
-  CustomerSettings,
+  CustomerCart, CustomerChat, CustomerDashboard, CustomerFarms,
+  CustomerFishCatalog, CustomerOrders, CustomerProductDetail,
+  CustomerProfile, CustomerSettings,
 } from '../pages/customer/CustomerPages.jsx'
 import {
-  FarmAddFish,
-  FarmChat,
-  FarmCustomers,
-  FarmDashboard,
-  FarmFish,
-  FarmInventory,
-  FarmOrders,
-  FarmProfile,
-  FarmReports,
+  FarmAddFish, FarmChat, FarmCustomers, FarmDashboard, FarmFish,
+  FarmInventory, FarmOrders, FarmProfile, FarmReports,
 } from '../pages/farm/FarmPages.jsx'
 import {
-  DriverChat,
-  DriverDashboard,
-  DriverLiveTracking,
-  DriverOrders,
-  DriverProfile,
-  DriverSettings,
+  DriverChat, DriverDashboard, DriverLiveTracking,
+  DriverOrders, DriverProfile, DriverSettings,
 } from '../pages/driver/DriverPages.jsx'
 import {
-  ManagerChatMonitoring,
-  ManagerDashboard,
-  ManagerGpsMonitoring,
-  ManagerKpi,
-  ManagerOrders,
-  ManagerReports,
-  ManagerStatistics,
+  ManagerChatMonitoring, ManagerDashboard, ManagerGpsMonitoring,
+  ManagerKpi, ManagerOrders, ManagerReports, ManagerStatistics,
 } from '../pages/manager/ManagerPages.jsx'
 import {
-  AdminManagement,
-  PermissionsPage,
-  RolesPage,
-  SuperAdminAuditLog,
-  SystemSettings,
-  SystemStatistics,
+  AdminManagement, PermissionsPage, RolesPage,
+  SuperAdminAuditLog, SystemSettings, SystemStatistics,
 } from '../pages/superadmin/SuperAdminPages.jsx'
 import {
-  adminNavigation,
-  customerNavigation,
-  driverNavigation,
-  farmNavigation,
-  managerNavigation,
-  superAdminNavigation,
+  adminNavigation, customerNavigation, driverNavigation,
+  farmNavigation, managerNavigation, superAdminNavigation,
 } from './navigation.js'
 
 export function AppRoutes() {
@@ -88,6 +53,7 @@ export function AppRoutes() {
       </Route>
       <Route path="/farm-registration" element={<FarmRegistration />} />
       <Route path="/driver-registration" element={<DriverRegistration />} />
+      <Route path="/telegram-link" element={<TelegramLinkPage />} />
 
       <Route path="/customer" element={<DashboardLayout navigation={customerNavigation} title="Mijoz paneli" />}>
         <Route index element={<Navigate to="dashboard" replace />} />

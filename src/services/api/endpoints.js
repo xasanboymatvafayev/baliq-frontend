@@ -6,6 +6,7 @@ export const endpoints = {
     verifyOtp: '/auth/verify-otp',
     resetPassword: '/auth/reset-password',
     me: '/auth/me',
+    checkTelegram: '/auth/check-telegram',
   },
   farms: {
     base: '/farms',

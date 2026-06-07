@@ -2,9 +2,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
+import { useState } from 'react'
 import { FormInput } from '../../components/forms/FormInput.jsx'
 import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
+import { authService } from '../../services/api/index.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
 
 const schema = z.object({
@@ -12,45 +14,50 @@ const schema = z.object({
   password: z.string().min(6, 'Parol kamida 6 ta belgi'),
 })
 
+const ROLE_ROUTES = {
+  'customer': '/customer/dashboard',
+  'farm-owner': '/farm/dashboard',
+  'driver': '/driver/dashboard',
+  'admin': '/admin/dashboard',
+  'manager': '/manager/dashboard',
+  'super-admin': '/super-admin/system-statistics',
+}
+
 export function Login() {
   const navigate = useNavigate()
-  const setSession = useAuthStore((state) => state.setSession)
-  const pushToast = useToastStore((state) => state.pushToast)
+  const setSession = useAuthStore((s) => s.setSession)
+  const pushToast = useToastStore((s) => s.pushToast)
+  const [loading, setLoading] = useState(false)
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
-  const onSubmit = (payload) => {
-    setSession({
-      user: { firstName: 'Frontend', lastName: 'User', phone: payload.phone },
-      role: 'customer',
-      token: null,
-    })
-    pushToast({ title: 'Frontend sessiya tayyor', description: 'Backend ulanganda real token saqlanadi.', variant: 'success' })
-    navigate('/customer/dashboard')
+  const onSubmit = async (data) => {
+    setLoading(true)
+    try {
+      const result = await authService.login(data)
+      setSession({ user: result.user, role: result.role, token: result.token })
+      pushToast({ title: 'Muvaffaqiyatli kirdingiz!', variant: 'success' })
+      navigate(ROLE_ROUTES[result.role] || '/customer/dashboard')
+    } catch (err) {
+      pushToast({ title: err.message || "Telefon yoki parol noto'g'ri", variant: 'error' })
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <AuthFormShell
       title="Kirish"
       description="Telefon raqam va parol orqali platformaga kiring."
-      footer={
-        <>
-          Akkount yo‘qmi?{' '}
-          <Link className="font-bold text-ocean-600" to="/register">
-            Ro‘yxatdan o‘tish
-          </Link>
-        </>
-      }
+      footer={<>Akkount yo'qmi? <Link className="font-bold text-ocean-600" to="/register">Ro'yxatdan o'tish</Link></>}
     >
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <FormInput label="Telefon" placeholder="+998 90 000 00 00" {...register('phone')} error={formState.errors.phone?.message} />
         <FormInput label="Parol" type="password" placeholder="••••••••" {...register('password')} error={formState.errors.password?.message} />
         <div className="flex justify-end">
-          <Link className="text-sm font-semibold text-ocean-600" to="/forgot-password">
-            Parolni unutdingizmi?
-          </Link>
+          <Link className="text-sm font-semibold text-ocean-600" to="/forgot-password">Parolni unutdingizmi?</Link>
         </div>
-        <button className="primary-button w-full" type="submit">
-          Kirish
+        <button className="primary-button w-full" type="submit" disabled={loading}>
+          {loading ? 'Kirilmoqda...' : 'Kirish'}
         </button>
       </form>
     </AuthFormShell>
