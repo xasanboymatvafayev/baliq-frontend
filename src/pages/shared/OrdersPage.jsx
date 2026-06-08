@@ -1,6 +1,6 @@
-\import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
-import { orderService } from '../../services/api/index.js'
+import { orderService, httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
@@ -23,6 +23,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
   const [selected, setSelected] = useState(null)
+  const [selectedDriverId, setSelectedDriverId] = useState('')
 
   const { data = [], isLoading } = useQuery({
     queryKey: ['orders'],
@@ -33,6 +34,25 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     queryKey: ['order-timeline', selected?.id],
     queryFn: () => orderService.timeline(selected.id),
     enabled: !!selected?.id,
+  })
+
+  // Admin uchun tasdiqlangan haydovchilar ro'yxati
+  const isAdmin = user?.role === 'admin' || user?.role === 'super-admin'
+  const { data: drivers = [] } = useQuery({
+    queryKey: ['approved-drivers'],
+    queryFn: () => httpClient.get('/drivers?status=APPROVED'),
+    enabled: isAdmin && !!selected && selected.status === 'CONFIRMED',
+  })
+
+  const assignDriverMutation = useMutation({
+    mutationFn: ({ orderId, driverId }) => orderService.assignDriver(orderId, { driver_id: driverId }),
+    onSuccess: () => {
+      pushToast({ title: 'Haydovchi biriktirildi ✅', variant: 'success' })
+      queryClient.invalidateQueries(['orders'])
+      setSelected(null)
+      setSelectedDriverId('')
+    },
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
   const cancelMutation = useMutation({
@@ -158,6 +178,43 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
           >
             {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Bekor qilish'}
           </button>
+        </div>
+      )
+    }
+
+    // Admin/Super-admin: haydovchi biriktirish (CONFIRMED buyurtmalar uchun)
+    if ((role === 'admin' || role === 'super-admin') && status === 'CONFIRMED') {
+      return (
+        <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+          <h4 className="font-bold">🚚 Haydovchi biriktirish</h4>
+          {drivers.length === 0 ? (
+            <p className="text-sm text-slate-500">Tasdiqlangan haydovchi topilmadi</p>
+          ) : (
+            <div className="flex gap-3">
+              <select
+                className="soft-input flex-1"
+                value={selectedDriverId}
+                onChange={(e) => setSelectedDriverId(e.target.value)}
+              >
+                <option value="">Haydovchini tanlang...</option>
+                {drivers.map((d) => (
+                  <option key={d.id} value={d.user_id || d.id}>
+                    {d.firstName} {d.lastName} — {d.plateNumber} ({d.capacity} kg)
+                  </option>
+                ))}
+              </select>
+              <button
+                className="primary-button"
+                onClick={() => {
+                  if (!selectedDriverId) { pushToast({ title: 'Haydovchini tanlang', variant: 'error' }); return }
+                  assignDriverMutation.mutate({ orderId: selected.id, driverId: selectedDriverId })
+                }}
+                disabled={assignDriverMutation.isPending || !selectedDriverId}
+              >
+                {assignDriverMutation.isPending ? 'Biriktirilmoqda...' : 'Biriktirish'}
+              </button>
+            </div>
+          )}
         </div>
       )
     }
