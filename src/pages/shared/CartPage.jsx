@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { ShoppingBag, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -12,13 +13,14 @@ export function CartPage() {
   const { items, removeItem, updateQuantity, clearCart } = useCartStore()
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
+  const [address, setAddress] = useState('')
 
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
 
   const orderMutation = useMutation({
     mutationFn: () => orderService.create({
       items: items.map((i) => ({ fish_id: i.fish_id || i.id, quantity: i.quantity, unit_price: i.price })),
-      delivery_address: 'Toshkent',
+      delivery_address: address || 'Belgilanmagan',
     }),
     onSuccess: () => {
       clearCart()
@@ -70,15 +72,21 @@ export function CartPage() {
             ))}
           </div>
 
-          <div className="glass-card flex items-center justify-between p-6">
+          <div className="glass-card p-6 space-y-4">
             <div>
-              <p className="text-sm text-slate-500">Jami summa</p>
-              <p className="text-3xl font-black text-ocean-600">{total.toLocaleString()} so'm</p>
+              <label className="block text-sm font-semibold mb-2">Yetkazish manzili</label>
+              <input className="soft-input w-full" placeholder="Manzilni kiriting (masalan: Toshkent, Chilonzor 9-kvartal)" value={address} onChange={(e) => setAddress(e.target.value)} />
             </div>
-            <button className="primary-button text-lg px-8 py-3"
-              onClick={() => orderMutation.mutate()} disabled={orderMutation.isPending}>
-              {orderMutation.isPending ? 'Yuborilmoqda...' : 'Buyurtma berish'}
-            </button>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-slate-500">Jami summa</p>
+                <p className="text-3xl font-black text-ocean-600">{total.toLocaleString()} so'm</p>
+              </div>
+              <button className="primary-button text-lg px-8 py-3"
+                onClick={() => orderMutation.mutate()} disabled={orderMutation.isPending}>
+                {orderMutation.isPending ? 'Yuborilmoqda...' : 'Buyurtma berish'}
+              </button>
+            </div>
           </div>
         </>
       )}
