@@ -17,6 +17,8 @@ const schema = z.object({
   carBrand: z.string().min(2, 'Mashina markasi kiriting'),
   plateNumber: z.string().min(4, 'Mashina raqami kiriting'),
   capacity: z.string().min(1, "Yuk sig'imi kiriting"),
+  licenseImage: z.any().refine((files) => files && files.length > 0, 'Haydovchilik guvohnomasi rasmi majburiy'),
+  technicalPassportImage: z.any().refine((files) => files && files.length > 0, 'Tex pasport rasmi majburiy'),
 })
 
 export function DriverRegistration() {
@@ -112,8 +114,8 @@ export function DriverRegistration() {
           <FormInput label="Mashina raqami" placeholder="01A 123 BC" {...register('plateNumber')} error={formState.errors.plateNumber?.message} />
           <FormInput label="Yuk sig'imi (kg)" placeholder="1000" {...register('capacity')} error={formState.errors.capacity?.message} />
           <div />
-          <FileUpload label="Haydovchilik guvohnomasi rasmi" name="licenseImage" register={register} />
-          <FileUpload label="Tex pasport rasmi" name="technicalPassportImage" register={register} />
+          <FileUpload label="Haydovchilik guvohnomasi rasmi (majburiy)" name="licenseImage" register={register} error={formState.errors.licenseImage?.message} />
+          <FileUpload label="Tex pasport rasmi (majburiy)" name="technicalPassportImage" register={register} error={formState.errors.technicalPassportImage?.message} />
           <button className="primary-button md:col-span-2" type="submit" disabled={loading}>
             {loading ? 'Yuborilmoqda...' : "So'rov yuborish"}
           </button>
