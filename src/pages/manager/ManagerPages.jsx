@@ -68,13 +68,13 @@ export function ManagerDashboard() {
           <h3 className="font-bold mb-4">Oylik buyurtmalar</h3>
           <div className="flex items-end gap-2 h-32">
             {data.series.map((s, i) => {
-              const max = Math.max(...data.series.map((x) => x.orders), 1)
-              const h = Math.max((s.orders / max) * 100, 4)
+              const max = Math.max(...data.series.map((x) => x.value), 1)
+              const h = Math.max((s.value / max) * 100, 4)
               return (
                 <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                  <span className="text-xs font-bold text-ocean-600">{s.orders}</span>
+                  <span className="text-xs font-bold text-ocean-600">{s.value}</span>
                   <div className="w-full rounded-t-lg bg-ocean-400 dark:bg-ocean-600 transition-all duration-1000" style={{ height: `${h}%` }} />
-                  <span className="text-xs text-slate-500">{s.month}</span>
+                  <span className="text-xs text-slate-500">{s.name}</span>
                 </div>
               )
             })}
