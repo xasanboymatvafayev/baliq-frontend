@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { z } from 'zod'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { FormInput } from '../../components/forms/FormInput.jsx'
 import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
@@ -12,14 +12,7 @@ import { ExternalLink, RefreshCw } from 'lucide-react'
 
 const schema = z.object({ otp: z.string().length(6, '6 xonali OTP kod kiriting') })
 
-const ROLE_ROUTES = {
-  'customer': '/customer/dashboard',
-  'farm-owner': '/farm/dashboard',
-  'driver': '/driver/dashboard',
-  'admin': '/admin/dashboard',
-  'manager': '/manager/dashboard',
-  'super-admin': '/super-admin/system-statistics',
-}
+const OTP_DURATION = 30 // 30 soniya
 
 export function OtpVerification() {
   const navigate = useNavigate()
@@ -27,40 +20,63 @@ export function OtpVerification() {
   const pushToast = useToastStore((s) => s.pushToast)
   const setSession = useAuthStore((s) => s.setSession)
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
   const [checking, setChecking] = useState(true)
   const [telegramLinked, setTelegramLinked] = useState(true)
   const [botLink, setBotLink] = useState('')
   const [botUsername, setBotUsername] = useState('BaliqSavdosiVerificationBot')
+  const [countdown, setCountdown] = useState(OTP_DURATION)
+  const timerRef = useRef(null)
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
-  // State dan kelgan ma'lumotlar (ro'yxatdan o'tish paytida)
+  // State dan kelgan ma'lumotlar
   const phone = location.state?.phone
-  const via = location.state?.via
+  const userId = location.state?.userId
   const stateLinked = location.state?.linked
   const stateBotLink = location.state?.botLink
 
+  // Countdown timer
+  const startCountdown = useCallback(() => {
+    setCountdown(OTP_DURATION)
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current)
+          timerRef.current = null
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }, [])
+
   useEffect(() => {
-    // Agar state da linked ma'lumot kelgan bo'lsa, shuni ishlatamiz
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [])
+
+  useEffect(() => {
     if (typeof stateLinked === 'boolean') {
       setTelegramLinked(stateLinked)
       if (stateBotLink) setBotLink(stateBotLink)
       setChecking(false)
+      if (stateLinked) startCountdown()
       return
     }
-    // Aks holda tekshiramiz
     if (phone) {
       httpClient.get(`/auth/check-telegram?phone=${encodeURIComponent(phone)}`)
         .then((data) => {
           setTelegramLinked(data.linked)
           setBotLink(data.bot_link || '')
           setBotUsername(data.bot_username || 'BaliqSavdosiVerificationBot')
+          if (data.linked) startCountdown()
         })
         .catch(() => setTelegramLinked(false))
         .finally(() => setChecking(false))
     } else {
       setChecking(false)
     }
-  }, [phone, stateLinked, stateBotLink])
+  }, [phone, stateLinked, stateBotLink, startCountdown])
 
   const checkAgain = async () => {
     if (!phone) return
@@ -70,10 +86,25 @@ export function OtpVerification() {
       setTelegramLinked(data.linked)
       setBotLink(data.bot_link || '')
       if (data.linked) {
-        pushToast({ title: "Telegram ulandi! Endi OTP so'rashingiz mumkin.", variant: 'success' })
+        pushToast({ title: "Telegram ulandi! OTP yuborildi.", variant: 'success' })
+        startCountdown()
       }
     } catch { /* ignore */ }
     finally { setChecking(false) }
+  }
+
+  const resendOtp = async () => {
+    if (!phone) return
+    setResending(true)
+    try {
+      await httpClient.post('/auth/resend-otp', { phone })
+      pushToast({ title: 'Yangi OTP kod yuborildi!', variant: 'success' })
+      startCountdown()
+    } catch (err) {
+      pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
+    } finally {
+      setResending(false)
+    }
   }
 
   const onSubmit = async (data) => {
@@ -82,17 +113,29 @@ export function OtpVerification() {
       const result = await authService.verifyOtp({ otp: data.otp, phone })
       if (result.token) {
         setSession({ user: result.user, role: result.role, token: result.token })
-        // Pending farm yoki driver ro'yxatdan o'tish bor bo'lsa yuboramiz
+
+        // Pending farm so'rovi
         if (location.state?.pendingFarm) {
           const farmData = JSON.parse(localStorage.getItem('pending-farm-registration') || '{}')
           if (farmData.farmName) {
             try {
               await httpClient.post('/farms', farmData)
               localStorage.removeItem('pending-farm-registration')
-              pushToast({ title: "Ferma so'rovi yuborildi! Admin tasdiqlashini kuting.", variant: 'success' })
-            } catch { /* ignore farm error */ }
+            } catch { /* ignore */ }
           }
+          // Fermer uchun — admin tasdiqlashini kuting, login sahifasiga yo'naltiramiz
+          pushToast({
+            title: "So'rovingiz adminga yuborildi!",
+            description: "Admin tasdiqlashi bilan Telegram orqali xabar olasiz. Shundan keyin tizimga kirishingiz mumkin.",
+            variant: 'success',
+          })
+          // Logout qilamiz chunki hali admin tasdiqlamagan
+          useAuthStore.getState().logout()
+          navigate('/login')
+          return
         }
+
+        // Pending driver so'rovi
         if (location.state?.pendingDriver) {
           const driverData = JSON.parse(localStorage.getItem('pending-driver-registration') || '{}')
           if (driverData.carBrand) {
@@ -100,19 +143,28 @@ export function OtpVerification() {
               const u = result.user
               await httpClient.post('/drivers', { ...driverData, firstName: u.firstName, lastName: u.lastName, phone: u.phone })
               localStorage.removeItem('pending-driver-registration')
-              pushToast({ title: "Haydovchi so'rovi yuborildi! Admin tasdiqlashini kuting.", variant: 'success' })
             } catch { /* ignore */ }
           }
+          // Driver uchun ham — admin tasdiqlashini kuting
+          pushToast({
+            title: "So'rovingiz adminga yuborildi!",
+            description: "Admin tasdiqlashi bilan Telegram orqali xabar olasiz. Shundan keyin tizimga kirishingiz mumkin.",
+            variant: 'success',
+          })
+          useAuthStore.getState().logout()
+          navigate('/login')
+          return
         }
-        const redirect = location.state?.redirect
+
+        // Oddiy customer — dashboardga
         pushToast({ title: "Muvaffaqiyatli ro'yxatdan o'tdingiz!", variant: 'success' })
-        navigate(redirect || ROLE_ROUTES[result.role] || '/customer/dashboard')
+        navigate('/customer/dashboard')
       } else if (result.reset_token) {
         pushToast({ title: 'OTP tasdiqlandi', variant: 'success' })
         navigate('/reset-password', { state: { reset_token: result.reset_token } })
       }
     } catch (err) {
-      pushToast({ title: err.message || "OTP noto'g'ri", variant: 'error' })
+      pushToast({ title: err.message || "OTP noto'g'ri yoki muddati o'tgan", variant: 'error' })
     } finally {
       setLoading(false)
     }
@@ -128,7 +180,7 @@ export function OtpVerification() {
     )
   }
 
-  // Telegram ulanmagan — yo'riqnoma ko'rsatamiz
+  // Telegram ulanmagan — yo'riqnoma
   if (!telegramLinked) {
     return (
       <AuthFormShell
@@ -140,9 +192,8 @@ export function OtpVerification() {
             <p className="text-sm font-bold text-amber-800 dark:text-amber-300 mb-3">📱 Qanday ulash kerak?</p>
             <ol className="space-y-2 text-sm text-amber-700 dark:text-amber-400">
               <li className="flex gap-2"><span className="font-bold shrink-0">1.</span> Quyidagi tugmani bosing va Telegram oching</li>
-              <li className="flex gap-2"><span className="font-bold shrink-0">2.</span> Botda "START" tugmasini bosing</li>
-              <li className="flex gap-2"><span className="font-bold shrink-0">3.</span> Botga <b>Start</b> bosgandan so'ng qaytib keling</li>
-              <li className="flex gap-2"><span className="font-bold shrink-0">4.</span> "Tekshirish" tugmasini bosing</li>
+              <li className="flex gap-2"><span className="font-bold shrink-0">2.</span> Botda <b>"START"</b> tugmasini bosing</li>
+              <li className="flex gap-2"><span className="font-bold shrink-0">3.</span> Qaytib keling va "Tekshirish" tugmasini bosing</li>
             </ol>
           </div>
 
@@ -188,10 +239,33 @@ export function OtpVerification() {
           </a>
         </div>
       </div>
+
+      {/* Countdown timer */}
+      <div className="mb-4 text-center">
+        {countdown > 0 ? (
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Kod amal qilish muddati: <span className="font-bold text-ocean-600">{countdown} soniya</span>
+          </p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-sm text-rose-500 font-semibold">⏱ Kod muddati tugadi!</p>
+            <button
+              type="button"
+              className="secondary-button flex items-center justify-center gap-2 mx-auto"
+              onClick={resendOtp}
+              disabled={resending}
+            >
+              <RefreshCw className={`h-4 w-4 ${resending ? 'animate-spin' : ''}`} />
+              {resending ? 'Yuborilmoqda...' : 'Qayta yuborish'}
+            </button>
+          </div>
+        )}
+      </div>
+
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
         <FormInput label="OTP kod" inputMode="numeric" maxLength="6" placeholder="000000"
           {...register('otp')} error={formState.errors.otp?.message} />
-        <button className="primary-button w-full" type="submit" disabled={loading}>
+        <button className="primary-button w-full" type="submit" disabled={loading || countdown === 0}>
           {loading ? 'Tekshirilmoqda...' : 'Tasdiqlash'}
         </button>
       </form>
