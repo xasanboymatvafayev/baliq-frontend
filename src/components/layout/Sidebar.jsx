@@ -1,8 +1,22 @@
-import { NavLink } from 'react-router-dom'
-import { Fish, X } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { Fish, X, LogOut } from 'lucide-react'
 import { cn } from '../../utils/cn.js'
+import { useAuthStore } from '../../store/authStore.js'
+import { useToastStore } from '../../store/toastStore.js'
 
 export function Sidebar({ navigation, open, onClose }) {
+  const logout = useAuthStore((s) => s.logout)
+  const user = useAuthStore((s) => s.user)
+  const pushToast = useToastStore((s) => s.pushToast)
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    pushToast({ title: "Tizimdan chiqildi", variant: 'success' })
+    navigate('/login')
+    onClose?.()
+  }
+
   return (
     <>
       <div className={cn('fixed inset-0 z-30 bg-slate-950/50 lg:hidden', open ? 'block' : 'hidden')} onClick={onClose} />
@@ -26,7 +40,8 @@ export function Sidebar({ navigation, open, onClose }) {
             <X className="h-5 w-5" />
           </button>
         </div>
-        <nav className="flex-1 space-y-1 overflow-y-auto px-4 pb-6">
+
+        <nav className="flex-1 space-y-1 overflow-y-auto px-4 pb-4">
           {navigation.map((item) => (
             <NavLink
               key={item.to}
@@ -44,6 +59,23 @@ export function Sidebar({ navigation, open, onClose }) {
             </NavLink>
           ))}
         </nav>
+
+        {/* Chiqish tugmasi — har doim pastda */}
+        <div className="px-4 pb-6 border-t border-white/10 pt-4">
+          {user && (
+            <div className="mb-3 px-2">
+              <p className="text-xs text-slate-400 truncate">{user.firstName} {user.lastName}</p>
+              <p className="text-xs text-slate-500 truncate">{user.phone}</p>
+            </div>
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold text-rose-400 transition hover:bg-rose-500/10 hover:text-rose-300"
+          >
+            <LogOut className="h-5 w-5" />
+            Tizimdan chiqish
+          </button>
+        </div>
       </aside>
     </>
   )
