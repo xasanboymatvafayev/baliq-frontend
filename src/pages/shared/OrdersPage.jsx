@@ -1,7 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+\import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { orderService } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
+import { useAuthStore } from '../../store/authStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
 import { useState } from 'react'
 
@@ -20,6 +21,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   usePageTitle(title)
   const pushToast = useToastStore((state) => state.pushToast)
   const queryClient = useQueryClient()
+  const user = useAuthStore((s) => s.user)
   const [selected, setSelected] = useState(null)
 
   const { data = [], isLoading } = useQuery({
@@ -40,7 +42,128 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       queryClient.invalidateQueries(['orders'])
       setSelected(null)
     },
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
+
+  const confirmMutation = useMutation({
+    mutationFn: (id) => orderService.updateStatus(id, { status: 'CONFIRMED' }),
+    onSuccess: () => {
+      pushToast({ title: 'Buyurtma tasdiqlandi ✅', variant: 'success' })
+      queryClient.invalidateQueries(['orders'])
+      setSelected(null)
+    },
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
+  })
+
+  const rejectMutation = useMutation({
+    mutationFn: (id) => orderService.updateStatus(id, { status: 'CANCELLED' }),
+    onSuccess: () => {
+      pushToast({ title: 'Buyurtma rad etildi', variant: 'error' })
+      queryClient.invalidateQueries(['orders'])
+      setSelected(null)
+    },
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
+  })
+
+  const driverStatusMutation = useMutation({
+    mutationFn: ({ id, status }) => orderService.updateStatus(id, { status }),
+    onSuccess: (_, variables) => {
+      const labels = { LOADING: 'Yuklanmoqda 📦', IN_TRANSIT: "Yo'lda 🚚", DELIVERED: 'Yetkazildi ✅' }
+      pushToast({ title: labels[variables.status] || 'Status yangilandi', variant: 'success' })
+      queryClient.invalidateQueries(['orders'])
+      setSelected(null)
+    },
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
+  })
+
+  const renderActions = () => {
+    if (!selected) return null
+    const role = user?.role
+    const status = selected.status
+
+    // Farm owner actions
+    if (role === 'farm-owner' && status === 'PENDING') {
+      return (
+        <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
+          <button
+            className="primary-button"
+            onClick={() => confirmMutation.mutate(selected.id)}
+            disabled={confirmMutation.isPending}
+          >
+            {confirmMutation.isPending ? 'Tasdiqlanmoqda...' : '✅ Tasdiqlash'}
+          </button>
+          <button
+            className="secondary-button text-rose-500"
+            onClick={() => rejectMutation.mutate(selected.id)}
+            disabled={rejectMutation.isPending}
+          >
+            {rejectMutation.isPending ? 'Rad etilmoqda...' : '❌ Rad etish'}
+          </button>
+        </div>
+      )
+    }
+
+    // Driver actions
+    if (role === 'driver') {
+      if (status === 'DRIVER_ASSIGNED') {
+        return (
+          <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+            <button
+              className="primary-button w-full text-lg py-3"
+              onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'LOADING' })}
+              disabled={driverStatusMutation.isPending}
+            >
+              {driverStatusMutation.isPending ? 'Yuklanmoqda...' : '📦 Qabul qilish (Fermaga bordim)'}
+            </button>
+          </div>
+        )
+      }
+      if (status === 'LOADING') {
+        return (
+          <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+            <button
+              className="primary-button w-full text-lg py-3 !bg-cyan-600 hover:!bg-cyan-700"
+              onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'IN_TRANSIT' })}
+              disabled={driverStatusMutation.isPending}
+            >
+              {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : "🚚 Yo'lga chiqdim"}
+            </button>
+          </div>
+        )
+      }
+      if (status === 'IN_TRANSIT') {
+        return (
+          <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+            <button
+              className="primary-button w-full text-lg py-3 !bg-green-600 hover:!bg-green-700"
+              onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })}
+              disabled={driverStatusMutation.isPending}
+            >
+              {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : '✅ Yetkazildi'}
+            </button>
+          </div>
+        )
+      }
+      return null
+    }
+
+    // Customer actions
+    if (role === 'customer' && status === 'PENDING') {
+      return (
+        <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+          <button
+            className="secondary-button text-rose-500"
+            onClick={() => cancelMutation.mutate(selected.id)}
+            disabled={cancelMutation.isPending}
+          >
+            {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Bekor qilish'}
+          </button>
+        </div>
+      )
+    }
+
+    return null
+  }
 
   return (
     <div className="space-y-6">
@@ -59,6 +182,9 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
             <div><span className="text-slate-500">Status:</span> <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLORS[selected.status]}`}>{STATUS_LABELS[selected.status]}</span></div>
             <div><span className="text-slate-500">Sana:</span> {new Date(selected.created_at).toLocaleDateString('uz')}</div>
           </div>
+          {selected.customer_name && (
+            <div className="text-sm"><span className="text-slate-500">Mijoz:</span> <b>{selected.customer_name}</b></div>
+          )}
           <OrderTimeline currentStatus={selected.status} />
           <div className="space-y-2">
             <h4 className="font-bold">Mahsulotlar:</h4>
@@ -69,11 +195,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
               </div>
             ))}
           </div>
-          {selected.status === 'PENDING' && (
-            <button className="secondary-button text-rose-500" onClick={() => cancelMutation.mutate(selected.id)}>
-              Bekor qilish
-            </button>
-          )}
+          {renderActions()}
         </div>
       ) : isLoading ? (
         <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="glass-card h-16 animate-pulse" />)}</div>
