@@ -24,14 +24,28 @@ export function Register() {
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      const tg = await authService.checkTelegram(data.phone)
-      if (!tg.linked) {
-        navigate(`/telegram-link?phone=${encodeURIComponent(data.phone)}&flow=register&firstName=${encodeURIComponent(data.firstName)}&lastName=${encodeURIComponent(data.lastName)}&password=${encodeURIComponent(data.password)}`)
-        return
+      // 1. Ro'yxatdan o'tamiz — backend linked/not_linked qaytaradi
+      const result = await authService.register(data)
+
+      if (result.linked === false) {
+        // Telegram ulanmagan — OTP sahifasiga o'tamiz, u yerda bot yo'riqnomasi chiqadi
+        pushToast({ title: 'Telegram bot bilan ulanishingiz kerak', variant: 'info' })
+        navigate('/otp-verification', {
+          state: {
+            phone: data.phone,
+            userId: result.user_id,
+            linked: false,
+            botLink: result.bot_link,
+            botUsername: result.bot_username,
+          }
+        })
+      } else {
+        // Telegram ulangan — OTP yuborildi
+        pushToast({ title: 'OTP Telegram botga yuborildi!', variant: 'success' })
+        navigate('/otp-verification', {
+          state: { phone: data.phone, userId: result.user_id, linked: true }
+        })
       }
-      await authService.register(data)
-      pushToast({ title: 'OTP Telegram botga yuborildi!', variant: 'success' })
-      navigate('/otp-verification')
     } catch (err) {
       pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
     } finally {
