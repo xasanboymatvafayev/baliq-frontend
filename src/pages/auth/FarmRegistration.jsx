@@ -19,6 +19,7 @@ const schema = z.object({
   region: z.string().min(2, 'Viloyat kiriting'),
   district: z.string().min(2, 'Tuman kiriting'),
   stir: z.string().min(9, 'STIR kiriting'),
+  farmImage: z.any().refine((files) => files && files.length > 0, 'Ferma rasmi majburiy'),
 })
 
 // Leaflet xarita komponenti — faqat GPS koordinata tanlash uchun
@@ -240,7 +241,7 @@ export function FarmRegistration() {
           <FormInput label="Viloyat" placeholder="Toshkent" {...register('region')} error={formState.errors.region?.message} />
           <FormInput label="Tuman" placeholder="Yunusobod" {...register('district')} error={formState.errors.district?.message} />
           <LocationPicker value={gpsLocation} onChange={setGpsLocation} />
-          <FileUpload label="Ferma rasmi (ixtiyoriy)" name="farmImage" register={register} />
+          <FileUpload label="Ferma rasmi (majburiy)" name="farmImage" register={register} error={formState.errors.farmImage?.message} />
           <div className="flex items-end">
             <button className="primary-button w-full" type="submit" disabled={loading}>
               {loading ? 'Yuborilmoqda...' : "So'rov yuborish"}
