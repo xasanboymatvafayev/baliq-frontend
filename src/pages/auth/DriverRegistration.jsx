@@ -52,7 +52,7 @@ export function DriverRegistration() {
       })
     } catch (err) {
       if (err.message?.includes('allaqachon')) {
-        // Login qilib driver so'rov yuboramiz
+        // Foydalanuvchi oldin ro'yxatdan o'tgan — login qilib ko'ramiz
         try {
           const loginResult = await httpClient.post('/auth/login', { phone: data.phone, password: data.password })
           setSession({ user: loginResult.user, role: loginResult.role, token: loginResult.token })
@@ -71,7 +71,12 @@ export function DriverRegistration() {
           })
           navigate('/driver/dashboard')
         } catch (e2) {
-          pushToast({ title: e2.message, variant: 'error' })
+          if (e2.message?.includes('tasdiqlanmagan')) {
+            pushToast({ title: 'Avval OTP orqali telefon raqamingizni tasdiqlang', variant: 'warning' })
+            navigate('/otp-verification', { state: { phone: data.phone, pendingDriver: true } })
+          } else {
+            pushToast({ title: e2.message, variant: 'error' })
+          }
         }
       } else {
         pushToast({ title: err.message, variant: 'error' })
