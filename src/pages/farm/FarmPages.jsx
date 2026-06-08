@@ -7,19 +7,71 @@ import { DashboardPage } from '../shared/DashboardPage.jsx'
 import { OrdersPage } from '../shared/OrdersPage.jsx'
 import { ProfilePage } from '../shared/ProfilePage.jsx'
 import { ChatPage } from '../shared/ChatPage.jsx'
-import { httpClient, fishService } from '../../services/api/index.js'
-import { useState } from 'react'
+import { httpClient, fishService, fileService } from '../../services/api/index.js'
+import { useState, useRef } from 'react'
+import { Pencil, Trash2, X, ImageUp } from 'lucide-react'
 
-// ===== FARM FISH LIST =====
+// ===== FARM FISH LIST (with Edit/Delete) =====
 export function FarmFish() {
   usePageTitle('Baliqlar')
+  const pushToast = useToastStore((s) => s.pushToast)
+  const queryClient = useQueryClient()
+  const [editingFish, setEditingFish] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
+
   const { data = [], isLoading } = useQuery({
     queryKey: ['farm-fish'],
     queryFn: () => fishService.list(),
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (id) => fishService.remove(id),
+    onSuccess: () => {
+      pushToast({ title: "Baliq o'chirildi", variant: 'success' })
+      queryClient.invalidateQueries(['farm-fish'])
+      setDeleteTarget(null)
+    },
+    onError: (err) => pushToast({ title: err.message, variant: 'error' }),
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }) => fishService.update(id, data),
+    onSuccess: () => {
+      pushToast({ title: 'Baliq yangilandi', variant: 'success' })
+      queryClient.invalidateQueries(['farm-fish'])
+      setEditingFish(null)
+    },
+    onError: (err) => pushToast({ title: err.message, variant: 'error' }),
+  })
+
   return (
     <div className="space-y-6">
+      {/* Delete confirmation */}
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="glass-card max-w-md w-full p-6 space-y-4">
+            <h3 className="text-xl font-black">O'chirishni tasdiqlang</h3>
+            <p className="text-slate-600 dark:text-slate-400">"{deleteTarget.name}" baliqni o'chirishni xohlaysizmi?</p>
+            <div className="flex gap-3 justify-end">
+              <button className="secondary-button" onClick={() => setDeleteTarget(null)}>Bekor qilish</button>
+              <button className="px-5 py-2.5 rounded-2xl font-bold text-white bg-rose-500 hover:bg-rose-600" onClick={() => deleteMutation.mutate(deleteTarget.id)} disabled={deleteMutation.isPending}>
+                {deleteMutation.isPending ? "O'chirilmoqda..." : "O'chirish"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit modal */}
+      {editingFish && (
+        <EditFishModal
+          fish={editingFish}
+          onClose={() => setEditingFish(null)}
+          onSave={(data) => updateMutation.mutate({ id: editingFish.id, data })}
+          saving={updateMutation.isPending}
+        />
+      )}
+
       <section className="glass-card p-6 flex justify-between items-center">
         <div><h2 className="text-3xl font-black">Baliqlar</h2><p className="mt-2 text-slate-500">Ferma mahsulotlari</p></div>
         <a href="/farm/add-fish" className="primary-button">+ Qo'shish</a>
@@ -29,16 +81,33 @@ export function FarmFish() {
           <table className="w-full text-sm">
             <thead className="border-b border-slate-200 dark:border-white/10">
               <tr className="text-left text-xs font-bold uppercase text-slate-500">
-                <th className="p-4">Nomi</th><th className="p-4">Narx</th><th className="p-4">Zaxira</th><th className="p-4">Kategoriya</th>
+                <th className="p-4">Rasm</th><th className="p-4">Nomi</th><th className="p-4">Narx</th><th className="p-4">Zaxira</th><th className="p-4">Kategoriya</th><th className="p-4">Amallar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {data.map((fish) => (
                 <tr key={fish.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                  <td className="p-4">
+                    {fish.image_url ? (
+                      <img src={fish.image_url} alt={fish.name} className="h-10 w-10 rounded-xl object-cover" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400">🐟</div>
+                    )}
+                  </td>
                   <td className="p-4 font-semibold">{fish.name}</td>
                   <td className="p-4 font-bold text-ocean-600">{fish.price?.toLocaleString()} so'm/{fish.unit}</td>
                   <td className="p-4">{fish.stock} {fish.unit}</td>
                   <td className="p-4 text-slate-500">{fish.category}</td>
+                  <td className="p-4">
+                    <div className="flex gap-2">
+                      <button className="p-2 rounded-xl text-ocean-600 hover:bg-ocean-50 dark:hover:bg-ocean-900/20" onClick={() => setEditingFish(fish)} title="Tahrirlash">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20" onClick={() => setDeleteTarget(fish)} title="O'chirish">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -49,18 +118,87 @@ export function FarmFish() {
   )
 }
 
-// ===== ADD FISH =====
+// ===== EDIT FISH MODAL =====
+function EditFishModal({ fish, onClose, onSave, saving }) {
+  const [name, setName] = useState(fish.name || '')
+  const [price, setPrice] = useState(fish.price || '')
+  const [stock, setStock] = useState(fish.stock || '')
+  const [category, setCategory] = useState(fish.category || '')
+  const [description, setDescription] = useState(fish.description || '')
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="glass-card max-w-lg w-full p-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-xl font-black">Baliqni tahrirlash</h3>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div><label className="block text-sm font-semibold mb-1">Nomi</label><input className="soft-input w-full" value={name} onChange={(e) => setName(e.target.value)} /></div>
+          <div><label className="block text-sm font-semibold mb-1">Kategoriya</label>
+            <select className="soft-input w-full" value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option>Daryo baliqlari</option><option>Dengiz baliqlari</option><option>Ferma baliqlari</option><option>Premium baliqlar</option>
+            </select>
+          </div>
+          <div><label className="block text-sm font-semibold mb-1">Narx (so'm)</label><input className="soft-input w-full" type="number" value={price} onChange={(e) => setPrice(e.target.value)} /></div>
+          <div><label className="block text-sm font-semibold mb-1">Zaxira</label><input className="soft-input w-full" type="number" value={stock} onChange={(e) => setStock(e.target.value)} /></div>
+          <div className="sm:col-span-2"><label className="block text-sm font-semibold mb-1">Tavsif</label><input className="soft-input w-full" value={description} onChange={(e) => setDescription(e.target.value)} /></div>
+        </div>
+        <div className="flex gap-3 justify-end pt-2">
+          <button className="secondary-button" onClick={onClose}>Bekor qilish</button>
+          <button className="primary-button" onClick={() => onSave({ name, price: Number(price), stock: Number(stock), category, description })} disabled={saving}>
+            {saving ? 'Saqlanmoqda...' : 'Saqlash'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ===== ADD FISH (with image upload) =====
 export function FarmAddFish() {
   usePageTitle("Baliq qo'shish")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const { register, handleSubmit, reset, formState } = useForm()
+  const [imageFile, setImageFile] = useState(null)
+  const [imagePreview, setImagePreview] = useState(null)
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef(null)
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setImageFile(file)
+      setImagePreview(URL.createObjectURL(file))
+    }
+  }
 
   const mutation = useMutation({
-    mutationFn: (data) => fishService.create({ ...data, price: Number(data.price), stock: Number(data.stock) }),
+    mutationFn: async (data) => {
+      let image_url = null
+      // Rasmni yuklash
+      if (imageFile) {
+        setUploading(true)
+        try {
+          const formData = new FormData()
+          formData.append('file', imageFile)
+          const uploadResult = await fileService.upload(formData)
+          image_url = uploadResult.url || uploadResult.file_url
+        } catch (err) {
+          pushToast({ title: 'Rasm yuklashda xatolik: ' + err.message, variant: 'error' })
+        }
+        setUploading(false)
+      }
+      return fishService.create({ ...data, price: Number(data.price), stock: Number(data.stock), image_url })
+    },
     onSuccess: () => {
       pushToast({ title: "Baliq qo'shildi", variant: 'success' })
       reset()
+      setImageFile(null)
+      setImagePreview(null)
       queryClient.invalidateQueries(['farm-fish'])
     },
     onError: (err) => pushToast({ title: err.message, variant: 'error' }),
@@ -84,9 +222,29 @@ export function FarmAddFish() {
           </select>
         </div>
         <div><label className="block text-sm font-semibold mb-2">Tavsif</label><input className="soft-input w-full" {...register('description')} /></div>
+        {/* Rasm yuklash */}
         <div className="sm:col-span-2">
-          <button className="primary-button" type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? 'Saqlanmoqda...' : "Qo'shish"}
+          <label className="block text-sm font-semibold mb-2">Baliq rasmi</label>
+          <div className="flex items-center gap-4">
+            <label className="cursor-pointer rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-4 text-center hover:border-ocean-400 dark:border-white/10 dark:bg-white/5 flex-1">
+              <ImageUp className="mx-auto h-8 w-8 text-ocean-600" />
+              <span className="mt-2 block text-sm font-semibold">{imageFile ? imageFile.name : 'Rasm tanlang'}</span>
+              <span className="mt-1 block text-xs text-slate-500">PNG, JPG yoki WebP</span>
+              <input ref={fileRef} type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+            </label>
+            {imagePreview && (
+              <div className="relative">
+                <img src={imagePreview} alt="Preview" className="h-20 w-20 rounded-xl object-cover" />
+                <button type="button" className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full p-1" onClick={() => { setImageFile(null); setImagePreview(null) }}>
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="sm:col-span-2">
+          <button className="primary-button" type="submit" disabled={mutation.isPending || uploading}>
+            {uploading ? 'Rasm yuklanmoqda...' : mutation.isPending ? 'Saqlanmoqda...' : "Qo'shish"}
           </button>
         </div>
       </form>
@@ -149,7 +307,7 @@ export function FarmCustomers() {
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
             {customers.map((c, i) => (
-              <tr key={i}><td className="p-4 font-semibold">{c.name || 'Noma\'lum'}</td><td className="p-4">{c.orders} ta</td></tr>
+              <tr key={i}><td className="p-4 font-semibold">{c.name || "Noma'lum"}</td><td className="p-4">{c.orders} ta</td></tr>
             ))}
           </tbody>
         </table>
