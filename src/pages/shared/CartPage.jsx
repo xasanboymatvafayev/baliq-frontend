@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ShoppingBag, Trash2 } from 'lucide-react'
+import { ShoppingBag, Trash2, MapPin } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { useCartStore } from '../../store/cartStore.js'
@@ -14,22 +14,43 @@ export function CartPage() {
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [address, setAddress] = useState('')
+  const [addressError, setAddressError] = useState('')
 
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
 
   const orderMutation = useMutation({
-    mutationFn: () => orderService.create({
-      items: items.map((i) => ({ fish_id: i.fish_id || i.id, quantity: i.quantity, unit_price: i.price })),
-      delivery_address: address || 'Belgilanmagan',
-    }),
+    mutationFn: () => {
+      if (!address.trim()) {
+        throw new Error('Yetkazish manzilini kiriting!')
+      }
+      return orderService.create({
+        items: items.map((i) => ({ fish_id: i.fish_id || i.id, quantity: i.quantity, unit_price: i.price })),
+        delivery_address: address.trim(),
+      })
+    },
     onSuccess: () => {
       clearCart()
       pushToast({ title: 'Buyurtma yaratildi!', variant: 'success' })
       queryClient.invalidateQueries(['orders'])
       navigate('/customer/orders')
     },
-    onError: (err) => pushToast({ title: err.message, variant: 'error' }),
+    onError: (err) => {
+      if (err.message?.includes('manzil')) {
+        setAddressError(err.message)
+      }
+      pushToast({ title: err.message, variant: 'error' })
+    },
   })
+
+  const handleOrder = () => {
+    if (!address.trim()) {
+      setAddressError('Yetkazish manzilini kiriting!')
+      pushToast({ title: 'Yetkazish manzilini kiriting!', variant: 'error' })
+      return
+    }
+    setAddressError('')
+    orderMutation.mutate()
+  }
 
   return (
     <div className="space-y-6">
@@ -74,8 +95,19 @@ export function CartPage() {
 
           <div className="glass-card p-6 space-y-4">
             <div>
-              <label className="block text-sm font-semibold mb-2">Yetkazish manzili</label>
-              <input className="soft-input w-full" placeholder="Manzilni kiriting (masalan: Toshkent, Chilonzor 9-kvartal)" value={address} onChange={(e) => setAddress(e.target.value)} />
+              <label className="flex items-center gap-2 text-sm font-semibold mb-2">
+                <MapPin className="h-4 w-4 text-ocean-600" />
+                Yetkazish manzili <span className="text-rose-500">*</span>
+              </label>
+              <input
+                className={`soft-input w-full ${addressError ? 'ring-2 ring-rose-400' : ''}`}
+                placeholder="Manzilni kiriting (masalan: Toshkent, Chilonzor 9-kvartal, 12-uy)"
+                value={address}
+                onChange={(e) => { setAddress(e.target.value); setAddressError('') }}
+              />
+              {addressError && (
+                <p className="text-xs text-rose-500 mt-1">{addressError}</p>
+              )}
             </div>
             <div className="flex items-center justify-between">
               <div>
@@ -83,7 +115,7 @@ export function CartPage() {
                 <p className="text-3xl font-black text-ocean-600">{total.toLocaleString()} so'm</p>
               </div>
               <button className="primary-button text-lg px-8 py-3"
-                onClick={() => orderMutation.mutate()} disabled={orderMutation.isPending}>
+                onClick={handleOrder} disabled={orderMutation.isPending}>
                 {orderMutation.isPending ? 'Yuborilmoqda...' : 'Buyurtma berish'}
               </button>
             </div>
