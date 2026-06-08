@@ -7,7 +7,7 @@ import { FileUpload } from '../../components/forms/FileUpload.jsx'
 import { FormInput } from '../../components/forms/FormInput.jsx'
 import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
-import { httpClient } from '../../services/api/index.js'
+import { httpClient, fileService } from '../../services/api/index.js'
 
 const schema = z.object({
   firstName: z.string().min(2, 'Ism kiriting'),
@@ -28,9 +28,27 @@ export function DriverRegistration() {
   const [loading, setLoading] = useState(false)
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
+  // Rasmni serverga yuklash va URL olish
+  const uploadImage = async (fileList) => {
+    if (!fileList || fileList.length === 0) return null
+    const formData = new FormData()
+    formData.append('file', fileList[0])
+    try {
+      const result = await fileService.upload(formData)
+      return result.url || result.file_url || null
+    } catch (err) {
+      console.error('Rasm yuklashda xatolik:', err)
+      return null
+    }
+  }
+
   const onSubmit = async (data) => {
     setLoading(true)
     try {
+      // Rasmlarni yuklash
+      const licenseImageUrl = await uploadImage(data.licenseImage)
+      const technicalPassportImageUrl = await uploadImage(data.technicalPassportImage)
+
       // 1. Ro'yxatdan o'tamiz
       const regResult = await httpClient.post('/auth/register', {
         firstName: data.firstName,
@@ -48,16 +66,22 @@ export function DriverRegistration() {
         plateNumber: data.plateNumber,
         capacity: data.capacity,
         phone: data.phone,
+        licenseImage: licenseImageUrl,
+        technicalPassportImage: technicalPassportImageUrl,
       }))
       navigate('/otp-verification', {
         state: { phone: data.phone, userId: regResult.user_id, redirect: '/driver/dashboard', pendingDriver: true }
       })
     } catch (err) {
       if (err.message?.includes('allaqachon')) {
-        // Foydalanuvchi oldin ro'yxatdan o'tgan — login qilib ko'ramiz
         try {
           const loginResult = await httpClient.post('/auth/login', { phone: data.phone, password: data.password })
           setSession({ user: loginResult.user, role: loginResult.role, token: loginResult.token })
+
+          // Rasmlarni yuklash (agar oldin yuklangan bo'lmasa)
+          const licenseImageUrl = await uploadImage(data.licenseImage)
+          const technicalPassportImageUrl = await uploadImage(data.technicalPassportImage)
+
           await httpClient.post('/drivers', {
             firstName: data.firstName,
             lastName: data.lastName,
@@ -65,6 +89,8 @@ export function DriverRegistration() {
             carBrand: data.carBrand,
             plateNumber: data.plateNumber,
             capacity: data.capacity,
+            licenseImage: licenseImageUrl,
+            technicalPassportImage: technicalPassportImageUrl,
           })
           pushToast({
             title: "Haydovchi so'rovi yuborildi!",
@@ -100,16 +126,12 @@ export function DriverRegistration() {
           <Link className="secondary-button" to="/login">Kirishga qaytish</Link>
         </div>
         <form className="glass-card grid gap-5 p-6 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
-          <div className="md:col-span-2">
-            <h3 className="font-bold text-ocean-600 mb-3">👤 Shaxsiy ma'lumotlar</h3>
-          </div>
+          <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">👤 Shaxsiy ma'lumotlar</h3></div>
           <FormInput label="Ism" {...register('firstName')} error={formState.errors.firstName?.message} />
           <FormInput label="Familiya" {...register('lastName')} error={formState.errors.lastName?.message} />
           <FormInput label="Telefon" placeholder="+998901234567" {...register('phone')} error={formState.errors.phone?.message} />
           <FormInput label="Parol" type="password" placeholder="••••••••" {...register('password')} error={formState.errors.password?.message} />
-          <div className="md:col-span-2 border-t border-slate-200 dark:border-white/10 pt-4">
-            <h3 className="font-bold text-ocean-600 mb-3">🚚 Transport ma'lumotlari</h3>
-          </div>
+          <div className="md:col-span-2 border-t border-slate-200 dark:border-white/10 pt-4"><h3 className="font-bold text-ocean-600 mb-3">🚚 Transport ma'lumotlari</h3></div>
           <FormInput label="Mashina markasi" placeholder="Nexia, Cobalt..." {...register('carBrand')} error={formState.errors.carBrand?.message} />
           <FormInput label="Mashina raqami" placeholder="01A 123 BC" {...register('plateNumber')} error={formState.errors.plateNumber?.message} />
           <FormInput label="Yuk sig'imi (kg)" placeholder="1000" {...register('capacity')} error={formState.errors.capacity?.message} />
