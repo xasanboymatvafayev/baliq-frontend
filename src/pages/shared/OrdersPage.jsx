@@ -4,11 +4,13 @@ import { orderService, httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
+import { Pagination } from '../../components/common/Pagination.jsx'
 import { useState } from 'react'
+import { Filter } from 'lucide-react'
 
 const STATUS_LABELS = {
   PENDING: 'Kutilmoqda', CONFIRMED: 'Tasdiqlandi', DRIVER_ASSIGNED: 'Haydovchi biriktirildi',
-  LOADING: 'Yuklanmoqda', IN_TRANSIT: 'Yo\'lda', DELIVERED: 'Yetkazildi', CANCELLED: 'Bekor qilindi',
+  LOADING: 'Yuklanmoqda', IN_TRANSIT: "Yo'lda", DELIVERED: 'Yetkazildi', CANCELLED: 'Bekor qilindi',
 }
 const STATUS_COLORS = {
   PENDING: 'bg-amber-100 text-amber-700', CONFIRMED: 'bg-blue-100 text-blue-700',
@@ -17,6 +19,8 @@ const STATUS_COLORS = {
   CANCELLED: 'bg-rose-100 text-rose-700',
 }
 
+const PAGE_SIZE = 10
+
 export function OrdersPage({ title = 'Buyurtmalar' }) {
   usePageTitle(title)
   const pushToast = useToastStore((state) => state.pushToast)
@@ -24,10 +28,16 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const user = useAuthStore((s) => s.user)
   const [selected, setSelected] = useState(null)
   const [selectedDriverId, setSelectedDriverId] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+  const [page, setPage] = useState(1)
 
-  const { data = [], isLoading } = useQuery({
-    queryKey: ['orders'],
-    queryFn: () => orderService.list(),
+  const { data: ordersData = [], isLoading } = useQuery({
+    queryKey: ['orders', statusFilter, page],
+    queryFn: () => orderService.list({
+      ...(statusFilter ? { status: statusFilter } : {}),
+      skip: (page - 1) * PAGE_SIZE,
+      limit: PAGE_SIZE,
+    }),
   })
 
   const { data: timeline = [] } = useQuery({
@@ -105,18 +115,10 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     if (role === 'farm-owner' && status === 'PENDING') {
       return (
         <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
-          <button
-            className="primary-button"
-            onClick={() => confirmMutation.mutate(selected.id)}
-            disabled={confirmMutation.isPending}
-          >
+          <button className="primary-button" onClick={() => confirmMutation.mutate(selected.id)} disabled={confirmMutation.isPending}>
             {confirmMutation.isPending ? 'Tasdiqlanmoqda...' : '✅ Tasdiqlash'}
           </button>
-          <button
-            className="secondary-button text-rose-500"
-            onClick={() => rejectMutation.mutate(selected.id)}
-            disabled={rejectMutation.isPending}
-          >
+          <button className="secondary-button text-rose-500" onClick={() => rejectMutation.mutate(selected.id)} disabled={rejectMutation.isPending}>
             {rejectMutation.isPending ? 'Rad etilmoqda...' : '❌ Rad etish'}
           </button>
         </div>
@@ -128,11 +130,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       if (status === 'DRIVER_ASSIGNED') {
         return (
           <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-            <button
-              className="primary-button w-full text-lg py-3"
-              onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'LOADING' })}
-              disabled={driverStatusMutation.isPending}
-            >
+            <button className="primary-button w-full text-lg py-3" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'LOADING' })} disabled={driverStatusMutation.isPending}>
               {driverStatusMutation.isPending ? 'Yuklanmoqda...' : '📦 Qabul qilish (Fermaga bordim)'}
             </button>
           </div>
@@ -141,11 +139,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       if (status === 'LOADING') {
         return (
           <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-            <button
-              className="primary-button w-full text-lg py-3 !bg-cyan-600 hover:!bg-cyan-700"
-              onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'IN_TRANSIT' })}
-              disabled={driverStatusMutation.isPending}
-            >
+            <button className="primary-button w-full text-lg py-3 !bg-cyan-600 hover:!bg-cyan-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'IN_TRANSIT' })} disabled={driverStatusMutation.isPending}>
               {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : "🚚 Yo'lga chiqdim"}
             </button>
           </div>
@@ -154,11 +148,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       if (status === 'IN_TRANSIT') {
         return (
           <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-            <button
-              className="primary-button w-full text-lg py-3 !bg-green-600 hover:!bg-green-700"
-              onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })}
-              disabled={driverStatusMutation.isPending}
-            >
+            <button className="primary-button w-full text-lg py-3 !bg-green-600 hover:!bg-green-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })} disabled={driverStatusMutation.isPending}>
               {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : '✅ Yetkazildi'}
             </button>
           </div>
@@ -171,11 +161,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     if (role === 'customer' && status === 'PENDING') {
       return (
         <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-          <button
-            className="secondary-button text-rose-500"
-            onClick={() => cancelMutation.mutate(selected.id)}
-            disabled={cancelMutation.isPending}
-          >
+          <button className="secondary-button text-rose-500" onClick={() => cancelMutation.mutate(selected.id)} disabled={cancelMutation.isPending}>
             {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Bekor qilish'}
           </button>
         </div>
@@ -191,11 +177,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
             <p className="text-sm text-slate-500">Tasdiqlangan haydovchi topilmadi</p>
           ) : (
             <div className="flex gap-3">
-              <select
-                className="soft-input flex-1"
-                value={selectedDriverId}
-                onChange={(e) => setSelectedDriverId(e.target.value)}
-              >
+              <select className="soft-input flex-1" value={selectedDriverId} onChange={(e) => setSelectedDriverId(e.target.value)}>
                 <option value="">Haydovchini tanlang...</option>
                 {drivers.map((d) => (
                   <option key={d.id} value={d.user_id || d.id}>
@@ -224,8 +206,22 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
 
   return (
     <div className="space-y-6">
-      <section className="glass-card p-6">
+      <section className="glass-card p-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-3xl font-black">{title}</h2>
+        {/* Status Filter */}
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-slate-500" />
+          <select
+            className="soft-input text-sm"
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
+          >
+            <option value="">Barcha statuslar</option>
+            {Object.entries(STATUS_LABELS).map(([key, label]) => (
+              <option key={key} value={key}>{label}</option>
+            ))}
+          </select>
+        </div>
       </section>
 
       {selected ? (
@@ -242,6 +238,9 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
           {selected.customer_name && (
             <div className="text-sm"><span className="text-slate-500">Mijoz:</span> <b>{selected.customer_name}</b></div>
           )}
+          {selected.delivery_address && (
+            <div className="text-sm"><span className="text-slate-500">Manzil:</span> <b>{selected.delivery_address}</b></div>
+          )}
           <OrderTimeline currentStatus={selected.status} />
           <div className="space-y-2">
             <h4 className="font-bold">Mahsulotlar:</h4>
@@ -256,29 +255,39 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
         </div>
       ) : isLoading ? (
         <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="glass-card h-16 animate-pulse" />)}</div>
-      ) : data.length === 0 ? (
-        <div className="glass-card p-12 text-center text-slate-500">Buyurtmalar hali yo'q</div>
-      ) : (
-        <div className="glass-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 dark:border-white/10">
-              <tr className="text-left text-xs font-bold uppercase text-slate-500">
-                <th className="p-4">ID</th><th className="p-4">Jami</th><th className="p-4">Status</th><th className="p-4">Sana</th><th className="p-4"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {data.map((order) => (
-                <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                  <td className="p-4 font-mono text-xs">#{order.id?.slice(-6)}</td>
-                  <td className="p-4 font-bold">{order.total?.toLocaleString()} so'm</td>
-                  <td className="p-4"><span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLORS[order.status]}`}>{STATUS_LABELS[order.status]}</span></td>
-                  <td className="p-4 text-slate-500">{new Date(order.created_at).toLocaleDateString('uz')}</td>
-                  <td className="p-4"><button className="secondary-button text-xs" onClick={() => setSelected(order)}>Ko'rish</button></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      ) : ordersData.length === 0 ? (
+        <div className="glass-card p-12 text-center text-slate-500">
+          {statusFilter ? `"${STATUS_LABELS[statusFilter]}" statusida buyurtma yo'q` : "Buyurtmalar hali yo'q"}
         </div>
+      ) : (
+        <>
+          <div className="glass-card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead className="border-b border-slate-200 dark:border-white/10">
+                <tr className="text-left text-xs font-bold uppercase text-slate-500">
+                  <th className="p-4">ID</th><th className="p-4">Jami</th><th className="p-4">Status</th><th className="p-4">Sana</th><th className="p-4"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                {ordersData.map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                    <td className="p-4 font-mono text-xs">#{order.id?.slice(-6)}</td>
+                    <td className="p-4 font-bold">{order.total?.toLocaleString()} so'm</td>
+                    <td className="p-4"><span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLORS[order.status]}`}>{STATUS_LABELS[order.status]}</span></td>
+                    <td className="p-4 text-slate-500">{new Date(order.created_at).toLocaleDateString('uz')}</td>
+                    <td className="p-4"><button className="secondary-button text-xs" onClick={() => setSelected(order)}>Ko'rish</button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Pagination */}
+          <Pagination
+            currentPage={page}
+            hasMore={ordersData.length === PAGE_SIZE}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </div>
   )
