@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AuthLayout } from '../layouts/AuthLayout.jsx'
 import { DashboardLayout } from '../layouts/DashboardLayout.jsx'
+import { ProtectedRoute } from './ProtectedRoute.jsx'
 import { LandingPage } from '../pages/LandingPage.jsx'
 import { DriverRegistration } from '../pages/auth/DriverRegistration.jsx'
 import { FarmRegistration } from '../pages/auth/FarmRegistration.jsx'
@@ -43,6 +44,7 @@ import {
 export function AppRoutes() {
   return (
     <Routes>
+      {/* Ochiq sahifalar */}
       <Route path="/" element={<LandingPage />} />
       <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
@@ -55,7 +57,12 @@ export function AppRoutes() {
       <Route path="/driver-registration" element={<DriverRegistration />} />
       <Route path="/telegram-link" element={<TelegramLinkPage />} />
 
-      <Route path="/customer" element={<DashboardLayout navigation={customerNavigation} title="Mijoz paneli" />}>
+      {/* Himoyalangan sahifalar */}
+      <Route path="/customer" element={
+        <ProtectedRoute>
+          <DashboardLayout navigation={customerNavigation} title="Mijoz paneli" />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<CustomerDashboard />} />
         <Route path="fish-catalog" element={<CustomerFishCatalog />} />
@@ -68,7 +75,11 @@ export function AppRoutes() {
         <Route path="settings" element={<CustomerSettings />} />
       </Route>
 
-      <Route path="/farm" element={<DashboardLayout navigation={farmNavigation} title="Ferma paneli" />}>
+      <Route path="/farm" element={
+        <ProtectedRoute>
+          <DashboardLayout navigation={farmNavigation} title="Ferma paneli" />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<FarmDashboard />} />
         <Route path="fish" element={<FarmFish />} />
@@ -81,7 +92,11 @@ export function AppRoutes() {
         <Route path="profile" element={<FarmProfile />} />
       </Route>
 
-      <Route path="/driver" element={<DashboardLayout navigation={driverNavigation} title="Haydovchi paneli" />}>
+      <Route path="/driver" element={
+        <ProtectedRoute>
+          <DashboardLayout navigation={driverNavigation} title="Haydovchi paneli" />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<DriverDashboard />} />
         <Route path="orders" element={<DriverOrders />} />
@@ -91,7 +106,11 @@ export function AppRoutes() {
         <Route path="settings" element={<DriverSettings />} />
       </Route>
 
-      <Route path="/admin" element={<DashboardLayout navigation={adminNavigation} title="Admin paneli" />}>
+      <Route path="/admin" element={
+        <ProtectedRoute>
+          <DashboardLayout navigation={adminNavigation} title="Admin paneli" />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="farm-requests" element={<AdminFarmRequests />} />
@@ -103,7 +122,11 @@ export function AppRoutes() {
         <Route path="settings" element={<AdminSettings />} />
       </Route>
 
-      <Route path="/manager" element={<DashboardLayout navigation={managerNavigation} title="Menejer paneli" />}>
+      <Route path="/manager" element={
+        <ProtectedRoute>
+          <DashboardLayout navigation={managerNavigation} title="Menejer paneli" />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<ManagerDashboard />} />
         <Route path="gps-monitoring" element={<ManagerGpsMonitoring />} />
@@ -114,7 +137,11 @@ export function AppRoutes() {
         <Route path="chat-monitoring" element={<ManagerChatMonitoring />} />
       </Route>
 
-      <Route path="/super-admin" element={<DashboardLayout navigation={superAdminNavigation} title="Super Admin" />}>
+      <Route path="/super-admin" element={
+        <ProtectedRoute>
+          <DashboardLayout navigation={superAdminNavigation} title="Super Admin" />
+        </ProtectedRoute>
+      }>
         <Route index element={<Navigate to="system-statistics" replace />} />
         <Route path="system-statistics" element={<SystemStatistics />} />
         <Route path="admin-management" element={<AdminManagement />} />
