@@ -176,12 +176,13 @@ export function FarmRegistration() {
       }))
       navigate('/otp-verification', { state: { phone: data.phone, userId, redirect: '/farm/dashboard', pendingFarm: true } })
     } catch (err) {
-      // Agar foydalanuvchi allaqachon mavjud bo'lsa, login qilib ferma so'rovini yuboramiz
+      // Agar foydalanuvchi allaqachon mavjud bo'lsa — OTP tasdiqlanganligini tekshiramiz
       if (err.message?.includes('allaqachon')) {
+        // Foydalanuvchi oldin ro'yxatdan o'tgan — login qilib ko'ramiz
         try {
           const loginResult = await httpClient.post('/auth/login', { phone: data.phone, password: data.password })
           setSession({ user: loginResult.user, role: loginResult.role, token: loginResult.token })
-          // Ferma so'rovini yuboramiz
+          // Login muvaffaqiyatli — OTP tasdiqlanganligini anglatadi, ferma so'rovini yuboramiz
           await httpClient.post('/farms', {
             farmName: data.farmName,
             region: data.region,
@@ -196,7 +197,13 @@ export function FarmRegistration() {
           })
           navigate('/farm/dashboard')
         } catch (loginErr) {
-          pushToast({ title: loginErr.message, variant: 'error' })
+          // Login xatosi — OTP tasdiqlanmagan bo'lishi mumkin
+          if (loginErr.message?.includes('tasdiqlanmagan')) {
+            pushToast({ title: 'Avval OTP orqali telefon raqamingizni tasdiqlang', variant: 'warning' })
+            navigate('/otp-verification', { state: { phone: data.phone, pendingFarm: true } })
+          } else {
+            pushToast({ title: loginErr.message, variant: 'error' })
+          }
         }
       } else {
         pushToast({ title: err.message, variant: 'error' })
