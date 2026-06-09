@@ -24,9 +24,9 @@ export function ForgotPassword() {
         navigate(`/telegram-link?phone=${encodeURIComponent(data.phone)}&flow=forgot-password`)
         return
       }
-      await authService.forgotPassword({ phone: data.phone })
+      const result = await authService.forgotPassword({ phone: data.phone })
       pushToast({ title: 'OTP Telegram botga yuborildi!', variant: 'success' })
-      navigate('/otp-verification')
+      navigate('/otp-verification', { state: { phone: data.phone, userId: result.user_id, linked: true } })
     } catch (err) {
       pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
     } finally {
