@@ -86,6 +86,10 @@ export function OtpVerification() {
       setTelegramLinked(data.linked)
       setBotLink(data.bot_link || '')
       if (data.linked) {
+        // Telegram ulandi — OTP yuborish
+        try {
+          await httpClient.post('/auth/resend-otp', { phone })
+        } catch { /* ignore */ }
         pushToast({ title: "Telegram ulandi! OTP yuborildi.", variant: 'success' })
         startCountdown()
       }
@@ -110,9 +114,10 @@ export function OtpVerification() {
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      const result = await authService.verifyOtp({ otp: data.otp, phone })
+      const result = await authService.verifyOtp({ user_id: userId, code: data.otp })
       if (result.token) {
-        setSession({ user: result.user, role: result.role, token: result.token })
+        const userRole = result.user?.role || result.role || 'customer'
+        setSession({ user: result.user, role: userRole, token: result.token })
 
         // Pending farm so'rovi
         if (location.state?.pendingFarm) {
