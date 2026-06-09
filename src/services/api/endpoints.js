@@ -55,5 +55,6 @@ export const endpoints = {
   },
   files: {
     upload: '/files/upload',
+    publicUpload: '/files/public-upload',
   },
 }
