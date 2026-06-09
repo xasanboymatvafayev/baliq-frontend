@@ -90,11 +90,12 @@ export function ManagerChatMonitoring() { return <ChatPage title="Chat monitorin
 
 export function ManagerOrders() {
   usePageTitle('Buyurtmalar (ko\'rish)')
-  const { data: orders = [], isLoading } = useQuery({
+  const { data: ordersRaw, isLoading } = useQuery({
     queryKey: ['manager-orders'],
     queryFn: () => httpClient.get('/orders'),
     refetchInterval: 15000,
   })
+  const orders = ordersRaw?.data || ordersRaw || []
 
   const STATUS_LABELS = {
     PENDING: 'Kutilmoqda', CONFIRMED: 'Tasdiqlandi', DRIVER_ASSIGNED: 'Haydovchi biriktirildi',
