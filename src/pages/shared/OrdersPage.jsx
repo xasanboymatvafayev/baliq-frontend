@@ -31,7 +31,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
 
-  const { data: ordersData = [], isLoading } = useQuery({
+  const { data: ordersRaw, isLoading } = useQuery({
     queryKey: ['orders', statusFilter, page],
     queryFn: () => orderService.list({
       ...(statusFilter ? { status: statusFilter } : {}),
@@ -39,6 +39,8 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       limit: PAGE_SIZE,
     }),
   })
+  const ordersData = ordersRaw?.data || ordersRaw || []
+  const ordersTotal = ordersRaw?.total || 0
 
   const { data: timeline = [] } = useQuery({
     queryKey: ['order-timeline', selected?.id],
@@ -50,7 +52,10 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const isAdmin = user?.role === 'admin' || user?.role === 'super-admin'
   const { data: drivers = [] } = useQuery({
     queryKey: ['approved-drivers'],
-    queryFn: () => httpClient.get('/drivers?status=APPROVED'),
+    queryFn: async () => {
+      const res = await httpClient.get('/drivers?status=APPROVED')
+      return res?.data || res || []
+    },
     enabled: isAdmin && !!selected && selected.status === 'CONFIRMED',
   })
 
@@ -284,7 +289,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
           {/* Pagination */}
           <Pagination
             currentPage={page}
-            hasMore={ordersData.length === PAGE_SIZE}
+            hasMore={page * PAGE_SIZE < ordersTotal}
             onPageChange={setPage}
           />
         </>
