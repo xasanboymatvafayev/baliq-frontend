@@ -24,10 +24,11 @@ export function CustomerSettings() { return <SettingsPage /> }
 export function CustomerFarms() {
   usePageTitle("Fermalar ro'yxati")
   const [selectedFarm, setSelectedFarm] = useState(null)
-  const { data = [], isLoading } = useQuery({
+  const { data: farmsRaw, isLoading } = useQuery({
     queryKey: ['farms'],
     queryFn: () => httpClient.get('/farms?status=APPROVED'),
   })
+  const data = farmsRaw?.data || farmsRaw || []
 
   return (
     <div className="space-y-6">
