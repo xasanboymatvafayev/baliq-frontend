@@ -76,7 +76,8 @@ export function DriverRegistration() {
       if (err.message?.includes('allaqachon')) {
         try {
           const loginResult = await httpClient.post('/auth/login', { phone: data.phone, password: data.password })
-          setSession({ user: loginResult.user, role: loginResult.role, token: loginResult.token })
+          const loginRole = loginResult.user?.role || loginResult.role || 'customer'
+          setSession({ user: loginResult.user, role: loginRole, token: loginResult.token })
 
           // Rasmlarni yuklash (agar oldin yuklangan bo'lmasa)
           const licenseImageUrl = await uploadImage(data.licenseImage)
