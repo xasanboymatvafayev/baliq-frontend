@@ -294,7 +294,8 @@ export function FarmInventory() {
 // ===== FARM CUSTOMERS =====
 export function FarmCustomers() {
   usePageTitle('Mijozlar')
-  const { data = [] } = useQuery({ queryKey: ['orders'], queryFn: () => httpClient.get('/orders') })
+  const { data: ordersRaw } = useQuery({ queryKey: ['orders'], queryFn: () => httpClient.get('/orders') })
+  const data = ordersRaw?.data || ordersRaw || []
   const customers = [...new Map(data.map((o) => [o.customer_id, { name: o.customer_name, orders: data.filter((x) => x.customer_id === o.customer_id).length }])).values()]
 
   return (
