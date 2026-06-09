@@ -110,13 +110,13 @@ export function FarmRegistration() {
   const [loading, setLoading] = useState(false)
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
-  // Rasmni serverga yuklash va URL olish
+  // Rasmni serverga yuklash va URL olish (auth talab qilmaydigan public endpoint)
   const uploadImage = async (fileList) => {
     if (!fileList || fileList.length === 0) return null
     const formData = new FormData()
     formData.append('file', fileList[0])
     try {
-      const result = await fileService.upload(formData)
+      const result = await fileService.publicUpload(formData)
       return result.url || result.file_url || null
     } catch (err) {
       console.error('Rasm yuklashda xatolik:', err)
