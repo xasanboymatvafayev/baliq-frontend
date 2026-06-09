@@ -34,9 +34,10 @@ export function Login() {
     setLoading(true)
     try {
       const result = await authService.login(data)
-      setSession({ user: result.user, role: result.role, token: result.token })
+      const userRole = result.user?.role || result.role || 'customer'
+      setSession({ user: result.user, role: userRole, token: result.token })
       pushToast({ title: 'Muvaffaqiyatli kirdingiz!', variant: 'success' })
-      navigate(ROLE_ROUTES[result.role] || '/customer/dashboard')
+      navigate(ROLE_ROUTES[userRole] || '/customer/dashboard')
     } catch (err) {
       pushToast({ title: err.message || "Telefon yoki parol noto'g'ri", variant: 'error' })
     } finally {
