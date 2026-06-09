@@ -6,4 +6,8 @@ export const fileService = {
     httpClient.post(endpoints.files.upload, payload, {
       headers: { 'Content-Type': 'multipart/form-data' },
     }),
+  publicUpload: (payload) =>
+    httpClient.post(endpoints.files.publicUpload, payload, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 }
