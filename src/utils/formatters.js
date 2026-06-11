@@ -1,17 +1,30 @@
+// ─── Pul formatlash ───────────────────────────────────────────────
+// 360000 → "360,000 so'm"
 export function formatCurrency(value) {
+  if (value == null || isNaN(value)) return '0 so\'m'
   return new Intl.NumberFormat('uz-UZ', {
-    style: 'currency',
-    currency: 'UZS',
     maximumFractionDigits: 0,
-  }).format(value || 0)
+  }).format(value) + ' so\'m'
+}
+
+// 360000 → "360,000"
+export function formatNumber(value) {
+  if (value == null || isNaN(value)) return '0'
+  return new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(value)
+}
+
+// Sof foydani hisoblash: 12% soliq chegiriladi
+// 360000 → { gross: 360000, tax: 43200, net: 316800 }
+export function calcFarmRevenue(gross) {
+  const g = Number(gross) || 0
+  const tax = Math.round(g * 0.12)
+  return { gross: g, tax, net: g - tax }
 }
 
 export function formatDate(value) {
   if (!value) return '—'
   return new Intl.DateTimeFormat('uz-UZ', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
+    day: '2-digit', month: 'short', year: 'numeric',
   }).format(new Date(value))
 }
 
