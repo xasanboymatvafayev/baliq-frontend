@@ -30,6 +30,7 @@ export const endpoints = {
     detail: (id) => `/orders/${id}`,
     timeline: (id) => `/orders/${id}/timeline`,
     assignDriver: (id) => `/orders/${id}/assign-driver`,
+    batchAssign: '/orders/batch-assign-driver', // ← ko'p buyurtmani birlashtirib yuborish
   },
   chat: {
     rooms: '/chat/rooms',
@@ -46,15 +47,7 @@ export const endpoints = {
     kpi: '/analytics/kpi',
     system: '/analytics/system',
   },
-  audit: {
-    logs: '/audit/logs',
-  },
-  settings: {
-    profile: '/settings/profile',
-    system: '/settings/system',
-  },
-  files: {
-    upload: '/files/upload',
-    publicUpload: '/files/public-upload',
-  },
+  audit: { logs: '/audit/logs' },
+  settings: { profile: '/settings/profile', system: '/settings/system' },
+  files: { upload: '/files/upload', publicUpload: '/files/public-upload' },
 }
