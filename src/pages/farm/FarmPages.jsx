@@ -8,7 +8,7 @@ import { OrdersPage } from '../shared/OrdersPage.jsx'
 import { ProfilePage } from '../shared/ProfilePage.jsx'
 import { ChatPage } from '../shared/ChatPage.jsx'
 import { httpClient, fishService, fileService } from '../../services/api/index.js'
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { Pencil, Trash2, X, ImageUp } from 'lucide-react'
 
 // ===== FARM FISH LIST (with Edit/Delete) =====
@@ -322,3 +322,90 @@ export function FarmOrders() { return <OrdersPage title="Ferma buyurtmalari" /> 
 export function FarmChat() { return <ChatPage title="Ferma chat" /> }
 export function FarmReports() { return <DashboardPage title="Hisobotlar" subtitle="Sotuv, buyurtma, ombor va logistika hisobotlari." /> }
 export function FarmProfile() { return <ProfilePage /> }
+
+// ===== FARM REPORTS — Soliq hisob-kitobi =====
+import { formatCurrency, formatNumber, calcFarmRevenue } from '../../utils/formatters.js'
+
+export function FarmReports() {
+  usePageTitle('Hisobotlar')
+  const { data: ordersRaw } = useQuery({
+    queryKey: ['farm-orders-report'],
+    queryFn: () => httpClient.get('/orders?limit=200'),
+  })
+  const orders = (ordersRaw?.data || ordersRaw || []).filter(
+    (o) => o.status === 'DELIVERED'
+  )
+
+  const totals = useMemo(() => {
+    const gross = orders.reduce((s, o) => s + (o.total || 0), 0)
+    return calcFarmRevenue(gross)
+  }, [orders])
+
+  return (
+    <div className="space-y-6">
+      <section className="glass-card p-6">
+        <h2 className="text-3xl font-black">Hisobotlar</h2>
+        <p className="mt-2 text-slate-500">Yetkazilgan buyurtmalar asosida hisob-kitob</p>
+      </section>
+
+      {/* Soliq hisob-kitobi kartasi */}
+      <div className="glass-card p-6 space-y-4">
+        <h3 className="font-black text-lg">💰 Daromad va soliq hisob-kitobi</h3>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl bg-ocean-50 dark:bg-ocean-900/20 p-4">
+            <p className="text-xs font-bold uppercase text-slate-500 mb-1">Umumiy sotuv</p>
+            <p className="text-2xl font-black text-ocean-700 dark:text-ocean-300">{formatCurrency(totals.gross)}</p>
+          </div>
+          <div className="rounded-2xl bg-rose-50 dark:bg-rose-900/20 p-4">
+            <p className="text-xs font-bold uppercase text-slate-500 mb-1">Soliq (12%)</p>
+            <p className="text-2xl font-black text-rose-600 dark:text-rose-400">− {formatCurrency(totals.tax)}</p>
+          </div>
+          <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 p-4 border-2 border-green-300 dark:border-green-700">
+            <p className="text-xs font-bold uppercase text-slate-500 mb-1">Sof daromad</p>
+            <p className="text-2xl font-black text-green-700 dark:text-green-300">{formatCurrency(totals.net)}</p>
+          </div>
+        </div>
+        <p className="text-xs text-slate-400">
+          * Hisoblash: Umumiy sotuv × 12% = Soliq. Sof daromad = Umumiy sotuv − Soliq.
+          Masalan: {formatCurrency(360000)} → Soliq: {formatCurrency(43200)} → Sof: {formatCurrency(316800)}
+        </p>
+      </div>
+
+      {/* Buyurtmalar jadvali */}
+      <div className="glass-card overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-white/10">
+          <h4 className="font-bold">Yetkazilgan buyurtmalar ({orders.length} ta)</h4>
+        </div>
+        {orders.length === 0 ? (
+          <div className="p-8 text-center text-slate-500">Hali yetkazilgan buyurtma yo'q</div>
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="border-b border-slate-200 dark:border-white/10">
+              <tr className="text-left text-xs font-bold uppercase text-slate-500">
+                <th className="p-4">ID</th>
+                <th className="p-4">Umumiy</th>
+                <th className="p-4">Soliq (12%)</th>
+                <th className="p-4">Sof</th>
+                <th className="p-4 hidden sm:table-cell">Sana</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {orders.map((o) => {
+                const r = calcFarmRevenue(o.total)
+                return (
+                  <tr key={o.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                    <td className="p-4 font-mono text-xs">#{o.id?.slice(-6)}</td>
+                    <td className="p-4 font-bold">{formatCurrency(r.gross)}</td>
+                    <td className="p-4 text-rose-500">− {formatCurrency(r.tax)}</td>
+                    <td className="p-4 font-black text-green-700 dark:text-green-400">{formatCurrency(r.net)}</td>
+                    <td className="p-4 text-slate-500 hidden sm:table-cell">{new Date(o.created_at).toLocaleDateString('uz')}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </div>
+  )
+}
