@@ -8,4 +8,6 @@ export const orderService = {
   updateStatus: (id, payload) => httpClient.patch(endpoints.orders.detail(id), payload),
   timeline: (id) => httpClient.get(endpoints.orders.timeline(id)),
   assignDriver: (id, payload) => httpClient.post(endpoints.orders.assignDriver(id), payload),
+  // Ko'p buyurtmani bitta driverga biriktirish
+  batchAssignDriver: (payload) => httpClient.post(endpoints.orders.batchAssign, payload),
 }
