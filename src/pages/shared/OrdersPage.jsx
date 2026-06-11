@@ -5,8 +5,9 @@ import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
 import { Pagination } from '../../components/common/Pagination.jsx'
+import { formatCurrency } from '../../utils/formatters.js'
 import { useState } from 'react'
-import { Filter } from 'lucide-react'
+import { Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp } from 'lucide-react'
 
 const STATUS_LABELS = {
   PENDING: 'Kutilmoqda', CONFIRMED: 'Tasdiqlandi', DRIVER_ASSIGNED: 'Haydovchi biriktirildi',
@@ -18,7 +19,6 @@ const STATUS_COLORS = {
   IN_TRANSIT: 'bg-cyan-100 text-cyan-700', DELIVERED: 'bg-green-100 text-green-700',
   CANCELLED: 'bg-rose-100 text-rose-700',
 }
-
 const PAGE_SIZE = 10
 
 export function OrdersPage({ title = 'Buyurtmalar' }) {
@@ -30,6 +30,11 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const [selectedDriverId, setSelectedDriverId] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
+  // Admin: tanlangan buyurtmalar (ko'p tanlash)
+  const [checkedIds, setCheckedIds] = useState([])
+  const [showBatchPanel, setShowBatchPanel] = useState(false)
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'manager'
 
   const { data: ordersRaw, isLoading } = useQuery({
     queryKey: ['orders', statusFilter, page],
@@ -48,24 +53,33 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     enabled: !!selected?.id,
   })
 
-  // Admin uchun tasdiqlangan haydovchilar ro'yxati
-  const isAdmin = user?.role === 'admin' || user?.role === 'super-admin'
   const { data: drivers = [] } = useQuery({
     queryKey: ['approved-drivers'],
     queryFn: async () => {
       const res = await httpClient.get('/drivers?status=APPROVED')
       return res?.data || res || []
     },
-    enabled: isAdmin && !!selected && selected.status === 'CONFIRMED',
+    enabled: isAdmin,
   })
 
+  // ─── Mutatsiyalar ────────────────────────────────────────────
   const assignDriverMutation = useMutation({
     mutationFn: ({ orderId, driverId }) => orderService.assignDriver(orderId, { driver_id: driverId }),
     onSuccess: () => {
       pushToast({ title: 'Haydovchi biriktirildi ✅', variant: 'success' })
       queryClient.invalidateQueries(['orders'])
-      setSelected(null)
-      setSelectedDriverId('')
+      setSelected(null); setSelectedDriverId('')
+    },
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
+  })
+
+  // Ko'p buyurtmani birlashtirib driverga yuborish
+  const batchAssignMutation = useMutation({
+    mutationFn: ({ orderIds, driverId }) => orderService.batchAssignDriver({ order_ids: orderIds, driver_id: driverId }),
+    onSuccess: () => {
+      pushToast({ title: `${checkedIds.length} ta buyurtma driverga yuborildi ✅`, variant: 'success' })
+      queryClient.invalidateQueries(['orders'])
+      setCheckedIds([]); setShowBatchPanel(false); setSelectedDriverId('')
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
@@ -74,8 +88,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     mutationFn: (id) => orderService.updateStatus(id, { status: 'CANCELLED' }),
     onSuccess: () => {
       pushToast({ title: 'Buyurtma bekor qilindi', variant: 'success' })
-      queryClient.invalidateQueries(['orders'])
-      setSelected(null)
+      queryClient.invalidateQueries(['orders']); setSelected(null)
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
@@ -84,8 +97,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     mutationFn: (id) => orderService.updateStatus(id, { status: 'CONFIRMED' }),
     onSuccess: () => {
       pushToast({ title: 'Buyurtma tasdiqlandi ✅', variant: 'success' })
-      queryClient.invalidateQueries(['orders'])
-      setSelected(null)
+      queryClient.invalidateQueries(['orders']); setSelected(null)
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
@@ -94,29 +106,36 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     mutationFn: (id) => orderService.updateStatus(id, { status: 'CANCELLED' }),
     onSuccess: () => {
       pushToast({ title: 'Buyurtma rad etildi', variant: 'error' })
-      queryClient.invalidateQueries(['orders'])
-      setSelected(null)
+      queryClient.invalidateQueries(['orders']); setSelected(null)
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
   const driverStatusMutation = useMutation({
     mutationFn: ({ id, status }) => orderService.updateStatus(id, { status }),
-    onSuccess: (_, variables) => {
+    onSuccess: (_, { status }) => {
       const labels = { LOADING: 'Yuklanmoqda 📦', IN_TRANSIT: "Yo'lda 🚚", DELIVERED: 'Yetkazildi ✅' }
-      pushToast({ title: labels[variables.status] || 'Status yangilandi', variant: 'success' })
-      queryClient.invalidateQueries(['orders'])
-      setSelected(null)
+      pushToast({ title: labels[status] || 'Status yangilandi', variant: 'success' })
+      queryClient.invalidateQueries(['orders']); setSelected(null)
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
+  // ─── Checkbox toggle ─────────────────────────────────────────
+  const toggleCheck = (id, status) => {
+    if (status !== 'CONFIRMED') {
+      pushToast({ title: 'Faqat "Tasdiqlandi" statusidagi buyurtmalarni tanlang', variant: 'error' })
+      return
+    }
+    setCheckedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
+  }
+
+  // ─── Amallar ─────────────────────────────────────────────────
   const renderActions = () => {
     if (!selected) return null
     const role = user?.role
     const status = selected.status
 
-    // Farm owner actions
     if (role === 'farm-owner' && status === 'PENDING') {
       return (
         <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
@@ -130,57 +149,129 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       )
     }
 
-    // Driver actions
     if (role === 'driver') {
-      if (status === 'DRIVER_ASSIGNED') {
-        return (
-          <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-            <button className="primary-button w-full text-lg py-3" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'LOADING' })} disabled={driverStatusMutation.isPending}>
-              {driverStatusMutation.isPending ? 'Yuklanmoqda...' : '📦 Qabul qilish (Fermaga bordim)'}
-            </button>
-          </div>
-        )
-      }
-      if (status === 'LOADING') {
-        return (
-          <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-            <button className="primary-button w-full text-lg py-3 !bg-cyan-600 hover:!bg-cyan-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'IN_TRANSIT' })} disabled={driverStatusMutation.isPending}>
-              {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : "🚚 Yo'lga chiqdim"}
-            </button>
-          </div>
-        )
-      }
-      if (status === 'IN_TRANSIT') {
-        return (
-          <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-            <button className="primary-button w-full text-lg py-3 !bg-green-600 hover:!bg-green-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })} disabled={driverStatusMutation.isPending}>
-              {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : '✅ Yetkazildi'}
-            </button>
-          </div>
-        )
-      }
-      return null
-    }
-
-    // Customer actions
-    if (role === 'customer' && status === 'PENDING') {
-      return (
+      if (status === 'DRIVER_ASSIGNED') return (
         <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-          <button className="secondary-button text-rose-500" onClick={() => cancelMutation.mutate(selected.id)} disabled={cancelMutation.isPending}>
-            {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Bekor qilish'}
+          <button className="primary-button w-full text-lg py-3" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'LOADING' })} disabled={driverStatusMutation.isPending}>
+            {driverStatusMutation.isPending ? 'O\'zgartirilmoqda...' : '📦 Qabul qilish (Fermaga bordim)'}
           </button>
         </div>
       )
+      if (status === 'LOADING') return (
+        <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+          <button className="primary-button w-full text-lg py-3 !bg-cyan-600 hover:!bg-cyan-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'IN_TRANSIT' })} disabled={driverStatusMutation.isPending}>
+            {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : "🚚 Yo'lga chiqdim"}
+          </button>
+        </div>
+      )
+      if (status === 'IN_TRANSIT') return (
+        <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+          <button className="primary-button w-full text-lg py-3 !bg-green-600 hover:!bg-green-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })} disabled={driverStatusMutation.isPending}>
+            {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : '✅ Yetkazildi'}
+          </button>
+        </div>
+      )
+      return null
     }
 
-    // Admin/Super-admin: haydovchi biriktirish (CONFIRMED buyurtmalar uchun)
-    if ((role === 'admin' || role === 'super-admin') && status === 'CONFIRMED') {
-      return (
-        <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
-          <h4 className="font-bold">🚚 Haydovchi biriktirish</h4>
-          {drivers.length === 0 ? (
-            <p className="text-sm text-slate-500">Tasdiqlangan haydovchi topilmadi</p>
-          ) : (
+    if (role === 'customer' && status === 'PENDING') return (
+      <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+        <button className="secondary-button text-rose-500" onClick={() => cancelMutation.mutate(selected.id)} disabled={cancelMutation.isPending}>
+          {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Bekor qilish'}
+        </button>
+      </div>
+    )
+
+    // Mijoz buyurtmani qabul qildi (IN_TRANSIT bo'lsa)
+    if (role === 'customer' && status === 'IN_TRANSIT') return (
+      <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+        <button className="primary-button w-full text-lg py-3 !bg-green-600 hover:!bg-green-700"
+          onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })}
+          disabled={driverStatusMutation.isPending}>
+          {driverStatusMutation.isPending ? 'Saqlanmoqda...' : '✅ Buyurtmani qabul qildim'}
+        </button>
+      </div>
+    )
+
+    if (isAdmin && status === 'CONFIRMED') return (
+      <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+        <h4 className="font-bold">🚚 Haydovchi biriktirish</h4>
+        {drivers.length === 0 ? (
+          <p className="text-sm text-slate-500">Tasdiqlangan haydovchi topilmadi</p>
+        ) : (
+          <div className="flex gap-3">
+            <select className="soft-input flex-1" value={selectedDriverId} onChange={(e) => setSelectedDriverId(e.target.value)}>
+              <option value="">Haydovchini tanlang...</option>
+              {drivers.map((d) => (
+                <option key={d.id} value={d.user_id || d.id}>
+                  {d.firstName} {d.lastName} — {d.plateNumber} ({d.capacity} kg)
+                </option>
+              ))}
+            </select>
+            <button
+              className="primary-button"
+              onClick={() => {
+                if (!selectedDriverId) { pushToast({ title: 'Haydovchini tanlang', variant: 'error' }); return }
+                assignDriverMutation.mutate({ orderId: selected.id, driverId: selectedDriverId })
+              }}
+              disabled={assignDriverMutation.isPending || !selectedDriverId}
+            >
+              {assignDriverMutation.isPending ? 'Biriktirilmoqda...' : 'Biriktirish'}
+            </button>
+          </div>
+        )}
+      </div>
+    )
+
+    return null
+  }
+
+  // ─── Tasdiqlangan buyurtmalar soni (CONFIRMED) ───────────────
+  const confirmedOrders = ordersData.filter((o) => o.status === 'CONFIRMED')
+
+  return (
+    <div className="space-y-6">
+      <section className="glass-card p-6 flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-3xl font-black">{title}</h2>
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Admin uchun ko'p tanlash tugmasi */}
+          {isAdmin && confirmedOrders.length > 0 && (
+            <button
+              className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold transition border
+                ${showBatchPanel ? 'bg-purple-600 text-white border-purple-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
+              onClick={() => { setShowBatchPanel((v) => !v); setCheckedIds([]) }}
+            >
+              <Users className="h-4 w-4" />
+              Ko'p buyurtma → Driver
+              {showBatchPanel ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </button>
+          )}
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-500" />
+            <select className="soft-input text-sm" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}>
+              <option value="">Barcha statuslar</option>
+              {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+            </select>
+          </div>
+        </div>
+      </section>
+
+      {/* Batch assign panel */}
+      {showBatchPanel && isAdmin && (
+        <div className="glass-card p-5 border-2 border-purple-300 dark:border-purple-700 space-y-4">
+          <div className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-purple-600" />
+            <h3 className="font-black text-purple-700 dark:text-purple-300">Ko'p buyurtmani birlashtirib driverga yuborish</h3>
+          </div>
+          <p className="text-sm text-slate-500">
+            Quyida "Tasdiqlandi" statusidagi buyurtmalar ko'rsatilgan. Bir nechtatini belgilang va bitta driverga yuboring — driver ularni ketma-ket yetkazadi.
+          </p>
+          {checkedIds.length > 0 && (
+            <div className="rounded-2xl bg-purple-50 dark:bg-purple-900/20 p-3 text-sm font-semibold text-purple-700 dark:text-purple-300">
+              ✅ {checkedIds.length} ta buyurtma tanlandi
+            </div>
+          )}
+          {checkedIds.length >= 2 && (
             <div className="flex gap-3">
               <select className="soft-input flex-1" value={selectedDriverId} onChange={(e) => setSelectedDriverId(e.target.value)}>
                 <option value="">Haydovchini tanlang...</option>
@@ -191,43 +282,19 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
                 ))}
               </select>
               <button
-                className="primary-button"
+                className="primary-button !bg-purple-600 hover:!bg-purple-700"
                 onClick={() => {
                   if (!selectedDriverId) { pushToast({ title: 'Haydovchini tanlang', variant: 'error' }); return }
-                  assignDriverMutation.mutate({ orderId: selected.id, driverId: selectedDriverId })
+                  batchAssignMutation.mutate({ orderIds: checkedIds, driverId: selectedDriverId })
                 }}
-                disabled={assignDriverMutation.isPending || !selectedDriverId}
+                disabled={batchAssignMutation.isPending}
               >
-                {assignDriverMutation.isPending ? 'Biriktirilmoqda...' : 'Biriktirish'}
+                {batchAssignMutation.isPending ? 'Yuborilmoqda...' : `${checkedIds.length} ta → Driver`}
               </button>
             </div>
           )}
         </div>
-      )
-    }
-
-    return null
-  }
-
-  return (
-    <div className="space-y-6">
-      <section className="glass-card p-6 flex flex-wrap items-center justify-between gap-4">
-        <h2 className="text-3xl font-black">{title}</h2>
-        {/* Status Filter */}
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-slate-500" />
-          <select
-            className="soft-input text-sm"
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}
-          >
-            <option value="">Barcha statuslar</option>
-            {Object.entries(STATUS_LABELS).map(([key, label]) => (
-              <option key={key} value={key}>{label}</option>
-            ))}
-          </select>
-        </div>
-      </section>
+      )}
 
       {selected ? (
         <div className="glass-card p-6 space-y-4">
@@ -236,23 +303,20 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
             <button className="secondary-button" onClick={() => setSelected(null)}>← Orqaga</button>
           </div>
           <div className="grid gap-2 sm:grid-cols-3 text-sm">
-            <div><span className="text-slate-500">Jami:</span> <b>{selected.total?.toLocaleString()} so'm</b></div>
+            <div><span className="text-slate-500">Jami:</span> <b>{formatCurrency(selected.total)}</b></div>
             <div><span className="text-slate-500">Status:</span> <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLORS[selected.status]}`}>{STATUS_LABELS[selected.status]}</span></div>
             <div><span className="text-slate-500">Sana:</span> {new Date(selected.created_at).toLocaleDateString('uz')}</div>
           </div>
-          {selected.customer_name && (
-            <div className="text-sm"><span className="text-slate-500">Mijoz:</span> <b>{selected.customer_name}</b></div>
-          )}
-          {selected.delivery_address && (
-            <div className="text-sm"><span className="text-slate-500">Manzil:</span> <b>{selected.delivery_address}</b></div>
-          )}
+          {selected.customer_name && <div className="text-sm"><span className="text-slate-500">Mijoz:</span> <b>{selected.customer_name}</b></div>}
+          {selected.delivery_address && <div className="text-sm"><span className="text-slate-500">Manzil:</span> <b>{selected.delivery_address}</b></div>}
+          {selected.delivery_coords && <div className="text-sm font-mono text-xs text-slate-400">📍 {selected.delivery_coords}</div>}
           <OrderTimeline currentStatus={selected.status} />
           <div className="space-y-2">
             <h4 className="font-bold">Mahsulotlar:</h4>
             {selected.items?.map((item, i) => (
               <div key={i} className="flex justify-between rounded-2xl bg-slate-50 px-4 py-2 dark:bg-white/5 text-sm">
                 <span>{item.fish_name}</span>
-                <span>{item.quantity} {item.unit || 'kg'} × {item.unit_price?.toLocaleString()} = <b>{item.subtotal?.toLocaleString()} so'm</b></span>
+                <span>{item.quantity} {item.unit || 'kg'} × {formatCurrency(item.unit_price)} = <b>{formatCurrency(item.subtotal)}</b></span>
               </div>
             ))}
           </div>
@@ -270,28 +334,40 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200 dark:border-white/10">
                 <tr className="text-left text-xs font-bold uppercase text-slate-500">
-                  <th className="p-4">ID</th><th className="p-4">Jami</th><th className="p-4">Status</th><th className="p-4">Sana</th><th className="p-4"></th>
+                  {showBatchPanel && isAdmin && <th className="p-4 w-10"></th>}
+                  <th className="p-4">ID</th>
+                  <th className="p-4">Jami</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4 hidden sm:table-cell">Sana</th>
+                  <th className="p-4"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                 {ordersData.map((order) => (
                   <tr key={order.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
+                    {showBatchPanel && isAdmin && (
+                      <td className="p-4">
+                        <button
+                          onClick={() => toggleCheck(order.id, order.status)}
+                          className={`transition ${order.status !== 'CONFIRMED' ? 'opacity-30 cursor-not-allowed' : 'text-purple-600'}`}
+                        >
+                          {checkedIds.includes(order.id)
+                            ? <CheckSquare className="h-5 w-5" />
+                            : <Square className="h-5 w-5" />}
+                        </button>
+                      </td>
+                    )}
                     <td className="p-4 font-mono text-xs">#{order.id?.slice(-6)}</td>
-                    <td className="p-4 font-bold">{order.total?.toLocaleString()} so'm</td>
+                    <td className="p-4 font-bold">{formatCurrency(order.total)}</td>
                     <td className="p-4"><span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLORS[order.status]}`}>{STATUS_LABELS[order.status]}</span></td>
-                    <td className="p-4 text-slate-500">{new Date(order.created_at).toLocaleDateString('uz')}</td>
+                    <td className="p-4 text-slate-500 hidden sm:table-cell">{new Date(order.created_at).toLocaleDateString('uz')}</td>
                     <td className="p-4"><button className="secondary-button text-xs" onClick={() => setSelected(order)}>Ko'rish</button></td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          {/* Pagination */}
-          <Pagination
-            currentPage={page}
-            hasMore={page * PAGE_SIZE < ordersTotal}
-            onPageChange={setPage}
-          />
+          <Pagination currentPage={page} hasMore={page * PAGE_SIZE < ordersTotal} onPageChange={setPage} />
         </>
       )}
     </div>
