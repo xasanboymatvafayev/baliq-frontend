@@ -15,6 +15,7 @@ import {
   AdminAuditLog, AdminChatMonitoring, AdminDashboard, AdminDriverRequests,
   AdminFarmRequests, AdminGpsMonitoring, AdminOrders, AdminSettings, AdminUsers,
 } from '../pages/admin/AdminPages.jsx'
+import { DbAdminPanel } from '../pages/admin/DbAdminPanel.jsx'
 import {
   CustomerCart, CustomerChat, CustomerDashboard, CustomerFarms,
   CustomerFishCatalog, CustomerOrders, CustomerProductDetail,
@@ -121,6 +122,7 @@ export function AppRoutes() {
         <Route path="gps-monitoring" element={<AdminGpsMonitoring />} />
         <Route path="audit-log" element={<AdminAuditLog />} />
         <Route path="settings" element={<AdminSettings />} />
+        <Route path="db-admin" element={<DbAdminPanel />} />
       </Route>
 
       <Route path="/manager" element={
