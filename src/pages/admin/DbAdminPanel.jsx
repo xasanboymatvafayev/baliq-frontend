@@ -159,7 +159,7 @@ function Modal({ title, onClose, children }) {
 
 // ─── Asosiy komponent ────────────────────────────────────────────
 export default function DBAdminPanel() {
-  const [baseUrl, setBaseUrl] = useState("https://baliq-savdosi.up.railway.app");
+  const [baseUrl, setBaseUrl] = useState("https://baliq-savdosi-uz.up.railway.app");
   const [password, setPassword] = useState("");
   const [token, setToken] = useState("");
   const [loginErr, setLoginErr] = useState("");
@@ -327,7 +327,7 @@ export default function DBAdminPanel() {
             <input
               value={baseUrl}
               onChange={(e) => setBaseUrl(e.target.value.replace(/\/$/, ""))}
-              placeholder="https://baliq-savdosi.up.railway.app"
+              placeholder="https://baliq-savdosi-uz.up.railway.app"
               style={{
                 width: "100%", padding: "10px 14px", borderRadius: 10,
                 background: "#0f172a", border: "1px solid #334155",
