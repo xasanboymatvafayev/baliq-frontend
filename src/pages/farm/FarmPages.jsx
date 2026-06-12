@@ -320,7 +320,6 @@ export function FarmCustomers() {
 export function FarmDashboard() { return <DashboardPage title="Ferma Dashboard" subtitle="Baliq zaxirasi, ombor, buyurtmalar va mijozlar bo'yicha operatsion panel." /> }
 export function FarmOrders() { return <OrdersPage title="Ferma buyurtmalari" /> }
 export function FarmChat() { return <ChatPage title="Ferma chat" /> }
-export function FarmReports() { return <DashboardPage title="Hisobotlar" subtitle="Sotuv, buyurtma, ombor va logistika hisobotlari." /> }
 export function FarmProfile() { return <ProfilePage /> }
 
 // ===== FARM REPORTS — Soliq hisob-kitobi =====
