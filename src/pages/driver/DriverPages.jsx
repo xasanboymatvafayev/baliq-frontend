@@ -11,6 +11,7 @@ import { useToastStore } from '../../store/toastStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
 import { formatCurrency } from '../../utils/formatters.js'
 import { Navigation, MapPin, Package, CheckCircle2, Loader2, ChevronRight, ArrowLeft, Truck, Users } from 'lucide-react'
+import { useSocketEmit } from '../../hooks/useSocket.js'
 
 export function DriverDashboard() {
   return <DashboardPage title="Haydovchi Dashboard" subtitle="Biriktirilgan buyurtmalar, jonli tracking va mijoz/ferma chatlari." />
@@ -196,18 +197,25 @@ export function DriverOrders() {
   const [myPosition, setMyPosition] = useState(null)
   const watchRef = useRef(null)
 
-  // ─── Doimiy GPS kuzatish ──────────────────────────────────────
+  const emit = useSocketEmit()
+
+  // ─── Doimiy GPS kuzatish + backendga yuborish ─────────────────
   useEffect(() => {
     if (!navigator.geolocation) return
     watchRef.current = navigator.geolocation.watchPosition(
-      (pos) => setMyPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => {
+        const coords = { lat: pos.coords.latitude, lng: pos.coords.longitude }
+        setMyPosition(coords)
+        // Socket orqali real-time lokatsiyani backendga yuboramiz
+        emit('driver_location_update', coords)
+      },
       () => {},
       { enableHighAccuracy: true, maximumAge: 5000 }
     )
     return () => {
       if (watchRef.current) navigator.geolocation.clearWatch(watchRef.current)
     }
-  }, [])
+  }, [emit])
 
   const { data: ordersRaw = [], isLoading } = useQuery({
     queryKey: ['driver-orders'],
