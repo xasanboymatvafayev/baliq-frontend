@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { DashboardPage } from '../shared/DashboardPage.jsx'
+import { GpsMonitoringPage } from '../shared/GpsMonitoringPage.jsx'
 import { OrdersPage } from '../shared/OrdersPage.jsx'
 import { ChatPage } from '../shared/ChatPage.jsx'
 import { SettingsPage } from '../shared/SettingsPage.jsx'
@@ -509,3 +510,6 @@ export function AdminDashboard() { return <DashboardPage title="Admin Dashboard"
 export function AdminOrders() { return <OrdersPage title="Admin buyurtmalar" /> }
 export function AdminChatMonitoring() { return <ChatPage title="Chat monitoring" /> }
 export function AdminSettings() { return <SettingsPage /> }
+
+export function AdminGpsMonitoring() { return <GpsMonitoringPage /> }
+
