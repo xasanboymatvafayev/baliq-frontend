@@ -15,7 +15,7 @@ import {
   AdminAuditLog, AdminChatMonitoring, AdminDashboard, AdminDriverRequests,
   AdminFarmRequests, AdminGpsMonitoring, AdminOrders, AdminSettings, AdminUsers,
 } from '../pages/admin/AdminPages.jsx'
-import { DbAdminPanel } from '../pages/admin/DbAdminPanel.jsx'
+import DbAdminPanel from '../pages/admin/DbAdminPanel.jsx'
 import {
   CustomerCart, CustomerChat, CustomerDashboard, CustomerFarms,
   CustomerFishCatalog, CustomerOrders, CustomerProductDetail,
