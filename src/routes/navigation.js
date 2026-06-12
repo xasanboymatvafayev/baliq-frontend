@@ -1,5 +1,6 @@
 import {
   Activity,
+  Database,
   BarChart3,
   Boxes,
   Car,
@@ -62,6 +63,7 @@ export const adminNavigation = [
   { label: 'GPS Monitoring', to: '/admin/gps-monitoring', icon: MapPinned },
   { label: 'Chat monitoring', to: '/admin/chat-monitoring', icon: MessageSquare },
   { label: 'Audit log', to: '/admin/audit-log', icon: Activity },
+  { label: 'DB Boshqaruv', to: '/admin/db-admin', icon: Database },
   { label: 'Sozlamalar', to: '/admin/settings', icon: Settings },
 ]
 
