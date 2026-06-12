@@ -59,6 +59,7 @@ export const adminNavigation = [
   { label: 'Haydovchi so‘rovlari', to: '/admin/driver-requests', icon: Car },
   { label: 'Buyurtmalar', to: '/admin/orders', icon: ClipboardCheck },
   { label: 'Foydalanuvchilar', to: '/admin/users', icon: Users },
+  { label: 'GPS Monitoring', to: '/admin/gps-monitoring', icon: MapPinned },
   { label: 'Chat monitoring', to: '/admin/chat-monitoring', icon: MessageSquare },
   { label: 'Audit log', to: '/admin/audit-log', icon: Activity },
   { label: 'Sozlamalar', to: '/admin/settings', icon: Settings },
