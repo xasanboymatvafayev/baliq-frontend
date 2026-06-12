@@ -13,7 +13,7 @@ import { ResetPassword } from '../pages/auth/ResetPassword.jsx'
 import { TelegramLinkPage } from '../pages/auth/TelegramLinkPage.jsx'
 import {
   AdminAuditLog, AdminChatMonitoring, AdminDashboard, AdminDriverRequests,
-  AdminFarmRequests, AdminOrders, AdminSettings, AdminUsers,
+  AdminFarmRequests, AdminGpsMonitoring, AdminOrders, AdminSettings, AdminUsers,
 } from '../pages/admin/AdminPages.jsx'
 import {
   CustomerCart, CustomerChat, CustomerDashboard, CustomerFarms,
@@ -118,6 +118,7 @@ export function AppRoutes() {
         <Route path="orders" element={<AdminOrders />} />
         <Route path="users" element={<AdminUsers />} />
         <Route path="chat-monitoring" element={<AdminChatMonitoring />} />
+        <Route path="gps-monitoring" element={<AdminGpsMonitoring />} />
         <Route path="audit-log" element={<AdminAuditLog />} />
         <Route path="settings" element={<AdminSettings />} />
       </Route>
