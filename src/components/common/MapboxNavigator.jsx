@@ -76,9 +76,18 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
 
     const init = async () => {
       try {
+        if (!document.getElementById('mapbox-gl-css')) {
+          const link = document.createElement('link')
+          link.id = 'mapbox-gl-css'
+          link.rel = 'stylesheet'
+          link.href =
+            'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.css'
+
+          document.head.appendChild(link)
+        }
         // Dynamic import
         const mapboxgl = (await import('https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.js')).default
-        await import('https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.css')
+        
 
         if (destroyed || !mapContainer.current) return
 
