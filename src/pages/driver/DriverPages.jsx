@@ -31,13 +31,7 @@ function distanceKm(lat1, lng1, lat2, lng2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
-// ─── Google Maps navigatsiya ─────────────────────────────────────
-function openNavigation(lat, lng, label = '') {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-  const isAndroid = /Android/.test(navigator.userAgent)
-  // MapboxNavigator state orqali ochiladi
-  // Bu funksiya DriverActions dan chaqiriladi
-}
+
 
 // ─── Koordinatni parse qilish ────────────────────────────────────
 function parseCoords(coords) {
@@ -99,10 +93,20 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
   const allOrders = orders || [order]
   const isGroup = allOrders.length > 1
 
-  // Ferma koordinatalarini olish (birinchi buyurtmadagi ferma)
-  const farmCoords = parseCoords(order.farm_gps || order.farm?.gpsLocation)
+  // Ferma koordinatalari — barcha mumkin bo'lgan maydonlardan olish
+  const farmCoords = 
+    parseCoords(order.farm_gps) ||
+    parseCoords(order.farm?.gpsLocation) ||
+    parseCoords(order.farm?.coordinates) ||
+    (order.farm_lat && order.farm_lng ? { lat: order.farm_lat, lng: order.farm_lng } : null) ||
+    (order.farm?.lat && order.farm?.lng ? { lat: order.farm.lat, lng: order.farm.lng } : null)
+
   // Mijoz koordinatasi
-  const deliveryCoords = parseCoords(order.delivery_coords)
+  const deliveryCoords =
+    parseCoords(order.delivery_coords) ||
+    (order.delivery_lat && order.delivery_lng
+      ? { lat: Number(order.delivery_lat), lng: Number(order.delivery_lng) }
+      : null)
 
   // ─── Fermaga yaqinlashgan (100m) avto status ─────────────────
   useEffect(() => {
@@ -120,15 +124,25 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
           Fermaga boring va yukni oling. Fermaga 100m yaqinlashganda status avtomatik yangilanadi.
         </p>
-        {farmCoords && onOpenNav && (
+        {farmCoords && onOpenNav ? (
           <button
             className="primary-button w-full flex items-center justify-center gap-2"
             onClick={() => onOpenNav(farmCoords.lat, farmCoords.lng, order.farm?.farmName || 'Ferma')}
           >
             <Navigation className="h-4 w-4" />
-            🚜 Fermaga navigatsiya
+            🚜 Fermaga navigatsiya (ilova ichida)
           </button>
-        )}
+        ) : (order.farm?.farmAddress || order.farm?.location) ? (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.farm?.farmAddress || order.farm?.location)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="primary-button w-full flex items-center justify-center gap-2"
+          >
+            <Navigation className="h-4 w-4" />
+            🚜 Fermaga yo'l ko'rsatish
+          </a>
+        ) : null}
       </div>
     )
   }
@@ -363,3 +377,4 @@ export function DriverOrders() {
     </div>
   )
 }
+
