@@ -8,12 +8,6 @@ export const endpoints = {
     me: '/auth/me',
     checkTelegram: '/auth/check-telegram',
   },
-  farms: {
-    base: '/farms',
-    requests: '/farms/requests',
-    approve: (id) => `/farms/${id}/approve`,
-    reject: (id) => `/farms/${id}/reject`,
-  },
   drivers: {
     base: '/drivers',
     requests: '/drivers/requests',
@@ -24,6 +18,15 @@ export const endpoints = {
   fish: {
     base: '/fish',
     detail: (id) => `/fish/${id}`,
+    reviews: (id) => `/fish/${id}/reviews`,
+    addReview: (id) => `/fish/${id}/reviews`,
+  },
+  farms: {
+    base: '/farms',
+    detail: (id) => `/farms/${id}`,
+    requests: '/farms/requests',
+    approve: (id) => `/farms/${id}/approve`,
+    reject: (id) => `/farms/${id}/reject`,
   },
   orders: {
     base: '/orders',
