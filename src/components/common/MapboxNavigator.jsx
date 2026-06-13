@@ -86,8 +86,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
           document.head.appendChild(link)
         }
         // Dynamic import
-        const mod = await import('https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.js')
-        const mapboxgl = mod.default || mod
+        const mapboxgl = (await import('https://esm.sh/mapbox-gl@2.15.0')).default
         
 
         if (destroyed || !mapContainer.current) return
