@@ -190,7 +190,7 @@ export function DriverOrders() {
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [selected, setSelected] = useState(null)
-  const [navigator, setNavigator] = useState(null) // { lat, lng, address }
+  const [navTarget, setNavTarget] = useState(null) // { lat, lng, address }
   const [myPosition, setMyPosition] = useState(null)
   const watchRef = useRef(null)
 
@@ -260,6 +260,14 @@ export function DriverOrders() {
 
   return (
     <div className="space-y-6">
+      {navTarget && (
+        <MapboxNavigator
+          toLat={navTarget.lat}
+          toLng={navTarget.lng}
+          toAddress={navTarget.address}
+          onClose={() => setNavTarget(null)}
+        />
+      )}
       <section className="glass-card p-6 flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-black">Buyurtmalarim</h2>
@@ -330,7 +338,7 @@ export function DriverOrders() {
             onStatusChange={handleStatusChange}
             loading={statusMutation.isPending}
             myPosition={myPosition}
-            onOpenNav={(lat, lng, address) => setNavigator({ lat, lng, address })}
+            onOpenNav={(lat, lng, address) => setNavTarget({ lat, lng, address })}
           />
         </div>
       ) : isLoading ? (
