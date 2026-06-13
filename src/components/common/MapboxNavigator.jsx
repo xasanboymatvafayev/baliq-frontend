@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Navigation, X, Volume2, VolumeX, Loader2 } from 'lucide-react'
+import { X, Volume2, VolumeX, Loader2 } from 'lucide-react'
 
 const MAPBOX_TOKEN = 'pk.eyJ1IjoibWF0dmFmYWV2diIsImEiOiJjbXFjYWZ2dHMwanVqMnNzOWJza3hyeXRpIn0.yHH0ptxDfhCOdKIXhSrm5w'
 
@@ -8,10 +8,23 @@ function speak(text) {
   if (!window.speechSynthesis) return
   window.speechSynthesis.cancel()
   const utt = new SpeechSynthesisUtterance(text)
-  utt.lang = 'ru-RU' // O'zbek TTS yo'q, rus yaqinroq
+  utt.lang = 'ru-RU'
   utt.rate = 0.95
   utt.volume = 1
   window.speechSynthesis.speak(utt)
+}
+
+// ─── Masofa hisoblash (Haversine formulasi) ─────────────────────
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371000
+  const φ1 = lat1 * Math.PI / 180
+  const φ2 = lat2 * Math.PI / 180
+  const Δφ = (lat2 - lat1) * Math.PI / 180
+  const Δλ = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
 }
 
 // ─── Masofa formatlash ───────────────────────────────────────────
@@ -73,6 +86,8 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
   // ─── Mapbox GL JS yuklash ───────────────────────────────────
   useEffect(() => {
     let destroyed = false
+    let map = null
+    let watchId = null
 
     const init = async () => {
       try {
@@ -80,20 +95,15 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
           const link = document.createElement('link')
           link.id = 'mapbox-gl-css'
           link.rel = 'stylesheet'
-          link.href =
-            'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.css'
-
+          link.href = 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.css'
           document.head.appendChild(link)
         }
-        // Dynamic import
+
         const mapboxgl = (await import('https://esm.sh/mapbox-gl@2.15.0')).default
-        
 
         if (destroyed || !mapContainer.current) return
-
         mapboxgl.accessToken = MAPBOX_TOKEN
 
-        // GPS olish
         const pos = await new Promise((res, rej) =>
           navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 })
         )
@@ -102,13 +112,11 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
         const { latitude: lat, longitude: lng } = pos.coords
         setMyPos({ lat, lng })
 
-        // Yo'l olish
         const routeData = await fetchRoute(lat, lng, toLat, toLng)
         if (destroyed) return
         setRoute(routeData)
 
-        // Xarita
-        const map = new mapboxgl.Map({
+        map = new mapboxgl.Map({
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/navigation-night-v1',
           center: [lng, lat],
@@ -117,10 +125,9 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
         })
         mapRef.current = map
 
-        map.on('load', () => {
+        const onLoad = () => {
           if (destroyed) return
 
-          // Yo'l chizig'i
           map.addSource('route', {
             type: 'geojson',
             data: { type: 'Feature', geometry: routeData.geometry },
@@ -132,14 +139,12 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
             paint: { 'line-color': '#7c3aed', 'line-width': 6, 'line-opacity': 0.9 },
           })
 
-          // Driver markeri
           const el = document.createElement('div')
           el.innerHTML = '<div style="font-size:28px;filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))">🚚</div>'
           markerRef.current = new mapboxgl.Marker({ element: el })
             .setLngLat([lng, lat])
             .addTo(map)
 
-          // Manzil markeri
           new mapboxgl.Marker({ color: '#10b981' })
             .setLngLat([toLng, toLat])
             .setPopup(new mapboxgl.Popup().setHTML(`<b>📍 Manzil</b><br/>${toAddress || ''}`))
@@ -147,40 +152,36 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
 
           setLoading(false)
 
-          // Birinchi yo'riqnoma ovozi
           if (soundOn && routeData.legs[0]?.steps[0]) {
             const txt = translateInstruction(routeData.legs[0].steps[0].maneuver?.instruction || '')
             if (txt) speak(txt)
           }
-        })
+        }
 
-        // GPS kuzatish
-        watchRef.current = navigator.geolocation.watchPosition(
+        map.on('load', onLoad)
+
+        watchId = navigator.geolocation.watchPosition(
           (p) => {
             if (destroyed) return
             const { latitude: la, longitude: lo } = p.coords
-            setMyPos({ lat: la, lng: lo })
 
-            // Marker yangilash
             markerRef.current?.setLngLat([lo, la])
-            map.easeTo({ center: [lo, la], duration: 1000 })
+            map?.easeTo({ center: [lo, la], duration: 1000 })
 
-            // Manzilga yetib keldimi? (50m)
-            const dist = Math.sqrt((la - toLat) ** 2 + (lo - toLng) ** 2) * 111000
-            if (dist < 50 && !arrived) {
+            const distToDest = calculateDistance(la, lo, toLat, toLng)
+            if (distToDest < 50 && !arrived) {
               setArrived(true)
               if (soundOn) speak('Manzilga yetib keldingiz!')
             }
 
-            // Keyingi qadamga o'tish
             setCurrentStep((prev) => {
               const steps = routeData.legs[0]?.steps || []
               if (prev >= steps.length - 1) return prev
               const step = steps[prev]
               const stepEnd = step.geometry?.coordinates?.slice(-1)[0]
               if (!stepEnd) return prev
-              const d = Math.sqrt((la - stepEnd[1]) ** 2 + (lo - stepEnd[0]) ** 2) * 111000
-              if (d < 30) {
+              const stepDistance = calculateDistance(la, lo, stepEnd[1], stepEnd[0])
+              if (stepDistance < 30) {
                 const next = prev + 1
                 const nextTxt = translateInstruction(steps[next]?.maneuver?.instruction || '')
                 if (nextTxt && soundOn) speak(nextTxt)
@@ -192,6 +193,8 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
           () => {},
           { enableHighAccuracy: true, maximumAge: 3000 }
         )
+        watchRef.current = watchId
+
       } catch (e) {
         if (!destroyed) setError(e.message || 'Xato yuz berdi')
         setLoading(false)
@@ -202,11 +205,16 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
 
     return () => {
       destroyed = true
-      if (watchRef.current) navigator.geolocation.clearWatch(watchRef.current)
-      if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId)
+      }
+      if (mapRef.current) {
+        mapRef.current.remove()
+        mapRef.current = null
+      }
       window.speechSynthesis?.cancel()
     }
-  }, [toLat, toLng])
+  }, [toLat, toLng, toAddress])
 
   const steps = route?.legs[0]?.steps || []
   const step = steps[currentStep]
@@ -219,7 +227,6 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
       display: 'flex', flexDirection: 'column',
       background: '#0f172a', fontFamily: 'system-ui, sans-serif',
     }}>
-      {/* Yuqori panel — yo'riqnoma */}
       <div style={{
         background: arrived ? '#14532d' : '#1e1b4b',
         padding: '12px 16px', flexShrink: 0,
@@ -278,7 +285,6 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
           </div>
         </div>
 
-        {/* Umumiy masofa va vaqt */}
         {route && !loading && (
           <div style={{ display: 'flex', gap: 16, marginTop: 10 }}>
             <div style={{ background: 'rgba(255,255,255,0.08)', borderRadius: 8, padding: '4px 12px', textAlign: 'center' }}>
@@ -297,10 +303,8 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
         )}
       </div>
 
-      {/* Xarita */}
       <div ref={mapContainer} style={{ flex: 1 }} />
 
-      {/* Loading overlay */}
       {loading && (
         <div style={{
           position: 'absolute', inset: 0, background: 'rgba(15,23,42,0.85)',
@@ -311,7 +315,6 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
         </div>
       )}
 
-      {/* Qadam ro'yxati (pastki panel) */}
       {!loading && !error && steps.length > 0 && (
         <div style={{
           background: '#1e293b', borderTop: '1px solid rgba(255,255,255,0.08)',
