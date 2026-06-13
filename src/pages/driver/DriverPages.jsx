@@ -12,6 +12,7 @@ import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
 import { formatCurrency } from '../../utils/formatters.js'
 import { Navigation, MapPin, Package, CheckCircle2, Loader2, ChevronRight, ArrowLeft, Truck, Users } from 'lucide-react'
 import { useSocketEmit } from '../../hooks/useSocket.js'
+import { MapboxNavigator } from '../../components/common/MapboxNavigator.jsx'
 
 export function DriverDashboard() {
   return <DashboardPage title="Haydovchi Dashboard" subtitle="Biriktirilgan buyurtmalar, jonli tracking va mijoz/ferma chatlari." />
@@ -34,13 +35,8 @@ function distanceKm(lat1, lng1, lat2, lng2) {
 function openNavigation(lat, lng, label = '') {
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
   const isAndroid = /Android/.test(navigator.userAgent)
-  if (isIOS) {
-    window.open(`maps://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`, '_blank')
-  } else if (isAndroid) {
-    window.open(`google.navigation:q=${lat},${lng}`, '_blank')
-  } else {
-    window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}&travelmode=driving`, '_blank')
-  }
+  // MapboxNavigator state orqali ochiladi
+  // Bu funksiya DriverActions dan chaqiriladi
 }
 
 // ─── Koordinatni parse qilish ────────────────────────────────────
@@ -97,7 +93,7 @@ function OrderCard({ order, onClick, isGroup }) {
 }
 
 // ─── Buyurtma detali ichidagi harakat tugmalari ──────────────────
-function DriverActions({ order, orders, onStatusChange, loading, myPosition }) {
+function DriverActions({ order, orders, onStatusChange, loading, myPosition, onOpenNav }) {
   const status = order.status
   // Ko'p buyurtmali ish oqimi uchun: orders massivi berish mumkin
   const allOrders = orders || [order]
@@ -124,10 +120,10 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition }) {
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
           Fermaga boring va yukni oling. Fermaga 100m yaqinlashganda status avtomatik yangilanadi.
         </p>
-        {farmCoords && (
+        {farmCoords && onOpenNav && (
           <button
             className="primary-button w-full flex items-center justify-center gap-2"
-            onClick={() => openNavigation(farmCoords.lat, farmCoords.lng, order.farm?.farmName)}
+            onClick={() => onOpenNav(farmCoords.lat, farmCoords.lng, order.farm?.farmName || 'Ferma')}
           >
             <Navigation className="h-4 w-4" />
             🚜 Fermaga navigatsiya
@@ -166,10 +162,10 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition }) {
             <b>Ko'p buyurtmali yetkazish:</b> Quyidagi mijoz manziliga boring. Har bir buyurtmani yetkazgach keyingisiga o'tiladi.
           </div>
         )}
-        {targetCoords && (
+        {targetCoords && onOpenNav && (
           <button
             className="primary-button w-full flex items-center justify-center gap-2"
-            onClick={() => openNavigation(targetCoords.lat, targetCoords.lng)}
+            onClick={() => onOpenNav(targetCoords.lat, targetCoords.lng, order.delivery_address)}
           >
             <Navigation className="h-4 w-4" />
             📍 Mijozga navigatsiya
@@ -194,6 +190,7 @@ export function DriverOrders() {
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [selected, setSelected] = useState(null)
+  const [navigator, setNavigator] = useState(null) // { lat, lng, address }
   const [myPosition, setMyPosition] = useState(null)
   const watchRef = useRef(null)
 
@@ -333,6 +330,7 @@ export function DriverOrders() {
             onStatusChange={handleStatusChange}
             loading={statusMutation.isPending}
             myPosition={myPosition}
+            onOpenNav={(lat, lng, address) => setNavigator({ lat, lng, address })}
           />
         </div>
       ) : isLoading ? (
