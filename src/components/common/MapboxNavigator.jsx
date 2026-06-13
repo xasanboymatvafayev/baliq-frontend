@@ -105,7 +105,11 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
         mapboxgl.accessToken = MAPBOX_TOKEN
 
         const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 10000 })
+          navigator.geolocation.getCurrentPosition(res, rej, { 
+            enableHighAccuracy: false,  // true -> false (tezroq ishlaydi)
+            timeout: 30000,              // 10000 -> 30000 (30 soniya)
+            maximumAge: 5000             // Qo'shimcha: 5 sekundlik kesh
+          })
         )
         if (destroyed) return
 
