@@ -1,42 +1,9 @@
-import { Bell, Menu, Search, UserCircle, LogOut } from 'lucide-react'
+import { Menu, Search, UserCircle, LogOut } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ThemeToggle } from '../common/ThemeToggle.jsx'
+import { NotificationBell } from '../common/NotificationBell.jsx'
 import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
-import { useState } from 'react'
-
-// Bildirishnomalar tugmasi — real push notification
-function NotificationBtn() {
-  const [active, setActive] = useState(false)
-
-  const toggle = () => {
-    if (!('Notification' in window)) return
-    if (Notification.permission === 'granted') {
-      setActive(!active)
-    } else {
-      Notification.requestPermission().then((p) => {
-        if (p === 'granted') {
-          setActive(true)
-          new Notification('Baliq Savdosi', { body: 'Bildirishnomalar yoqildi!' })
-        }
-      })
-    }
-  }
-
-  return (
-    <button
-      className={`secondary-button px-3 relative ${active ? 'text-ocean-600' : ''}`}
-      aria-label="Bildirishnomalar"
-      onClick={toggle}
-      title={Notification?.permission === 'granted' ? 'Bildirishnomalar yoqiq' : 'Bildirishnomalarni yoqish'}
-    >
-      <Bell className="h-5 w-5" />
-      {Notification?.permission !== 'granted' && (
-        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500" />
-      )}
-    </button>
-  )
-}
 
 export function Topbar({ onMenuClick, title }) {
   const navigate = useNavigate()
@@ -79,7 +46,7 @@ export function Topbar({ onMenuClick, title }) {
           </div>
         </div>
         <ThemeToggle />
-        <NotificationBtn />
+        <NotificationBell />
         <Link to={profilePath} className="secondary-button px-3" aria-label="Profil" title={user ? `${user.firstName} ${user.lastName}` : 'Profil'}>
           <UserCircle className="h-5 w-5" />
         </Link>
