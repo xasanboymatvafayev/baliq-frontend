@@ -1,4 +1,4 @@
-import { Menu, Search, UserCircle, LogOut } from 'lucide-react'
+import { Menu, Search, UserCircle, LogOut, Bell } from 'lucide-react'
 import { useNavigate, Link } from 'react-router-dom'
 import { ThemeToggle } from '../common/ThemeToggle.jsx'
 import { NotificationBell } from '../common/NotificationBell.jsx'
@@ -23,36 +23,69 @@ export function Topbar({ onMenuClick, title }) {
 
   const handleLogout = () => {
     logout()
-    pushToast({ title: "Tizimdan chiqildi", variant: 'success' })
+    pushToast({ title: 'Tizimdan chiqildi', variant: 'success' })
     navigate('/login')
   }
 
-  const profilePath = profileRoutes[role] || '/customer/profile'
+  const initials = user
+    ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
+    : 'BS'
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200 bg-slate-50/80 px-4 py-4 backdrop-blur-xl dark:border-white/10 dark:bg-slate-950/80 sm:px-6">
+    <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 px-4 py-3 backdrop-blur-xl dark:border-white/[0.06] dark:bg-[#07101e]/90 sm:px-6">
       <div className="flex items-center gap-3">
-        <button className="secondary-button px-3 lg:hidden" onClick={onMenuClick} aria-label="Menyuni ochish">
-          <Menu className="h-5 w-5" />
+        {/* Mobil menu */}
+        <button
+          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-400 lg:hidden"
+          onClick={onMenuClick}
+          aria-label="Menyu"
+        >
+          <Menu className="h-4.5 w-4.5" />
         </button>
+
+        {/* Sarlavha */}
         <div className="min-w-0 flex-1">
-          <p className="text-sm text-slate-500">Boshqaruv paneli</p>
-          <h1 className="truncate text-2xl font-extrabold tracking-tight">{title}</h1>
+          <h1 className="truncate text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
+            {title}
+          </h1>
         </div>
-        <div className="hidden max-w-xs flex-1 md:block">
+
+        {/* Qidiruv */}
+        <div className="hidden max-w-52 flex-1 md:block lg:max-w-xs">
           <div className="relative">
-            <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
-            <input className="soft-input pl-10" placeholder="Qidirish..." />
+            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
+            <input
+              className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-4 text-sm outline-none transition
+                         focus:border-ocean-400 focus:bg-white focus:ring-2 focus:ring-ocean-100
+                         dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/10 dark:focus:ring-ocean-900/40"
+              placeholder="Qidirish..."
+            />
           </div>
         </div>
-        <ThemeToggle />
-        <NotificationBell />
-        <Link to={profilePath} className="secondary-button px-3" aria-label="Profil" title={user ? `${user.firstName} ${user.lastName}` : 'Profil'}>
-          <UserCircle className="h-5 w-5" />
-        </Link>
-        <button className="secondary-button px-3 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20" onClick={handleLogout} aria-label="Chiqish" title="Tizimdan chiqish">
-          <LogOut className="h-5 w-5" />
-        </button>
+
+        {/* O'ng tomondagi tugmalar */}
+        <div className="flex items-center gap-1.5">
+          <ThemeToggle />
+          <NotificationBell />
+
+          {/* Avatar */}
+          <Link
+            to={profileRoutes[role] || '/customer/profile'}
+            className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 text-xs font-black text-white shadow-glow-sm transition hover:shadow-glow hover:scale-105"
+            title={user ? `${user.firstName} ${user.lastName}` : 'Profil'}
+          >
+            {initials}
+          </Link>
+
+          {/* Chiqish */}
+          <button
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500 dark:border-white/10 dark:bg-white/5 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
+            onClick={handleLogout}
+            title="Tizimdan chiqish"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
+        </div>
       </div>
     </header>
   )
