@@ -221,7 +221,7 @@ export function DriverOrders() {
         emit('driver_location_update', coords)
       },
       () => {},
-      { enableHighAccuracy: true, maximumAge: 5000 }
+      { enableHighAccuracy: true, maximumAge: 0 }  // ✅ Har doim yangi lokatsiya, kesh yo'q
     )
     return () => {
       if (watchRef.current) navigator.geolocation.clearWatch(watchRef.current)
@@ -377,4 +377,5 @@ export function DriverOrders() {
     </div>
   )
 }
+
 
