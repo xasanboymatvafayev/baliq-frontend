@@ -106,9 +106,9 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
 
         const pos = await new Promise((res, rej) =>
           navigator.geolocation.getCurrentPosition(res, rej, { 
-            enableHighAccuracy: false,  // true -> false (tezroq ishlaydi)
-            timeout: 30000,              // 10000 -> 30000 (30 soniya)
-            maximumAge: 5000             // Qo'shimcha: 5 sekundlik kesh
+            enableHighAccuracy: true,   // ✅ Aniq GPS lokatsiya
+            timeout: 15000,              // 15 soniya
+            maximumAge: 0                // ✅ Har doim YANGI lokatsiya, kesh yo'q!
           })
         )
         if (destroyed) return
@@ -195,7 +195,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
             })
           },
           () => {},
-          { enableHighAccuracy: true, maximumAge: 3000 }
+          { enableHighAccuracy: true, maximumAge: 0 }  // ✅ Har doim yangi lokatsiya
         )
         watchRef.current = watchId
 
@@ -347,3 +347,5 @@ export function MapboxNavigator({ toLat, toLng, toAddress, onClose }) {
     </div>
   )
 }
+
+
