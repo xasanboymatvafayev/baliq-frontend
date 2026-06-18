@@ -17,7 +17,6 @@ import {
   PackagePlus,
   PackageSearch,
   Settings,
-  ShieldCheck,
   ShoppingCart,
   Store,
   UserCog,
