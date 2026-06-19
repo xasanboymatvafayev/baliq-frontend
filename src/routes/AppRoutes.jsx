@@ -17,6 +17,8 @@ import {
 } from '../pages/admin/AdminPages.jsx'
 import DbAdminPanel from '../pages/admin/DbAdminPanel.jsx'
 import { AdminStatisticsPage } from '../pages/shared/AdminStatisticsPage.jsx'
+import { AdminFinancePage, AdminWithdrawPage } from '../pages/admin/FinancePage.jsx'
+import { FarmBalancePage } from '../pages/farm/FarmBalancePage.jsx'
 import { PaymentPage } from '../pages/customer/PaymentPage.jsx'
 import { SecurityPage } from '../pages/shared/SecurityPage.jsx'
 import {
@@ -95,6 +97,7 @@ export function AppRoutes() {
         <Route path="customers" element={<FarmCustomers />} />
         <Route path="chat" element={<FarmChat />} />
         <Route path="reports" element={<FarmReports />} />
+        <Route path="balance" element={<FarmBalancePage />} />
         <Route path="profile" element={<FarmProfile />} />
       </Route>
 
@@ -129,6 +132,8 @@ export function AppRoutes() {
         <Route path="settings" element={<AdminSettings />} />
         <Route path="db-admin" element={<DbAdminPanel />} />
         <Route path="statistics" element={<AdminStatisticsPage />} />
+        <Route path="finance" element={<AdminFinancePage />} />
+        <Route path="withdrawals" element={<AdminWithdrawPage />} />
         <Route path="security" element={<SecurityPage />} />
       </Route>
 
