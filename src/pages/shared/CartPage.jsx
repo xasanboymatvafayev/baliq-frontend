@@ -140,9 +140,31 @@ export function CartPage() {
                   <p className="text-sm text-ocean-600">{formatNumber(item.price)} so'm/{item.unit || 'kg'}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button className="secondary-button px-2 py-1 text-sm" onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}>−</button>
-                  <span className="w-8 text-center font-bold">{item.quantity}</span>
-                  <button className="secondary-button px-2 py-1 text-sm" onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
+                  <button
+                    className="secondary-button px-2 py-1 text-sm"
+                    onClick={() => updateQuantity(item.id, Math.max(1, (parseFloat(item.quantity) || 1) - 1))}
+                  >−</button>
+                  <input
+                    type="number"
+                    inputMode="decimal"
+                    min={1}
+                    className="w-16 text-center font-bold rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 py-1.5 outline-none focus:border-ocean-400 focus:ring-2 focus:ring-ocean-100 dark:focus:ring-ocean-900/40"
+                    value={item.quantity}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      if (v === '') { updateQuantity(item.id, ''); return }
+                      const num = parseFloat(v)
+                      if (!isNaN(num)) updateQuantity(item.id, num)
+                    }}
+                    onBlur={(e) => {
+                      const num = parseFloat(e.target.value)
+                      if (isNaN(num) || num < 1) updateQuantity(item.id, 1)
+                    }}
+                  />
+                  <button
+                    className="secondary-button px-2 py-1 text-sm"
+                    onClick={() => updateQuantity(item.id, (parseFloat(item.quantity) || 0) + 1)}
+                  >+</button>
                 </div>
                 <p className="w-28 text-right font-bold shrink-0 hidden sm:block">{formatCurrency(item.price * item.quantity)}</p>
                 <button className="text-rose-500" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4" /></button>
