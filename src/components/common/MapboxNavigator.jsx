@@ -78,6 +78,15 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
 
     const init = async () => {
       try {
+        // CSS ni <link> orqali yuklaymiz (import bilan mapbox-gl.css ishlamaydi)
+        if (!document.getElementById('mapbox-gl-css')) {
+          const link = document.createElement('link')
+          link.id = 'mapbox-gl-css'
+          link.rel = 'stylesheet'
+          link.href = 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.css'
+          document.head.appendChild(link)
+        }
+
         const mapboxgl = (await import('https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.js')).default
         if (destroyed || !mapContainer.current) return
 
@@ -109,11 +118,9 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
         })
         mapRef.current = map
 
-        // Zoom kontrollarni o'chiramiz — o'zimiz qo'shamiz
-        map.removeControl(map._controls.find?.(c => c._container?.className?.includes('mapboxgl-ctrl-group')) || {})
-
         map.on('load', () => {
           if (destroyed) return
+          try {
 
           // Yo'l
           map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: routeData.geometry } })
@@ -135,6 +142,13 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
           // Birinchi yo'riqnoma
           const firstStep = translate(routeData.legs[0]?.steps[0]?.maneuver?.instruction || '')
           if (firstStep && soundRef.current) speak(firstStep)
+          } catch (e) {
+            console.error('Map load error:', e)
+          }
+        })
+
+        map.on('error', (e) => {
+          console.error('Mapbox error:', e)
         })
 
         // GPS kuzatish
