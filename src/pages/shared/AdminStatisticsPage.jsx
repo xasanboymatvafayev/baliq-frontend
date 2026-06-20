@@ -8,6 +8,7 @@ import {
   Tooltip, ResponsiveContainer, Legend,
 } from 'recharts'
 import { TrendingUp, ShoppingBag, Users, Truck, DollarSign, Star, Activity } from 'lucide-react'
+import { PageSkeleton } from '../../components/common/LoadingSkeleton.jsx'
 
 const COLORS = ['#0b93cc','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899']
 
@@ -45,7 +46,7 @@ function ChartCard({ title, children, className = '' }) {
 export function AdminStatisticsPage() {
   usePageTitle('Statistika')
 
-  const { data: kpi = {} } = useQuery({
+  const { data: kpi = {}, isLoading } = useQuery({
     queryKey: ['admin-kpi'],
     queryFn: () => httpClient.get('/analytics/kpi'),
     refetchInterval: 60000,
@@ -76,6 +77,8 @@ export function AdminStatisticsPage() {
   ]
 
   const revenue = calcFarmRevenue(kpi.totalRevenue || 0)
+
+  if (isLoading) return <PageSkeleton />
 
   return (
     <div className="space-y-6">
