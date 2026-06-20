@@ -4,6 +4,7 @@ import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { Shield, Smartphone, Monitor, Trash2, Key, CheckCircle2, Lock, Eye, EyeOff } from 'lucide-react'
+import { EmptyState } from '../../components/common/EmptyState.jsx'
 
 export function SecurityPage() {
   usePageTitle('Xavfsizlik')
@@ -174,7 +175,7 @@ export function SecurityPage() {
             </button>
           </div>
           {sessions.length === 0 ? (
-            <div className="glass-card p-10 text-center text-slate-500">Sessiya topilmadi</div>
+            <EmptyState icon="💻" title="Sessiya topilmadi" description="Boshqa qurilmadan kirganingizda shu yerda ko'rinadi" />
           ) : sessions.map((s) => (
             <div key={s.id} className="glass-card flex items-center justify-between gap-4 p-4">
               <div className="flex items-center gap-3">
@@ -203,7 +204,7 @@ export function SecurityPage() {
             <h4 className="font-black">Audit log — {auditRaw?.total || 0} ta yozuv</h4>
           </div>
           {auditLogs.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">Log topilmadi</div>
+            <EmptyState icon="📋" title="Hali harakat tarixi yo'q" description="Tizimda amallar bajarilganda shu yerda ko'rinadi" />
           ) : (
             <div className="divide-y divide-slate-100 dark:divide-white/5">
               {auditLogs.map((log) => (
