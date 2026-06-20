@@ -5,6 +5,8 @@ import { httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { formatCurrency, formatNumber } from '../../utils/formatters.js'
 import { Wallet, ArrowDownCircle, Clock, CheckCircle2, CreditCard, Save } from 'lucide-react'
+import { PageSkeleton } from '../../components/common/LoadingSkeleton.jsx'
+import { EmptyState } from '../../components/common/EmptyState.jsx'
 
 export function FarmBalancePage() {
   usePageTitle('Balans')
@@ -19,7 +21,7 @@ export function FarmBalancePage() {
   const [otpStep, setOtpStep] = useState(false)
   const [withdrawReqs, setWithdrawReqs] = useState([])
 
-  const { data: bal = { available_amount: 0, pending_amount: 0, withdrawn_amount: 0, monitoring: [] } } = useQuery({
+  const { data: bal = { available_amount: 0, pending_amount: 0, withdrawn_amount: 0, monitoring: [] }, isLoading } = useQuery({
     queryKey: ['farm-balance'],
     queryFn: () => httpClient.get('/finance/farm/balance'),
     refetchInterval: 30000,
@@ -60,6 +62,8 @@ export function FarmBalancePage() {
     { id: 'withdraw',  label: 'Pul yechish' },
     { id: 'monitoring', label: 'Monitoring' },
   ]
+
+  if (isLoading) return <PageSkeleton />
 
   return (
     <div className="space-y-6">
@@ -219,7 +223,7 @@ export function FarmBalancePage() {
             <h4 className="font-black">Buyurtmalar va soliq hisobi</h4>
           </div>
           {bal.monitoring?.length === 0 ? (
-            <div className="p-8 text-center text-slate-500">Hali yetkazilgan buyurtma yo'q</div>
+            <EmptyState icon="📦" title="Hali buyurtma yo'q" description="Buyurtma yetkazilgach soliq hisobi shu yerda ko'rinadi" />
           ) : (
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200 dark:border-white/10">
