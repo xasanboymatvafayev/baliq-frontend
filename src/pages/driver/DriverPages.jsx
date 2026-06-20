@@ -108,21 +108,11 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
       ? { lat: Number(order.delivery_lat), lng: Number(order.delivery_lng) }
       : null)
 
-  // ─── Fermaga yaqinlashgan (100m) avto status ─────────────────
-  useEffect(() => {
-    if (status !== 'DRIVER_ASSIGNED' || !farmCoords || !myPosition) return
-    const dist = distanceKm(myPosition.lat, myPosition.lng, farmCoords.lat, farmCoords.lng)
-    if (dist <= 0.1) {
-      // 100 metr yaqin → LOADING ga o'tkazamiz
-      onStatusChange(allOrders.map((o) => o.id), 'LOADING')
-    }
-  }, [myPosition, farmCoords, status])
-
   if (status === 'DRIVER_ASSIGNED') {
     return (
       <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/10">
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-          Fermaga boring va yukni oling. Fermaga 100m yaqinlashganda status avtomatik yangilanadi.
+          Fermaga boring va yukni oling. Navigatsiyani oching — 100m yaqinlashganda "Fermaga keldim" tugmasi chiqadi.
         </p>
         {farmCoords && onOpenNav ? (
           <button
