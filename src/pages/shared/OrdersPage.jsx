@@ -28,6 +28,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const user = useAuthStore((s) => s.user)
   const [selected, setSelected] = useState(null)
   const [selectedDriverId, setSelectedDriverId] = useState('')
+  const [taxPercent, setTaxPercent] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [page, setPage] = useState(1)
   // Admin: tanlangan buyurtmalar (ko'p tanlash)
@@ -64,11 +65,19 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
 
   // ─── Mutatsiyalar ────────────────────────────────────────────
   const assignDriverMutation = useMutation({
-    mutationFn: ({ orderId, driverId }) => orderService.assignDriver(orderId, { driver_id: driverId }),
-    onSuccess: () => {
-      pushToast({ title: 'Haydovchi biriktirildi ✅', variant: 'success' })
+    mutationFn: ({ orderId, driverId, taxPercent }) =>
+      httpClient.post('/finance/admin/assign-with-tax', {
+        order_id: orderId,
+        driver_id: driverId,
+        tax_percent: parseInt(taxPercent),
+      }),
+    onSuccess: (data) => {
+      pushToast({
+        title: `Biriktirildi! Soliq: ${data.tax_amount?.toLocaleString()} so'm, Fermerga: ${data.farm_amount?.toLocaleString()} so'm`,
+        variant: 'success',
+      })
       queryClient.invalidateQueries(['orders'])
-      setSelected(null); setSelectedDriverId('')
+      setSelected(null); setSelectedDriverId(''); setTaxPercent('')
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
@@ -199,8 +208,8 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
         {drivers.length === 0 ? (
           <p className="text-sm text-slate-500">Tasdiqlangan haydovchi topilmadi</p>
         ) : (
-          <div className="flex gap-3">
-            <select className="soft-input flex-1" value={selectedDriverId} onChange={(e) => setSelectedDriverId(e.target.value)}>
+          <div className="space-y-3">
+            <select className="soft-input w-full" value={selectedDriverId} onChange={(e) => setSelectedDriverId(e.target.value)}>
               <option value="">Haydovchini tanlang...</option>
               {drivers.map((d) => (
                 <option key={d.id} value={d.user_id || d.id}>
@@ -208,13 +217,37 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
                 </option>
               ))}
             </select>
+
+            <div>
+              <label className="text-sm font-bold text-slate-600 dark:text-slate-300">
+                Soliq foizi (fermerdan ushlab qolinadi) *
+              </label>
+              <div className="relative mt-1">
+                <input
+                  type="number" min={0} max={100}
+                  className="soft-input w-full pr-10"
+                  placeholder="Masalan: 10"
+                  value={taxPercent}
+                  onChange={(e) => setTaxPercent(e.target.value)}
+                />
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-bold">%</span>
+              </div>
+              {taxPercent && selected.total > 0 && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Soliq: <b className="text-rose-500">{Math.round(selected.total * taxPercent / 100).toLocaleString()} so'm</b>
+                  {' '}· Fermerga: <b className="text-emerald-600">{Math.round(selected.total - selected.total * taxPercent / 100).toLocaleString()} so'm</b>
+                </p>
+              )}
+            </div>
+
             <button
-              className="primary-button"
+              className="primary-button w-full"
               onClick={() => {
                 if (!selectedDriverId) { pushToast({ title: 'Haydovchini tanlang', variant: 'error' }); return }
-                assignDriverMutation.mutate({ orderId: selected.id, driverId: selectedDriverId })
+                if (taxPercent === '' || taxPercent < 0 || taxPercent > 100) { pushToast({ title: 'Soliq foizini 0-100 oralig\'ida kiriting', variant: 'error' }); return }
+                assignDriverMutation.mutate({ orderId: selected.id, driverId: selectedDriverId, taxPercent })
               }}
-              disabled={assignDriverMutation.isPending || !selectedDriverId}
+              disabled={assignDriverMutation.isPending || !selectedDriverId || taxPercent === ''}
             >
               {assignDriverMutation.isPending ? 'Biriktirilmoqda...' : 'Biriktirish'}
             </button>
