@@ -5,13 +5,15 @@ import { httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { formatCurrency, formatNumber } from '../../utils/formatters.js'
 import { DollarSign, TrendingUp, CreditCard, CheckCircle2, Clock, Star, ChevronRight } from 'lucide-react'
+import { PageSkeleton } from '../../components/common/LoadingSkeleton.jsx'
+import { EmptyState } from '../../components/common/EmptyState.jsx'
 
 // ─── Admin sof foyda balans sahifasi ────────────────────────────
 export function AdminFinancePage() {
   usePageTitle('Sof foyda balans')
   const [tab, setTab] = useState('balance')
 
-  const { data: bal = {} } = useQuery({
+  const { data: bal = {}, isLoading } = useQuery({
     queryKey: ['admin-balance'],
     queryFn: () => httpClient.get('/finance/admin/balance'),
     refetchInterval: 30000,
@@ -27,6 +29,8 @@ export function AdminFinancePage() {
     { id: 'history', label: 'Tarix' },
     { id: 'settings', label: 'Sozlamalar' },
   ]
+
+  if (isLoading) return <PageSkeleton />
 
   return (
     <div className="space-y-6">
@@ -75,6 +79,9 @@ export function AdminFinancePage() {
       {tab === 'balance' && (
         <div className="glass-card p-5 space-y-3">
           <h3 className="font-black">So'nggi soliq to'lovlari</h3>
+          {(!bal.history || bal.history.length === 0) && (
+            <EmptyState icon="💰" title="Hali soliq to'lovi yo'q" description="Buyurtma yetkazilib, haydovchi biriktirilganda bu yerda ko'rinadi" />
+          )}
           {(bal.history || []).slice(0, 10).map((h, i) => (
             <div key={i} className="flex items-center justify-between rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-3">
               <div>
@@ -172,6 +179,8 @@ export function AdminWithdrawPage() {
     refetchInterval: 30000,
   })
 
+  if (isLoading) return <PageSkeleton />
+
   const payMutation = useMutation({
     mutationFn: (id) => httpClient.post(`/finance/admin/withdraw-requests/${id}/pay`, {}),
     onSuccess: () => {
@@ -259,7 +268,7 @@ export function AdminWithdrawPage() {
               <h4 className="font-black">To'lash kerak ({data.pending?.length})</h4>
             </div>
             {data.pending?.length === 0 ? (
-              <div className="p-8 text-center text-slate-500">Kutilayotgan so'rovlar yo'q</div>
+              <EmptyState icon="✅" title="Hozircha so'rov yo'q" description="Fermerlar pul yechish so'rovi yuborganda shu yerda ko'rinadi" />
             ) : data.pending?.map((r) => (
               <div key={r.id} className="flex items-center justify-between px-4 py-4 border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 cursor-pointer" onClick={() => setSelected(r)}>
                 <div className="flex items-center gap-3">
