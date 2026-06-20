@@ -61,6 +61,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
   const markerRef    = useRef(null)
   const watchRef     = useRef(null)
   const [loading, setLoading]           = useState(true)
+  const loadedRef = useRef(false)
   const [error, setError]               = useState('')
   const [route, setRoute]               = useState(null)
   const [currentStep, setCurrentStep]   = useState(0)
@@ -115,7 +116,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
         // Xarita — to'liq ekran, sidebar YO'Q
         const map = new mapboxgl.Map({
           container: mapContainer.current,
-          style: 'mapbox://styles/mapbox/navigation-night-v1',
+          style: 'mapbox://styles/mapbox/dark-v11',
           center: [lng, lat],
           zoom: 15,
           pitch: 45,
@@ -124,7 +125,17 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
         })
         mapRef.current = map
 
+        // Agar style/load 10 soniyada kelmasa - xato ko'rsatamiz (cheksiz "yuklanmoqda" bo'lmasin)
+        const loadTimeout = setTimeout(() => {
+          if (!destroyed && !loadedRef.current) {
+            setError("Xarita yuklanmadi. Internet aloqasini tekshiring yoki qayta urinib ko'ring.")
+            setLoading(false)
+          }
+        }, 10000)
+
         map.on('load', () => {
+          clearTimeout(loadTimeout)
+          loadedRef.current = true
           if (destroyed) return
           try {
 
@@ -155,6 +166,13 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
 
         map.on('error', (e) => {
           console.error('Mapbox error:', e)
+          if (!loadedRef.current) {
+            clearTimeout(loadTimeout)
+            if (!destroyed) {
+              setError("Xaritada xato yuz berdi. Qayta urinib ko'ring.")
+              setLoading(false)
+            }
+          }
         })
 
         // GPS kuzatish
@@ -406,7 +424,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
       )}
 
       {/* Loading overlay */}
-      {loading && (
+      {loading && !error && (
         <div style={{
           position: 'absolute', inset: 0, background: 'rgba(10,15,30,0.9)',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14,
@@ -415,6 +433,37 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
           <div style={{ fontSize: 48 }}>🗺️</div>
           <Loader2 size={36} color="#7c3aed" style={{ animation: 'spin 1s linear infinite' }} />
           <p style={{ color: '#94a3b8', fontSize: 14 }}>GPS va yo'nalish hisoblanmoqda...</p>
+        </div>
+      )}
+
+      {/* Xato overlay — qayta urinish bilan */}
+      {error && (
+        <div style={{
+          position: 'absolute', inset: 0, background: 'rgba(10,15,30,0.96)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
+          zIndex: 20, padding: 24, textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 48 }}>⚠️</div>
+          <p style={{ color: '#fca5a5', fontSize: 15, fontWeight: 700, maxWidth: 320 }}>{error}</p>
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={() => {
+                setError('')
+                setLoading(true)
+                loadedRef.current = false
+                // toLat/toLng o'zgarmagani uchun useEffect qayta ishga tushishi uchun key trick kerak emas —
+                // shunchaki sahifani yopib qayta ochish eng ishonchli yo'l
+                onClose?.()
+              }}
+              style={{
+                padding: '12px 24px', borderRadius: 14, border: 'none',
+                background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+                color: 'white', fontWeight: 800, fontSize: 14, cursor: 'pointer',
+              }}
+            >
+              Yopish va qayta urinish
+            </button>
+          </div>
         </div>
       )}
 
