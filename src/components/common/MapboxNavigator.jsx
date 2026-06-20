@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Navigation, X, Volume2, VolumeX, Loader2, CheckCircle2, Plus, Minus, Maximize2 } from 'lucide-react'
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoibWF0dmFmYWV2diIsImEiOiJjbXFjYWZ2dHMwanVqMnNzOWJza3hyeXRpIn0.yHH0ptxDfhCOdKIXhSrm5w'
+const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || ''
 
 // ─── Masofa (km) ─────────────────────────────────────────────────
 function distKm(lat1, lng1, lat2, lng2) {
@@ -78,6 +78,12 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
 
     const init = async () => {
       try {
+        if (!MAPBOX_TOKEN) {
+          setError("Xarita sozlanmagan (VITE_MAPBOX_TOKEN yo'q)")
+          setLoading(false)
+          return
+        }
+
         // CSS ni <link> orqali yuklaymiz (import bilan mapbox-gl.css ishlamaydi)
         if (!document.getElementById('mapbox-gl-css')) {
           const link = document.createElement('link')
