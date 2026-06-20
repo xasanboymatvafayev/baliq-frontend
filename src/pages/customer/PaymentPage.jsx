@@ -5,6 +5,7 @@ import { httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { formatCurrency, formatNumber } from '../../utils/formatters.js'
 import { CreditCard, Gift, Tag, Star, ExternalLink, CheckCircle2, Clock, Send } from 'lucide-react'
+import { EmptyState } from '../../components/common/EmptyState.jsx'
 
 // ─── To'lov sahifasi ─────────────────────────────────────────────
 export function PaymentPage() {
@@ -107,10 +108,7 @@ export function PaymentPage() {
       {activeTab === 'payment' && (
         <div className="space-y-4">
           {orders.length === 0 ? (
-            <div className="glass-card p-10 text-center text-slate-500">
-              <div className="text-4xl mb-2">✅</div>
-              Kutilayotgan buyurtmalar yo'q
-            </div>
+            <EmptyState icon="✅" title="To'lov kutayotgan buyurtma yo'q" description="Yangi buyurtma bersangiz shu yerda ko'rinadi" />
           ) : orders.map((order) => (
             <div key={order.id} className="glass-card p-5 space-y-4">
               <div className="flex items-center justify-between">
@@ -195,7 +193,7 @@ export function PaymentPage() {
               <h4 className="font-black">Bonus tarixi</h4>
             </div>
             {bonus.history?.length === 0 ? (
-              <div className="p-8 text-center text-slate-400">Hali ball yig'ilmagan</div>
+              <EmptyState icon="⭐" title="Hali ball yig'ilmagan" description="Har buyurtmadan 2% bonus ball yig'iladi" />
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-white/5">
                 {bonus.history?.map((h, i) => (
