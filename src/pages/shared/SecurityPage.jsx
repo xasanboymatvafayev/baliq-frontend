@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { httpClient } from '../../services/api/index.js'
@@ -17,6 +17,11 @@ export function SecurityPage() {
     queryKey: ['2fa-status'],
     queryFn: () => httpClient.get('/security/2fa/status'),
   })
+
+  // Joriy sessiyani ro'yxatdan o'tkazish
+  useEffect(() => {
+    httpClient.post('/security/session/register', {}).catch(() => {})
+  }, [])
 
   const { data: sessions = [] } = useQuery({
     queryKey: ['sessions'],
