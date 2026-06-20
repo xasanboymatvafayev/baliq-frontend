@@ -10,10 +10,11 @@ import { useState } from 'react'
 import { Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp } from 'lucide-react'
 
 const STATUS_LABELS = {
-  PENDING: 'Kutilmoqda', CONFIRMED: 'Tasdiqlandi', DRIVER_ASSIGNED: 'Haydovchi biriktirildi',
+  AWAITING_PAYMENT: "To'lov kutilmoqda", PENDING: 'Kutilmoqda', CONFIRMED: 'Tasdiqlandi', DRIVER_ASSIGNED: 'Haydovchi biriktirildi',
   LOADING: 'Yuklanmoqda', IN_TRANSIT: "Yo'lda", DELIVERED: 'Yetkazildi', CANCELLED: 'Bekor qilindi',
 }
 const STATUS_COLORS = {
+  AWAITING_PAYMENT: 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300',
   PENDING: 'bg-amber-100 text-amber-700', CONFIRMED: 'bg-blue-100 text-blue-700',
   DRIVER_ASSIGNED: 'bg-purple-100 text-purple-700', LOADING: 'bg-orange-100 text-orange-700',
   IN_TRANSIT: 'bg-cyan-100 text-cyan-700', DELIVERED: 'bg-green-100 text-green-700',
@@ -90,6 +91,12 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       queryClient.invalidateQueries(['orders'])
       setCheckedIds([]); setShowBatchPanel(false); setSelectedDriverId('')
     },
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
+  })
+
+  const resendInvoiceMutation = useMutation({
+    mutationFn: ({ orderId, provider }) => httpClient.post('/telegram-payment/send-invoice', { order_id: orderId, provider }),
+    onSuccess: (data) => pushToast({ title: data.message, variant: 'success' }),
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
@@ -182,6 +189,27 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       )
       return null
     }
+
+    if (role === 'customer' && status === 'AWAITING_PAYMENT') return (
+      <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+        <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 p-3 text-sm text-amber-700 dark:text-amber-300">
+          💳 Telegram botda to'lovni yakunlang. To'lov amalga oshirilgach buyurtma fermerga yuboriladi.
+        </div>
+        <button
+          className="primary-button w-full"
+          onClick={() => resendInvoiceMutation.mutate({
+            orderId: selected.id,
+            provider: selected.payment_method,
+          })}
+          disabled={resendInvoiceMutation.isPending}
+        >
+          {resendInvoiceMutation.isPending ? 'Yuborilmoqda...' : '📱 Invoice ni qayta yuborish'}
+        </button>
+        <button className="secondary-button text-rose-500 w-full" onClick={() => cancelMutation.mutate(selected.id)} disabled={cancelMutation.isPending}>
+          {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Buyurtmani bekor qilish'}
+        </button>
+      </div>
+    )
 
     if (role === 'customer' && status === 'PENDING') return (
       <div className="pt-4 border-t border-slate-200 dark:border-white/10">
