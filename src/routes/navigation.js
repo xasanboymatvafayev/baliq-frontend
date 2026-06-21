@@ -59,8 +59,6 @@ export const driverNavigation = [
   { label: 'Jonli tracking', to: '/driver/live-tracking', icon: MapPinned },
   { label: 'Chat', to: '/driver/chat', icon: MessageSquare },
   { label: 'Profil', to: '/driver/profile', icon: UserCog },
-  { label: "To'lov", to: '/customer/payment', icon: CreditCard },
-  { label: 'Xavfsizlik', to: '/customer/security', icon: ShieldCheck },
   { label: 'Sozlamalar', to: '/driver/settings', icon: Settings },
 ]
 
@@ -78,8 +76,6 @@ export const adminNavigation = [
   { label: "Pul chiqarish", to: '/admin/withdrawals', icon: ArrowDownCircle },
   { label: 'Xavfsizlik', to: '/admin/security', icon: ShieldCheck },
   { label: 'DB Boshqaruv', to: '/admin/db-admin', icon: Database },
-  { label: "To'lov", to: '/customer/payment', icon: CreditCard },
-  { label: 'Xavfsizlik', to: '/customer/security', icon: ShieldCheck },
   { label: 'Sozlamalar', to: '/admin/settings', icon: Settings },
 ]
 
