@@ -68,12 +68,16 @@ export function GpsMonitoringPage() {
   const [lastUpdate, setLastUpdate] = useState(null)
 
   // ─── API: driverlar lokatsiyasi ───────────────────────────────
-  const { data: driversRaw = [], isLoading, refetch } = useQuery({
+  const { data: driversRaw = [], isLoading, refetch, dataUpdatedAt } = useQuery({
     queryKey: ['driver-locations'],
     queryFn: () => httpClient.get('/drivers/locations'),
     refetchInterval: 10000,
-    onSuccess: () => setLastUpdate(new Date()),
   })
+
+  // React Query v5 da onSuccess olib tashlangan - useEffect orqali kuzatamiz
+  useEffect(() => {
+    if (dataUpdatedAt) setLastUpdate(new Date(dataUpdatedAt))
+  }, [dataUpdatedAt])
 
   const drivers = (Array.isArray(driversRaw) ? driversRaw : driversRaw?.data || []).filter(
     (d) => d.lat && d.lng
