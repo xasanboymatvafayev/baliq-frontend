@@ -127,8 +127,14 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
 
         // Hozirgi joylashuv
         const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 12000 })
-        )
+          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 20000 })
+        ).catch((err) => {
+          const code = err?.code
+          if (code === 1) throw new Error("GPS ruxsati rad etildi. Brauzer sozlamalarida joylashuvga ruxsat bering.")
+          if (code === 2) throw new Error("GPS signali topilmadi. Ochiq joyga chiqib qayta urining.")
+          if (code === 3) throw new Error("GPS aniqlanmadi (vaqt tugadi). Internet yoki GPS ni tekshirib, qayta urining.")
+          throw new Error(err?.message || "GPS xatoligi yuz berdi.")
+        })
         if (destroyed) return
 
         const { latitude: lat, longitude: lng } = pos.coords
