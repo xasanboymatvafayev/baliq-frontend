@@ -185,8 +185,13 @@ export function CartPage() {
                 To'lov usuli <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-3 gap-3">
+                {/* Naqt pul — tez orada */}
+                <div className="relative flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 py-4 font-bold text-sm opacity-50 cursor-not-allowed select-none">
+                  <span className="text-2xl">💵</span>
+                  <span className="text-slate-400">Naqt pul</span>
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-amber-900 whitespace-nowrap">Tez orada</span>
+                </div>
                 {[
-                  { id: 'cash',  icon: '💵', label: 'Naqt pul' },
                   { id: 'click', icon: '💳', label: 'Click' },
                   { id: 'payme', icon: '💳', label: 'Payme' },
                 ].map((opt) => (
@@ -199,7 +204,7 @@ export function CartPage() {
                   >
                     <span className="text-2xl">{opt.icon}</span>
                     {opt.label}
-                    {opt.id !== 'cash' && <span className="text-[10px] text-slate-400">Telegram invoice</span>}
+                    <span className="text-[10px] text-slate-400">Telegram invoice</span>
                   </button>
                 ))}
               </div>
