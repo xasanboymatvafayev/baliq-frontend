@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { httpClient } from '../../services/api/index.js'
@@ -30,10 +30,15 @@ export function FarmBalancePage() {
   const { data: savedCard } = useQuery({
     queryKey: ['farm-saved-card'],
     queryFn: () => httpClient.get('/finance/farm/saved-card'),
-    onSuccess: (d) => {
-      if (d?.card?.card_number) { setCardNum(d.card.card_number); setCardHolder(d.card.card_holder) }
-    },
   })
+
+  // React Query v5 da useQuery ichida onSuccess yo'q - useEffect orqali kuzatamiz
+  useEffect(() => {
+    if (savedCard?.card?.card_number) {
+      setCardNum(savedCard.card.card_number)
+      setCardHolder(savedCard.card.card_holder)
+    }
+  }, [savedCard])
 
   const withdrawMutation = useMutation({
     mutationFn: () => httpClient.post('/finance/farm/withdraw', {
