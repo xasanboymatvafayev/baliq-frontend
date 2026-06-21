@@ -179,8 +179,6 @@ export function AdminWithdrawPage() {
     refetchInterval: 30000,
   })
 
-  if (isLoading) return <PageSkeleton />
-
   const payMutation = useMutation({
     mutationFn: (id) => httpClient.post(`/finance/admin/withdraw-requests/${id}/pay`, {}),
     onSuccess: () => {
@@ -190,6 +188,8 @@ export function AdminWithdrawPage() {
     },
     onError: (e) => pushToast({ title: e?.response?.data?.detail || 'Xato', variant: 'error' }),
   })
+
+  if (isLoading) return <PageSkeleton />
 
   return (
     <div className="space-y-6">
