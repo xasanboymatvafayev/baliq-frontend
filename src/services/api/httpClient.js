@@ -35,9 +35,23 @@ const STATUS_MESSAGES = {
   503: "Xizmat vaqtincha mavjud emas.",
 }
 
+let isRedirectingToLogin = false
+
 httpClient.interceptors.response.use(
   (response) => response.data,
   (error) => {
+    const status = error.response?.status
+
+    // 401 — token tugagan yoki noto'g'ri: avtomatik chiqarib login sahifasiga yo'naltiramiz
+    if (status === 401 && !isRedirectingToLogin) {
+      isRedirectingToLogin = true
+      localStorage.removeItem('baliq-auth-session')
+      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
+        window.location.href = '/login'
+      }
+      return Promise.reject(new Error("Sessiya muddati tugagan. Qayta kiring."))
+    }
+
     // Backend tomonidan kelgan o'zbek tilidagi xabar (detail field)
     const backendDetail = error.response?.data?.detail
     if (backendDetail) {
@@ -49,7 +63,6 @@ httpClient.interceptors.response.use(
       return Promise.reject(new Error(backendMessage))
     }
     // Status kodiga qarab xabar
-    const status = error.response?.status
     if (status && STATUS_MESSAGES[status]) {
       return Promise.reject(new Error(STATUS_MESSAGES[status]))
     }
