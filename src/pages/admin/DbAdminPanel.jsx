@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { getSchema } from "./dbSchemas.js";
 
 // ─── API helper ──────────────────────────────────────────────────
 function api(baseUrl, token) {
@@ -78,6 +79,369 @@ function JsonEditor({ value, onChange }) {
         }}
       />
       {err && <p style={{ color: "#ef4444", fontSize: 11, marginTop: 4 }}>{err}</p>}
+    </div>
+  );
+}
+
+// ─── Forma maydoni (1 ta input) ───────────────────────────────────
+function FieldInput({ field, value, onChange }) {
+  const isReadonly = field.type === "readonly";
+
+  const labelStyle = {
+    color: "#94a3b8", fontSize: 12, fontWeight: 700,
+    display: "block", marginBottom: 5,
+  };
+  const inputStyle = {
+    width: "100%", padding: "9px 12px", borderRadius: 9,
+    background: isReadonly ? "#0b1220" : "#0f172a",
+    border: `1px solid ${isReadonly ? "#1e293b" : "#334155"}`,
+    color: isReadonly ? "#64748b" : "#e2e8f0",
+    fontSize: 13, outline: "none", boxSizing: "border-box",
+    fontFamily: "inherit",
+  };
+
+  // Murakkab obyekt/massiv qiymatlarni o'qish uchun matn ko'rinishida
+  const displayValue = (v) => {
+    if (v === null || v === undefined) return "";
+    if (typeof v === "object") return JSON.stringify(v);
+    return String(v);
+  };
+
+  if (isReadonly) {
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>{field.label}</label>
+        <div style={{ ...inputStyle, cursor: "not-allowed", overflow: "auto", maxHeight: 80 }}>
+          {displayValue(value) || "—"}
+        </div>
+      </div>
+    );
+  }
+
+  if (field.type === "boolean") {
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>{field.label}</label>
+        <button
+          type="button"
+          onClick={() => onChange(!value)}
+          style={{
+            display: "flex", alignItems: "center", gap: 8, padding: "8px 12px",
+            borderRadius: 9, background: value ? "#14532d" : "#1e293b",
+            border: `1px solid ${value ? "#16a34a" : "#334155"}`,
+            color: value ? "#86efac" : "#94a3b8", cursor: "pointer",
+            fontWeight: 700, fontSize: 13,
+          }}
+        >
+          <span style={{
+            width: 16, height: 16, borderRadius: 5,
+            background: value ? "#22c55e" : "#475569",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11,
+          }}>{value ? "✓" : ""}</span>
+          {value ? "Ha" : "Yo'q"}
+        </button>
+      </div>
+    );
+  }
+
+  if (field.type === "select") {
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>{field.label}</label>
+        <select
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          style={{ ...inputStyle, cursor: "pointer" }}
+        >
+          <option value="">— tanlanmagan —</option>
+          {field.options.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
+    );
+  }
+
+  if (field.type === "textarea") {
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>{field.label}</label>
+        <textarea
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value)}
+          rows={3}
+          style={{ ...inputStyle, resize: "vertical", fontFamily: "inherit" }}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === "number") {
+    return (
+      <div style={{ marginBottom: 14 }}>
+        <label style={labelStyle}>{field.label}</label>
+        <input
+          type="number"
+          value={value ?? ""}
+          onChange={(e) => onChange(e.target.value === "" ? "" : Number(e.target.value))}
+          style={inputStyle}
+        />
+      </div>
+    );
+  }
+
+  // text, phone va boshqa hammasi - oddiy matn input
+  return (
+    <div style={{ marginBottom: 14 }}>
+      <label style={labelStyle}>{field.label}</label>
+      <input
+        type="text"
+        value={displayValue(value)}
+        onChange={(e) => onChange(e.target.value)}
+        style={inputStyle}
+      />
+    </div>
+  );
+}
+
+
+// ─── Har bir kolleksiya uchun forma sxemasi (oddiy odam tushunadigan) ─
+function getSchema(collectionName) {
+  const SCHEMAS = {
+    users: {
+      fields: [
+        { key: "firstName", label: "Ism", type: "text" },
+        { key: "lastName", label: "Familiya", type: "text" },
+        { key: "phone", label: "Telefon raqam", type: "text" },
+        { key: "email", label: "Email", type: "text" },
+        { key: "role", label: "Roli", type: "select", options: [
+          { value: "customer", label: "Mijoz" },
+          { value: "farm-owner", label: "Ferma egasi" },
+          { value: "driver", label: "Haydovchi" },
+          { value: "admin", label: "Admin" },
+          { value: "manager", label: "Menejer" },
+          { value: "super-admin", label: "Super Admin" },
+        ]},
+        { key: "is_active", label: "Faolmi", type: "boolean" },
+        { key: "bonus_balance", label: "Bonus ball", type: "number" },
+        { key: "two_fa_enabled", label: "2FA yoqilganmi", type: "boolean" },
+        { key: "created_at", label: "Ro'yxatdan o'tgan sana", type: "readonly" },
+      ],
+    },
+    drivers: {
+      fields: [
+        { key: "firstName", label: "Ism", type: "text" },
+        { key: "lastName", label: "Familiya", type: "text" },
+        { key: "phone", label: "Telefon", type: "text" },
+        { key: "plateNumber", label: "Mashina raqami", type: "text" },
+        { key: "capacity", label: "Yuk sig'imi (kg)", type: "number" },
+        { key: "status", label: "Holati", type: "select", options: [
+          { value: "PENDING", label: "Kutilmoqda" },
+          { value: "APPROVED", label: "Tasdiqlangan" },
+          { value: "REJECTED", label: "Rad etilgan" },
+        ]},
+        { key: "user_id", label: "Foydalanuvchi ID", type: "readonly" },
+        { key: "created_at", label: "Yaratilgan sana", type: "readonly" },
+      ],
+    },
+    farms: {
+      fields: [
+        { key: "farmName", label: "Ferma nomi", type: "text" },
+        { key: "farmAddress", label: "Manzil", type: "text" },
+        { key: "phone", label: "Telefon", type: "text" },
+        { key: "description", label: "Tavsif", type: "textarea" },
+        { key: "rating", label: "Reytingi", type: "number" },
+        { key: "rating_count", label: "Sharhlar soni", type: "number" },
+        { key: "status", label: "Holati", type: "select", options: [
+          { value: "PENDING", label: "Kutilmoqda" },
+          { value: "APPROVED", label: "Tasdiqlangan" },
+          { value: "REJECTED", label: "Rad etilgan" },
+        ]},
+        { key: "owner_id", label: "Egasi (foydalanuvchi ID)", type: "readonly" },
+        { key: "created_at", label: "Yaratilgan sana", type: "readonly" },
+      ],
+    },
+    orders: {
+      fields: [
+        { key: "customer_name", label: "Mijoz ismi", type: "text" },
+        { key: "total", label: "Jami summa (so'm)", type: "number" },
+        { key: "status", label: "Holati", type: "select", options: [
+          { value: "AWAITING_PAYMENT", label: "To'lov kutilmoqda" },
+          { value: "PENDING", label: "Kutilmoqda" },
+          { value: "CONFIRMED", label: "Tasdiqlandi" },
+          { value: "DRIVER_ASSIGNED", label: "Haydovchi biriktirildi" },
+          { value: "LOADING", label: "Yuklanmoqda" },
+          { value: "IN_TRANSIT", label: "Yo'lda" },
+          { value: "DELIVERED", label: "Yetkazildi" },
+          { value: "CANCELLED", label: "Bekor qilindi" },
+        ]},
+        { key: "payment_method", label: "To'lov usuli", type: "select", options: [
+          { value: "cash", label: "Naqt pul" },
+          { value: "click", label: "Click" },
+          { value: "payme", label: "Payme" },
+        ]},
+        { key: "paid", label: "To'langanmi", type: "boolean" },
+        { key: "delivery_address", label: "Yetkazish manzili", type: "text" },
+        { key: "tax_percent", label: "Soliq foizi", type: "number" },
+        { key: "customer_id", label: "Mijoz ID", type: "readonly" },
+        { key: "farm_id", label: "Ferma ID", type: "readonly" },
+        { key: "driver_id", label: "Haydovchi ID", type: "readonly" },
+        { key: "items", label: "Mahsulotlar", type: "readonly" },
+        { key: "created_at", label: "Yaratilgan sana", type: "readonly" },
+      ],
+    },
+    fish_products: {
+      fields: [
+        { key: "name", label: "Baliq nomi", type: "text" },
+        { key: "category", label: "Kategoriya", type: "text" },
+        { key: "price", label: "Narxi (so'm)", type: "number" },
+        { key: "unit", label: "O'lchov birligi", type: "text" },
+        { key: "stock", label: "Zaxira", type: "number" },
+        { key: "description", label: "Tavsif", type: "textarea" },
+        { key: "image_url", label: "Rasm havolasi", type: "text" },
+        { key: "farm_rating", label: "Ferma reytingi", type: "readonly" },
+        { key: "farm_id", label: "Ferma ID", type: "readonly" },
+        { key: "deleted_at", label: "O'chirilganmi", type: "readonly" },
+        { key: "created_at", label: "Qo'shilgan sana", type: "readonly" },
+      ],
+    },
+    chat_messages: {
+      readonlyAll: true,
+      fields: [
+        { key: "sender_id", label: "Yuboruvchi ID", type: "readonly" },
+        { key: "room_id", label: "Xona ID", type: "readonly" },
+        { key: "text", label: "Xabar matni", type: "readonly" },
+        { key: "created_at", label: "Yuborilgan sana", type: "readonly" },
+      ],
+    },
+    chat_rooms: {
+      readonlyAll: true,
+      fields: [
+        { key: "order_id", label: "Buyurtma ID", type: "readonly" },
+        { key: "participants", label: "Ishtirokchilar", type: "readonly" },
+        { key: "created_at", label: "Yaratilgan sana", type: "readonly" },
+      ],
+    },
+    gps_tracks: {
+      readonlyAll: true,
+      fields: [
+        { key: "driver_id", label: "Haydovchi ID", type: "readonly" },
+        { key: "lat", label: "Kenglik (lat)", type: "readonly" },
+        { key: "lng", label: "Uzunlik (lng)", type: "readonly" },
+        { key: "created_at", label: "Vaqt", type: "readonly" },
+      ],
+    },
+    audit_logs: {
+      readonlyAll: true,
+      fields: [
+        { key: "action", label: "Amal", type: "readonly" },
+        { key: "user_id", label: "Foydalanuvchi ID", type: "readonly" },
+        { key: "details", label: "Tafsilotlar", type: "readonly" },
+        { key: "created_at", label: "Vaqt", type: "readonly" },
+      ],
+    },
+    telegram_links: {
+      fields: [
+        { key: "phone", label: "Telefon raqam", type: "text" },
+        { key: "chat_id", label: "Telegram Chat ID", type: "readonly" },
+        { key: "linked_at", label: "Ulangan sana", type: "readonly" },
+      ],
+    },
+    otp_tokens: {
+      readonlyAll: true,
+      fields: [
+        { key: "user_id", label: "Foydalanuvchi ID", type: "readonly" },
+        { key: "otp", label: "OTP kod", type: "readonly" },
+        { key: "purpose", label: "Maqsadi", type: "readonly" },
+        { key: "expires_at", label: "Muddati tugaydi", type: "readonly" },
+      ],
+    },
+    settings: {
+      fields: [
+        { key: "key", label: "Sozlama nomi", type: "text" },
+        { key: "tax_percent", label: "Soliq foizi (%)", type: "number" },
+        { key: "click_balance", label: "Click balans", type: "number" },
+        { key: "payme_balance", label: "Payme balans", type: "number" },
+        { key: "net_profit", label: "Sof foyda", type: "number" },
+      ],
+    },
+    finance_settings: {
+      fields: [
+        { key: "tax_percent", label: "Soliq foizi (%)", type: "number" },
+        { key: "click_balance", label: "Click balans (so'm)", type: "number" },
+        { key: "payme_balance", label: "Payme balans (so'm)", type: "number" },
+        { key: "net_profit", label: "Sof foyda (so'm)", type: "number" },
+        { key: "click_api_key", label: "Click API key", type: "text" },
+        { key: "payme_api_key", label: "Payme API key", type: "text" },
+      ],
+    },
+    farm_balances: {
+      fields: [
+        { key: "farm_id", label: "Ferma ID", type: "readonly" },
+        { key: "available_amount", label: "Mavjud summa (so'm)", type: "number" },
+        { key: "pending_amount", label: "Kutilayotgan summa (so'm)", type: "number" },
+        { key: "withdrawn_amount", label: "Yechilgan summa (so'm)", type: "number" },
+      ],
+    },
+    withdraw_requests: {
+      fields: [
+        { key: "farm_id", label: "Ferma ID", type: "readonly" },
+        { key: "amount", label: "Summa (so'm)", type: "number" },
+        { key: "card_number", label: "Karta raqami", type: "text" },
+        { key: "card_holder", label: "Karta egasi", type: "text" },
+        { key: "status", label: "Holati", type: "select", options: [
+          { value: "PENDING", label: "Kutilmoqda" },
+          { value: "PAID", label: "To'landi" },
+        ]},
+        { key: "created_at", label: "So'rov yuborilgan sana", type: "readonly" },
+        { key: "paid_at", label: "To'langan sana", type: "readonly" },
+      ],
+    },
+    fish_reviews: {
+      readonlyAll: true,
+      fields: [
+        { key: "fish_id", label: "Baliq ID", type: "readonly" },
+        { key: "user_name", label: "Mijoz ismi", type: "readonly" },
+        { key: "rating", label: "Reyting (1-5)", type: "readonly" },
+        { key: "comment", label: "Izoh", type: "readonly" },
+        { key: "created_at", label: "Sana", type: "readonly" },
+      ],
+    },
+  };
+
+  return SCHEMAS[collectionName] || { fields: [] };
+}
+
+// ─── Kolleksiya uchun to'liq forma (oddiy odam tushunadigan) ─────
+function RecordForm({ collectionName, data, onChange, readOnly = false }) {
+  const schema = getSchema(collectionName);
+
+  if (!schema.fields.length) {
+    return (
+      <p style={{ color: "#64748b", fontSize: 13 }}>
+        Bu kolleksiya uchun forma mavjud emas. "Murakkab (JSON)" rejimidan foydalaning.
+      </p>
+    );
+  }
+
+  return (
+    <div>
+      {schema.readonlyAll && (
+        <div style={{
+          background: "#1e3a5f", border: "1px solid #1d4ed8", borderRadius: 9,
+          padding: "8px 12px", marginBottom: 14, color: "#7dd3fc", fontSize: 12,
+        }}>
+          ℹ️ Bu kolleksiya faqat ko'rish uchun — tizim avtomatik yaratadi.
+        </div>
+      )}
+      {schema.fields.map((field) => (
+        <FieldInput
+          key={field.key}
+          field={readOnly ? { ...field, type: "readonly" } : field}
+          value={data?.[field.key]}
+          onChange={(v) => onChange({ ...data, [field.key]: v })}
+        />
+      ))}
     </div>
   );
 }
@@ -175,6 +539,7 @@ export default function DBAdminPanel() {
 
   const [editDoc, setEditDoc] = useState(null);
   const [editData, setEditData] = useState({});
+  const [editMode, setEditMode] = useState("form"); // "form" | "json"
   const [viewDoc, setViewDoc] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -286,14 +651,18 @@ export default function DBAdminPanel() {
   };
 
   // ─── Keys ─────────────────────────────────────────────────────
-  const getColumns = (docList) => {
+  const getColumns = (docList, colName) => {
     if (!docList.length) return [];
-    const priorityCols = ["id", "firstName", "lastName", "phone", "name", "status", "role", "email", "created_at"];
     const allKeys = [...new Set(docList.flatMap(Object.keys))];
-    const sorted = [
-      ...priorityCols.filter((k) => allKeys.includes(k)),
-      ...allKeys.filter((k) => !priorityCols.includes(k)),
-    ];
+    // Schema bo'yicha maydon tartibini olamiz (eng muhimlari avval)
+    const schemaKeys = getSchema(colName).fields.map((f) => f.key).filter((k) => allKeys.includes(k));
+    const priorityCols = ["id", "firstName", "lastName", "phone", "name", "status", "role", "email", "created_at"];
+    const sorted = schemaKeys.length
+      ? schemaKeys
+      : [
+          ...priorityCols.filter((k) => allKeys.includes(k)),
+          ...allKeys.filter((k) => !priorityCols.includes(k)),
+        ];
     return sorted.slice(0, 7);
   };
 
@@ -387,7 +756,7 @@ export default function DBAdminPanel() {
   }
 
   // ─── Asosiy panel ────────────────────────────────────────────
-  const cols = getColumns(docs);
+  const cols = getColumns(docs, activeCol);
 
   return (
     <div style={{
@@ -470,7 +839,7 @@ export default function DBAdminPanel() {
               }}
             >
               <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 13, fontWeight: 600 }}>
-                {COL_ICONS[c.name] || "📁"} {c.name}
+                {getSchema(c.name).icon} {getSchema(c.name).title}
               </span>
               <span style={{
                 background: "#334155", borderRadius: 6, padding: "1px 6px",
@@ -565,9 +934,9 @@ export default function DBAdminPanel() {
               {/* Collection header */}
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16, flexWrap: "wrap", gap: 10 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <span style={{ fontSize: 24 }}>{COL_ICONS[activeCol] || "📁"}</span>
+                  <span style={{ fontSize: 24 }}>{getSchema(activeCol).icon}</span>
                   <div>
-                    <h2 style={{ margin: 0, fontWeight: 900, fontSize: 18, color: "#f1f5f9" }}>{activeCol}</h2>
+                    <h2 style={{ margin: 0, fontWeight: 900, fontSize: 18, color: "#f1f5f9" }}>{getSchema(activeCol).title}</h2>
                     <p style={{ margin: 0, color: "#475569", fontSize: 12 }}>{total} ta yozuv</p>
                   </div>
                 </div>
@@ -606,16 +975,19 @@ export default function DBAdminPanel() {
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
                     <thead>
                       <tr>
-                        {cols.map((k) => (
-                          <th key={k} style={{
-                            padding: "10px 12px", textAlign: "left",
-                            color: "#475569", fontWeight: 800, fontSize: 11,
-                            textTransform: "uppercase", letterSpacing: "0.05em",
-                            borderBottom: "1px solid #334155", whiteSpace: "nowrap",
-                          }}>
-                            {k}
-                          </th>
-                        ))}
+                        {cols.map((k) => {
+                          const fieldDef = getSchema(activeCol).fields.find((f) => f.key === k);
+                          return (
+                            <th key={k} style={{
+                              padding: "10px 12px", textAlign: "left",
+                              color: "#475569", fontWeight: 800, fontSize: 11,
+                              textTransform: "uppercase", letterSpacing: "0.05em",
+                              borderBottom: "1px solid #334155", whiteSpace: "nowrap",
+                            }}>
+                              {fieldDef?.label || k}
+                            </th>
+                          );
+                        })}
                         <th style={{
                           padding: "10px 12px", borderBottom: "1px solid #334155",
                           color: "#475569", fontSize: 11, fontWeight: 800, textTransform: "uppercase",
@@ -706,24 +1078,44 @@ export default function DBAdminPanel() {
 
       {/* Ko'rish modali */}
       {viewDoc && (
-        <Modal title={`👁 Ko'rish — ${activeCol} / ${viewDoc.id?.slice(-8)}`} onClose={() => setViewDoc(null)}>
-          <pre style={{
-            fontFamily: "monospace", fontSize: 12, color: "#94a3b8",
-            background: "#0f172a", padding: 16, borderRadius: 10,
-            overflow: "auto", maxHeight: 500, margin: 0,
-          }}>
-            {JSON.stringify(viewDoc, null, 2)}
-          </pre>
+        <Modal title={`👁 ${getSchema(activeCol).icon} ${getSchema(activeCol).title}`} onClose={() => setViewDoc(null)}>
+          <RecordForm collectionName={activeCol} data={viewDoc} onChange={() => {}} readOnly />
         </Modal>
       )}
 
       {/* Tahrirlash modali */}
       {editDoc && (
-        <Modal title={`✏️ Tahrirlash — ${editDoc.id?.slice(-8)}`} onClose={() => setEditDoc(null)}>
-          <p style={{ color: "#64748b", fontSize: 12, marginBottom: 12 }}>
-            ⚠️ Faqat kerakli maydonlarni o'zgartiring. id va _id o'zgartirilmaydi.
-          </p>
-          <JsonEditor value={editData} onChange={setEditData} />
+        <Modal title={`✏️ Tahrirlash — ${getSchema(activeCol).icon} ${getSchema(activeCol).title}`} onClose={() => setEditDoc(null)}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <p style={{ color: "#64748b", fontSize: 12, margin: 0 }}>
+              Kerakli maydonni o'zgartirib, "Saqlash" tugmasini bosing.
+            </p>
+            <div style={{ display: "flex", gap: 4, background: "#0f172a", borderRadius: 8, padding: 3 }}>
+              <button
+                onClick={() => setEditMode("form")}
+                style={{
+                  padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer",
+                  fontSize: 11, fontWeight: 800,
+                  background: editMode === "form" ? "#1d4ed8" : "transparent",
+                  color: editMode === "form" ? "white" : "#64748b",
+                }}
+              >📝 Forma</button>
+              <button
+                onClick={() => setEditMode("json")}
+                style={{
+                  padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer",
+                  fontSize: 11, fontWeight: 800,
+                  background: editMode === "json" ? "#1d4ed8" : "transparent",
+                  color: editMode === "json" ? "white" : "#64748b",
+                }}
+              >{ "{ }" } Murakkab</button>
+            </div>
+          </div>
+          {editMode === "form" ? (
+            <RecordForm collectionName={activeCol} data={editData} onChange={setEditData} />
+          ) : (
+            <JsonEditor value={editData} onChange={setEditData} />
+          )}
           <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
             <button
               onClick={() => setEditDoc(null)}
