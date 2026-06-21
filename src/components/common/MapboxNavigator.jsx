@@ -63,6 +63,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
   const [loading, setLoading]           = useState(true)
   const loadedRef = useRef(false)
   const [error, setError]               = useState('')
+  const [gpsWarning, setGpsWarning]     = useState('')
   const [route, setRoute]               = useState(null)
   const [currentStep, setCurrentStep]   = useState(0)
   const [myPos, setMyPos]               = useState(null)
@@ -125,39 +126,63 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
 
         mapboxgl.accessToken = MAPBOX_TOKEN
 
-        // Hozirgi joylashuv
-        const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 20000 })
-        ).catch((err) => {
-          const code = err?.code
-          if (code === 1) throw new Error("GPS ruxsati rad etildi. Brauzer sozlamalarida joylashuvga ruxsat bering.")
-          if (code === 2) throw new Error("GPS signali topilmadi. Ochiq joyga chiqib qayta urining.")
-          if (code === 3) throw new Error("GPS aniqlanmadi (vaqt tugadi). Internet yoki GPS ni tekshirib, qayta urining.")
-          throw new Error(err?.message || "GPS xatoligi yuz berdi.")
-        })
+        // Hozirgi joylashuv — 3 bosqichli fallback
+        // 1) Aniq GPS (8s) → 2) Network GPS (8s) → 3) GPS'siz faqat manzilni ko'rsat
+        const getPosition = () => new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: true, timeout: 8000, maximumAge: 10000 })
+        )
+        const getPositionLow = () => new Promise((res, rej) =>
+          navigator.geolocation.getCurrentPosition(res, rej, { enableHighAccuracy: false, timeout: 8000, maximumAge: 30000 })
+        )
+
+        let lat = null, lng = null
+        let noGps = false
+        try {
+          const pos = await getPosition().catch(async (err) => {
+            if (err?.code === 1) throw err  // Ruxsat yo'q — fallback ham ishlamaydi
+            return getPositionLow()          // Timeout/signal → network GPS ga o'tish
+          })
+          lat = pos.coords.latitude
+          lng = pos.coords.longitude
+          setMyPos({ lat, lng })
+        } catch (err) {
+          if (err?.code === 1) {
+            // Foydalanuvchi GPS ruxsatini rad etgan — xarita ochiladi, lekin route yo'q
+            noGps = true
+          } else {
+            // Ikki urinish ham muvaffaqiyatsiz — GPS'siz davom etamiz
+            noGps = true
+          }
+        }
         if (destroyed) return
 
-        const { latitude: lat, longitude: lng } = pos.coords
-        setMyPos({ lat, lng })
-
-        // Yo'l
-        const routeData = await fetchRoute(lat, lng, toLat, toLng)
+        // Yo'l (faqat GPS mavjud bo'lsa)
+        let routeData = null
+        if (!noGps && lat !== null) {
+          try {
+            routeData = await fetchRoute(lat, lng, toLat, toLng)
+            if (!destroyed) setRoute(routeData)
+          } catch (_) {
+            // Yo'l topilmasa ham xarita ochiladi
+          }
+        }
         if (destroyed) return
-        setRoute(routeData)
 
         // Xarita — to'liq ekran, sidebar YO'Q
+        const mapCenter = (!noGps && lat !== null) ? [lng, lat] : [toLng, toLat]
+        const mapZoom   = (!noGps && lat !== null) ? 15 : 13
         const map = new mapboxgl.Map({
           container: mapContainer.current,
           style: 'mapbox://styles/mapbox/dark-v11',
-          center: [lng, lat],
-          zoom: 15,
+          center: mapCenter,
+          zoom: mapZoom,
           pitch: 45,
-          attributionControl: false,    // attribution yashir
-          logoPosition: 'bottom-right', // logo pastga
+          attributionControl: false,
+          logoPosition: 'bottom-right',
         })
         mapRef.current = map
 
-        // Agar style/load 10 soniyada kelmasa - xato ko'rsatamiz (cheksiz "yuklanmoqda" bo'lmasin)
+        // Agar style/load 10 soniyada kelmasa - xato ko'rsatamiz
         const loadTimeout = setTimeout(() => {
           if (!destroyed && !loadedRef.current) {
             setError("Xarita yuklanmadi. Internet aloqasini tekshiring yoki qayta urinib ko'ring.")
@@ -171,26 +196,34 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
           if (destroyed) return
           try {
 
-          // Yo'l
-          map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: routeData.geometry } })
-          map.addLayer({ id: 'route-bg', type: 'line', source: 'route', paint: { 'line-color': '#1e3a5f', 'line-width': 10, 'line-opacity': 0.6 } })
-          map.addLayer({ id: 'route', type: 'line', source: 'route', paint: { 'line-color': '#7c3aed', 'line-width': 6 } })
+          // Yo'l (GPS mavjud bo'lsa)
+          if (routeData) {
+            map.addSource('route', { type: 'geojson', data: { type: 'Feature', geometry: routeData.geometry } })
+            map.addLayer({ id: 'route-bg', type: 'line', source: 'route', paint: { 'line-color': '#1e3a5f', 'line-width': 10, 'line-opacity': 0.6 } })
+            map.addLayer({ id: 'route', type: 'line', source: 'route', paint: { 'line-color': '#7c3aed', 'line-width': 6 } })
+          }
 
-          // Driver markeri
-          const el = document.createElement('div')
-          el.innerHTML = `<div style="font-size:28px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6))">🚚</div>`
-          markerRef.current = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map)
+          // Driver markeri (faqat GPS bor bo'lsa)
+          if (!noGps && lat !== null) {
+            const el = document.createElement('div')
+            el.innerHTML = `<div style="font-size:28px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6))">🚚</div>`
+            markerRef.current = new mapboxgl.Marker({ element: el }).setLngLat([lng, lat]).addTo(map)
+          }
 
-          // Manzil markeri
+          // Manzil markeri — har doim ko'rsatiladi
           const destEl = document.createElement('div')
           destEl.innerHTML = `<div style="font-size:32px;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.6))">${isFarm ? '🏡' : '📍'}</div>`
           new mapboxgl.Marker({ element: destEl }).setLngLat([toLng, toLat]).addTo(map)
 
           setLoading(false)
 
-          // Birinchi yo'riqnoma
-          const firstStep = translate(routeData.legs[0]?.steps[0]?.maneuver?.instruction || '')
-          if (firstStep && soundRef.current) speak(firstStep)
+          if (noGps) {
+            // GPS yo'q — xarita ochiq, faqat banner ko'rsatiladi
+            setGpsWarning("📍 GPS aniqlanmadi — xaritada faqat manzil ko'rsatilmoqda")
+          } else if (routeData) {
+            const firstStep = translate(routeData.legs[0]?.steps[0]?.maneuver?.instruction || '')
+            if (firstStep && soundRef.current) speak(firstStep)
+          }
           } catch (e) {
             console.error('Map load error:', e)
           }
@@ -311,6 +344,8 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
               ? <p style={{ color: '#94a3b8', margin: 0, fontSize: 14 }}>GPS va yo'l hisoblanmoqda...</p>
               : error
               ? <p style={{ color: '#f87171', margin: 0, fontSize: 14 }}>⚠️ {error}</p>
+              : gpsWarning
+              ? <p style={{ color: '#fbbf24', margin: 0, fontSize: 13, fontWeight: 700 }}>{gpsWarning}</p>
               : arrived
               ? <p style={{ color: '#86efac', fontWeight: 900, margin: 0, fontSize: 16 }}>Manzilga yetib keldingiz! 🎉</p>
               : nearFarm
