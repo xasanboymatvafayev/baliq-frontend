@@ -85,7 +85,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
           return
         }
 
-        // CSS ni <link> orqali yuklaymiz (import bilan mapbox-gl.css ishlamaydi)
+        // CSS ni <link> orqali yuklaymiz
         if (!document.getElementById('mapbox-gl-css')) {
           const link = document.createElement('link')
           link.id = 'mapbox-gl-css'
@@ -94,8 +94,34 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
           document.head.appendChild(link)
         }
 
-        const mapboxgl = (await import('https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.js')).default
+        // mapbox-gl UMD bundle - <script> tegi orqali yuklaymiz (dynamic import ESM emasligi sabab ishlamaydi)
+        const mapboxgl = await new Promise((resolve, reject) => {
+          if (window.mapboxgl) {
+            resolve(window.mapboxgl)
+            return
+          }
+          const existing = document.getElementById('mapbox-gl-script')
+          if (existing) {
+            existing.addEventListener('load', () => resolve(window.mapboxgl))
+            existing.addEventListener('error', () => reject(new Error("Mapbox skripti yuklanmadi")))
+            return
+          }
+          const script = document.createElement('script')
+          script.id = 'mapbox-gl-script'
+          script.src = 'https://cdn.jsdelivr.net/npm/mapbox-gl@2.15.0/dist/mapbox-gl.js'
+          script.async = true
+          script.onload = () => {
+            if (window.mapboxgl) resolve(window.mapboxgl)
+            else reject(new Error("Mapbox global obyekt topilmadi"))
+          }
+          script.onerror = () => reject(new Error("Mapbox skripti yuklanmadi - internetni tekshiring"))
+          document.head.appendChild(script)
+        })
+
         if (destroyed || !mapContainer.current) return
+        if (!mapboxgl || typeof mapboxgl.Map !== 'function') {
+          throw new Error("Mapbox kutubxonasi noto'g'ri yuklandi")
+        }
 
         mapboxgl.accessToken = MAPBOX_TOKEN
 
