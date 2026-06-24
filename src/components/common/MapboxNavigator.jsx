@@ -60,6 +60,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
   const mapRef       = useRef(null)
   const markerRef    = useRef(null)
   const watchRef     = useRef(null)
+  const lastSentRef  = useRef(0)
   const [loading, setLoading]           = useState(true)
   const loadedRef = useRef(false)
   const [error, setError]               = useState('')
@@ -248,6 +249,20 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
             setMyPos({ lat: la, lng: lo })
             markerRef.current?.setLngLat([lo, la])
             map.easeTo({ center: [lo, la], duration: 800 })
+
+            // Backend ga joylashuvni yuborish (har 3 soniyada)
+            const now = Date.now()
+            if (now - lastSentRef.current > 3000) {
+              lastSentRef.current = now
+              const token = (() => { try { return JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token } catch { return null } })()
+              if (token) {
+                fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/drivers/location`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ lat: la, lng: lo }),
+                }).catch(() => {})
+              }
+            }
 
             // Manzilga masofa
             const d = distKm(la, lo, toLat, toLng) * 1000
