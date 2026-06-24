@@ -787,6 +787,11 @@ export default function DBAdminPanel() {
   const [queryResult, setQueryResult] = useState(null);
   const [queryTab, setQueryTab] = useState(false);
 
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createData, setCreateData] = useState({});
+  const [createMode, setCreateMode] = useState("form");
+  const [creating, setCreating] = useState(false);
+
   const PAGE_SIZE = 15;
 
   const showToast = (msg, ok = true) => {
@@ -860,6 +865,23 @@ export default function DBAdminPanel() {
     }
   };
 
+  // ─── Yangi yozuv qo'shish ───────────────────────────────────────
+  const handleCreate = async () => {
+    setCreating(true);
+    const client = api(baseUrl, token);
+    const res = await client.post(`/collections/${activeCol}`, { data: createData });
+    setCreating(false);
+    if (res.message) {
+      showToast("✅ Yaratildi");
+      setCreateOpen(false);
+      setCreateData({});
+      loadDocs();
+      loadCollections();
+    } else {
+      showToast("❌ " + (res.detail || "Xato"), false);
+    }
+  };
+
   // ─── O'chirish ──────────────────────────────────────────────────
   const handleDelete = async () => {
     if (!deleteConfirm) return;
@@ -899,7 +921,7 @@ export default function DBAdminPanel() {
           ...priorityCols.filter((k) => allKeys.includes(k)),
           ...allKeys.filter((k) => !priorityCols.includes(k)),
         ];
-    return sorted.slice(0, 7);
+    return sorted.slice(0, 10);
   };
 
   // ─── Login sahifasi ─────────────────────────────────────────────
@@ -1282,21 +1304,42 @@ export default function DBAdminPanel() {
                     <p style={{ margin: 0, color: "#475569", fontSize: 12 }}>{total} ta yozuv</p>
                   </div>
                 </div>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Qidirish..."
-                  style={{
-                    padding: "8px 14px",
-                    borderRadius: 10,
-                    background: "#1e293b",
-                    border: "1px solid #334155",
-                    color: "#e2e8f0",
-                    fontSize: 13,
-                    width: 220,
-                    outline: "none",
-                  }}
-                />
+                <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                  <button
+                    onClick={() => { setCreateData({}); setCreateMode("form"); setCreateOpen(true); }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: 10,
+                      background: "linear-gradient(135deg, #16a34a, #15803d)",
+                      border: "none",
+                      color: "white",
+                      fontWeight: 800,
+                      fontSize: 13,
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    + Qo'shish
+                  </button>
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Qidirish..."
+                    style={{
+                      padding: "8px 14px",
+                      borderRadius: 10,
+                      background: "#1e293b",
+                      border: "1px solid #334155",
+                      color: "#e2e8f0",
+                      fontSize: 13,
+                      width: 200,
+                      outline: "none",
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Jadval */}
@@ -1475,6 +1518,68 @@ export default function DBAdminPanel() {
           )}
         </div>
       </div>
+
+      {/* Yangi yozuv qo'shish modali */}
+      {createOpen && activeCol && (
+        <Modal
+          title={`+ Yangi — ${getSchema(activeCol).icon} ${getSchema(activeCol).title}`}
+          onClose={() => { setCreateOpen(false); setCreateData({}); }}
+        >
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 14 }}>
+            <div style={{ display: "flex", gap: 4, background: "#0f172a", borderRadius: 8, padding: 3 }}>
+              <button
+                onClick={() => setCreateMode("form")}
+                style={{
+                  padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer",
+                  fontSize: 11, fontWeight: 800,
+                  background: createMode === "form" ? "#16a34a" : "transparent",
+                  color: createMode === "form" ? "white" : "#64748b",
+                }}
+              >
+                📝 Forma
+              </button>
+              <button
+                onClick={() => setCreateMode("json")}
+                style={{
+                  padding: "5px 12px", borderRadius: 6, border: "none", cursor: "pointer",
+                  fontSize: 11, fontWeight: 800,
+                  background: createMode === "json" ? "#16a34a" : "transparent",
+                  color: createMode === "json" ? "white" : "#64748b",
+                }}
+              >
+                {"{ }"} JSON
+              </button>
+            </div>
+          </div>
+          {createMode === "form" ? (
+            <RecordForm collectionName={activeCol} data={createData} onChange={setCreateData} />
+          ) : (
+            <JsonEditor value={createData} onChange={setCreateData} />
+          )}
+          <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
+            <button
+              onClick={() => { setCreateOpen(false); setCreateData({}); }}
+              style={{
+                padding: "8px 18px", borderRadius: 8, background: "#334155",
+                border: "none", color: "#94a3b8", cursor: "pointer", fontWeight: 700,
+              }}
+            >
+              Bekor
+            </button>
+            <button
+              onClick={handleCreate}
+              disabled={creating}
+              style={{
+                padding: "8px 18px", borderRadius: 8,
+                background: creating ? "#14532d" : "linear-gradient(135deg, #16a34a, #15803d)",
+                border: "none", color: "white", cursor: creating ? "not-allowed" : "pointer", fontWeight: 800,
+              }}
+            >
+              {creating ? "Qo'shilmoqda..." : "✅ Qo'shish"}
+            </button>
+          </div>
+        </Modal>
+      )}
 
       {/* Ko'rish modali */}
       {viewDoc && (
