@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
 @import 'leaflet/dist/leaflet.css';
 
 @tailwind base;
@@ -8,224 +8,149 @@
 :root {
   color-scheme: light;
   --radius: 1rem;
+  --sidebar-w: 268px;
 }
 .dark { color-scheme: dark; }
 
-/* ─── Scrollbar ─────────────────────────────────────────────────── */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #0b93cc33 transparent;
-}
-::-webkit-scrollbar { width: 4px; height: 4px; }
+/* ─── Scrollbar ──────────────────────────────────────────── */
+* { scrollbar-width: thin; scrollbar-color: #0b93cc22 transparent; }
+::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #0b93cc44; border-radius: 99px; }
+::-webkit-scrollbar-thumb { background: #0b93cc33; border-radius: 99px; }
 
-/* ─── Base ──────────────────────────────────────────────────────── */
+/* ─── Base ───────────────────────────────────────────────── */
+*, *::before, *::after {
+  -webkit-tap-highlight-color: transparent;
+}
+html { scroll-behavior: smooth; }
 body {
-  @apply bg-slate-50 text-slate-900 antialiased dark:bg-[#07101e] dark:text-slate-100;
-  font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  @apply bg-[#f0f4f8] text-slate-900 antialiased dark:bg-[#060d1a] dark:text-slate-100;
+  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* ─── Komponentlar ──────────────────────────────────────────────── */
+/* ─── Page transition ────────────────────────────────────── */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter { animation: pageIn 0.28s cubic-bezier(.16,1,.3,1) both; }
+
+/* ─── Components ─────────────────────────────────────────── */
 @layer components {
 
-  /* Karta */
+  /* Card */
   .glass-card {
-    @apply rounded-3xl border border-slate-200/80 bg-white shadow-card
-           dark:border-white/[0.06] dark:bg-slate-900/80;
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    @apply rounded-2xl border border-slate-200/70 bg-white
+           dark:border-white/[0.05] dark:bg-[#0d1829];
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    transition: box-shadow 0.2s ease, transform 0.18s ease;
   }
   .glass-card:hover {
-    @apply shadow-card-hover;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.06);
   }
 
   /* Input */
   .soft-input {
-    @apply w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none
+    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none
            transition-all duration-200
-           focus:border-ocean-400 focus:bg-white focus:ring-4 focus:ring-ocean-100/70
-           dark:border-white/10 dark:bg-slate-800/60 dark:focus:bg-slate-800 dark:focus:ring-ocean-900/40;
+           focus:border-ocean-400 focus:bg-white focus:ring-2 focus:ring-ocean-100
+           dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white
+           dark:focus:border-ocean-500 dark:focus:bg-white/[0.07] dark:focus:ring-ocean-900/40
+           placeholder:text-slate-400 dark:placeholder:text-slate-600;
   }
 
-  /* Asosiy tugma */
+  /* Primary button */
   .primary-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-white
-           transition-all duration-200
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
+           transition-all duration-200 active:scale-[0.97]
            disabled:cursor-not-allowed disabled:opacity-50;
-    background: linear-gradient(135deg, #0b93cc 0%, #0c76a6 100%);
-    box-shadow: 0 2px 12px rgba(11,147,204,0.30);
+    background: linear-gradient(135deg, #0b93cc 0%, #0878aa 100%);
+    box-shadow: 0 1px 8px rgba(11,147,204,0.25), 0 0 0 0 rgba(11,147,204,0);
   }
   .primary-button:hover:not(:disabled) {
+    box-shadow: 0 4px 16px rgba(11,147,204,0.35);
     transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(11,147,204,0.40);
-  }
-  .primary-button:active:not(:disabled) {
-    transform: translateY(0);
   }
 
-  /* Ikkilamchi tugma */
+  /* Secondary button */
   .secondary-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white
-           px-5 py-3 text-sm font-semibold text-slate-700
-           transition-all duration-200
-           hover:border-ocean-300 hover:bg-ocean-50 hover:text-ocean-700
-           dark:border-white/10 dark:bg-slate-800/80 dark:text-slate-200
-           dark:hover:border-ocean-500/40 dark:hover:bg-ocean-900/20 dark:hover:text-ocean-300;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white
+           px-5 py-2.5 text-sm font-semibold text-slate-700
+           transition-all duration-200 active:scale-[0.97]
+           hover:border-slate-300 hover:bg-slate-50
+           dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-slate-300
+           dark:hover:border-white/[0.12] dark:hover:bg-white/[0.07];
   }
 
-  /* Danger tugma */
+  /* Danger button */
   .danger-button {
-    @apply inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-white
-           transition-all duration-200
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white
+           transition-all duration-200 active:scale-[0.97]
            disabled:cursor-not-allowed disabled:opacity-50;
     background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-    box-shadow: 0 2px 12px rgba(239,68,68,0.25);
+    box-shadow: 0 1px 8px rgba(239,68,68,0.2);
   }
   .danger-button:hover:not(:disabled) {
+    box-shadow: 0 4px 16px rgba(239,68,68,0.3);
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(239,68,68,0.35);
   }
 
   /* Badge */
-  .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold;
-  }
-  .badge-blue    { @apply bg-ocean-100 text-ocean-700 dark:bg-ocean-900/30 dark:text-ocean-300; }
-  .badge-green   { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300; }
-  .badge-amber   { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300; }
-  .badge-rose    { @apply bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300; }
-  .badge-slate   { @apply bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400; }
-  .badge-purple  { @apply bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300; }
+  .badge { @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold; }
+  .badge-blue   { @apply bg-ocean-100 text-ocean-700 dark:bg-ocean-900/30 dark:text-ocean-300; }
+  .badge-green  { @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300; }
+  .badge-amber  { @apply bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300; }
+  .badge-rose   { @apply bg-rose-100 text-rose-700 dark:bg-rose-900/20 dark:text-rose-300; }
+  .badge-slate  { @apply bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-400; }
+  .badge-purple { @apply bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300; }
 
-  /* Shimmer skeleton */
+  /* Skeleton */
   .skeleton {
-    @apply rounded-2xl bg-slate-200 dark:bg-slate-800;
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.6s infinite;
+    @apply rounded-xl bg-slate-200 dark:bg-white/[0.05];
+    background: linear-gradient(90deg,
+      rgba(148,163,184,0.12) 25%,
+      rgba(148,163,184,0.22) 37%,
+      rgba(148,163,184,0.12) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
   }
   .dark .skeleton {
-    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
-    background-size: 200% 100%;
-  }
-
-  /* Stat karta */
-  .stat-card {
-    @apply glass-card flex flex-col gap-3 p-5;
-  }
-
-  /* Jadval */
-  .data-table {
-    @apply w-full text-sm;
-  }
-  .data-table thead th {
-    @apply px-4 py-3 text-left text-xs font-black uppercase tracking-widest text-slate-400
-           border-b border-slate-100 dark:border-white/[0.06];
-  }
-  .data-table tbody td {
-    @apply px-4 py-3.5 border-b border-slate-50 dark:border-white/[0.04];
-  }
-  .data-table tbody tr {
-    @apply transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.02];
-  }
-
-  /* Sidebar nav item */
-  .nav-item {
-    @apply flex items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-semibold
-           text-slate-500 transition-all duration-200
-           hover:bg-slate-100 hover:text-slate-900
-           dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white;
-  }
-  .nav-item.active {
-    @apply bg-ocean-50 text-ocean-700 font-bold
-           dark:bg-ocean-900/30 dark:text-ocean-300;
-  }
-
-  /* Page header */
-  .page-header {
-    @apply glass-card p-6 mb-6;
-  }
-  .page-title {
-    @apply text-2xl font-black tracking-tight sm:text-3xl;
-  }
-  .page-subtitle {
-    @apply mt-1 text-sm text-slate-500 dark:text-slate-400;
-  }
-
-  /* Divider */
-  .divider {
-    @apply border-t border-slate-100 dark:border-white/[0.06];
+    background: linear-gradient(90deg,
+      rgba(255,255,255,0.03) 25%,
+      rgba(255,255,255,0.07) 37%,
+      rgba(255,255,255,0.03) 63%
+    );
+    background-size: 400% 100%;
+    animation: shimmer 1.4s ease infinite;
   }
 }
 
-/* ─── Animatsiya utility ─────────────────────────────────────────── */
-.animate-slide-up { animation: slideUp 0.3s cubic-bezier(.16,1,.3,1) both; }
-.animate-fade-in  { animation: fadeIn 0.25s ease both; }
-
-/* ─── Auth layout background ────────────────────────────────────── */
-.auth-bg {
-  background:
-    radial-gradient(ellipse 80% 60% at 0% 0%,   rgba(11,147,204,0.28) 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 100% 100%, rgba(16,185,129,0.20) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 40% at 60% 20%,  rgba(124,58,237,0.08) 0%, transparent 45%),
-    #070f1e;
+/* ─── Section divider ────────────────────────────────────── */
+.section-title {
+  @apply text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 mb-3;
 }
 
-/* ─── Dot pattern (auth bg uchun) ──────────────────────────────── */
-.dot-pattern {
-  background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
-  background-size: 28px 28px;
+/* ─── Table ──────────────────────────────────────────────── */
+.data-table { @apply w-full text-sm; }
+.data-table th {
+  @apply px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wider
+         text-slate-500 dark:text-slate-500 border-b border-slate-100 dark:border-white/[0.05];
+}
+.data-table td { @apply px-4 py-3 border-b border-slate-50 dark:border-white/[0.03]; }
+.data-table tr:last-child td { @apply border-0; }
+.data-table tbody tr {
+  @apply transition-colors hover:bg-slate-50/80 dark:hover:bg-white/[0.02];
 }
 
-/* ─── PWA / Mobile safe area ──────────────────────────────────── */
-body {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* ─── Smooth transitions ──────────────────────────────────────── */
-*, *::before, *::after {
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ─── Improved glass-card hover animation ─────────────────────── */
-.glass-card {
-  transition: box-shadow 0.25s ease, transform 0.2s ease;
-}
-
-/* ─── Page enter animation ───────────────────────────────────── */
-@keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.page-enter {
-  animation: fadeSlideUp 0.3s ease both;
-}
-
-/* ─── Navigation active link glow ────────────────────────────── */
-.nav-active-glow {
-  box-shadow: 0 0 0 3px rgba(11, 147, 204, 0.15);
-}
-
-/* ─── Skeleton shimmer ────────────────────────────────────────── */
+/* ─── Animations ─────────────────────────────────────────── */
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-.shimmer {
-  background: linear-gradient(90deg,
-    rgba(148,163,184,0.1) 25%,
-    rgba(148,163,184,0.2) 37%,
-    rgba(148,163,184,0.1) 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
 }
-.dark .shimmer {
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0.03) 25%,
-    rgba(255,255,255,0.07) 37%,
-    rgba(255,255,255,0.03) 63%
-  );
-  background-size: 400% 100%;
-  animation: shimmer 1.4s ease infinite;
-}
+.animate-scale-in { animation: scaleIn 0.2s cubic-bezier(.16,1,.3,1) both; }

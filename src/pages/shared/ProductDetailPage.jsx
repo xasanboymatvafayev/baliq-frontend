@@ -62,6 +62,7 @@ export function ProductDetailPage() {
   const addItem = useCartStore((s) => s.addItem)
   const pushToast = useToastStore((s) => s.pushToast)
   const user = useAuthStore((s) => s.user)
+  const role = useAuthStore((s) => s.role)
   const queryClient = useQueryClient()
   const [myRating, setMyRating] = useState(0)
   const [myComment, setMyComment] = useState('')
@@ -260,7 +261,7 @@ export function ProductDetailPage() {
         <h3 className="text-xl font-black">💬 Sharhlar va reyting</h3>
 
         {/* Sharh yozish (faqat customer) */}
-        {user?.role === 'customer' && !reviewSent && (
+        {(role === 'customer' || role === 'farm-owner') && !reviewSent && (
           <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-4 space-y-3 border border-slate-200 dark:border-white/10">
             <p className="font-bold text-sm">Ferma reytingini qo'ying:</p>
             <StarInput value={myRating} onChange={setMyRating} />
