@@ -3,6 +3,7 @@ import { AppRoutes } from './routes/AppRoutes.jsx'
 import { ErrorBoundary } from './components/common/ErrorBoundary.jsx'
 import { ToastHost } from './components/common/ToastHost.jsx'
 import { useThemeStore } from './store/themeStore.js'
+import { PwaInstallBanner } from './components/common/PwaInstallBanner.jsx'
 
 export default function App() {
   const theme = useThemeStore((state) => state.theme)
@@ -11,16 +12,11 @@ export default function App() {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
 
-  // ✅ GPS ruxsatini sahifa ochilganda darhol so'rash
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        () => {
-          console.log('✅ GPS ruxsati berildi')
-        },
-        (error) => {
-          console.warn('⚠️ GPS ruxsati rad etildi:', error.message)
-        },
+        () => {},
+        (error) => console.warn('GPS:', error.message),
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       )
     }
@@ -30,8 +26,7 @@ export default function App() {
     <ErrorBoundary>
       <AppRoutes />
       <ToastHost />
+      <PwaInstallBanner />
     </ErrorBoundary>
   )
 }
-
-

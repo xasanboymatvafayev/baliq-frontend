@@ -16,6 +16,7 @@ import {
   AdminFarmRequests, AdminGpsMonitoring, AdminOrders, AdminSettings, AdminUsers,
 } from '../pages/admin/AdminPages.jsx'
 import DbAdminPanel from '../pages/admin/DbAdminPanel.jsx'
+import { AdminPromoPage } from '../pages/admin/AdminPromoPage.jsx'
 import { AdminStatisticsPage } from '../pages/shared/AdminStatisticsPage.jsx'
 import { AdminFinancePage, AdminWithdrawPage } from '../pages/admin/FinancePage.jsx'
 import { FarmBalancePage } from '../pages/farm/FarmBalancePage.jsx'
@@ -135,6 +136,7 @@ export function AppRoutes() {
         <Route path="finance" element={<AdminFinancePage />} />
         <Route path="withdrawals" element={<AdminWithdrawPage />} />
         <Route path="security" element={<SecurityPage />} />
+        <Route path="promo-codes" element={<AdminPromoPage />} />
       </Route>
 
       <Route path="/manager" element={

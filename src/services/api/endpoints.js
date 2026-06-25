@@ -20,6 +20,7 @@ export const endpoints = {
     detail: (id) => `/fish/${id}`,
     reviews: (id) => `/fish/${id}/reviews`,
     addReview: (id) => `/fish/${id}/reviews`,
+    search: '/fish/search',
   },
   farms: {
     base: '/farms',
@@ -33,7 +34,7 @@ export const endpoints = {
     detail: (id) => `/orders/${id}`,
     timeline: (id) => `/orders/${id}/timeline`,
     assignDriver: (id) => `/orders/${id}/assign-driver`,
-    batchAssign: '/orders/batch-assign-driver', // ← ko'p buyurtmani birlashtirib yuborish
+    batchAssign: '/orders/batch-assign-driver',
   },
   chat: {
     rooms: '/chat/rooms',
@@ -53,4 +54,18 @@ export const endpoints = {
   audit: { logs: '/audit/logs' },
   settings: { profile: '/settings/profile', system: '/settings/system' },
   files: { upload: '/files/upload', publicUpload: '/files/public-upload' },
+  payments: {
+    createLink: '/payments/create-link',
+    bonusBalance: '/payments/bonus/balance',
+    bonusUse: '/payments/bonus/use',
+    promoApply: '/payments/promo/apply',
+  },
+  promo: {
+    base: '/payments/promo',
+    list: '/payments/promo/list',
+    create: '/payments/promo/create',
+    detail: (id) => `/payments/promo/${id}`,
+    delete: (id) => `/payments/promo/${id}`,
+    toggle: (id) => `/payments/promo/${id}/toggle`,
+  },
 }
