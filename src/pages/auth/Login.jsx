@@ -3,40 +3,38 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { useState } from 'react'
-import { FormInput } from '../../components/forms/FormInput.jsx'
+import { Eye, EyeOff, Phone, Lock, ArrowRight, Loader2 } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { authService } from '../../services/api/index.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
 
 const schema = z.object({
-  phone: z.string().min(9, 'Telefon raqam kiriting'),
+  phone:    z.string().min(9, 'Telefon raqam kiriting'),
   password: z.string().min(6, 'Parol kamida 6 ta belgi'),
 })
 
 const ROLE_ROUTES = {
-  'customer': '/customer/dashboard',
-  'farm-owner': '/farm/dashboard',
-  'driver': '/driver/dashboard',
-  'admin': '/admin/dashboard',
-  'manager': '/manager/dashboard',
-  'super-admin': '/super-admin/system-statistics',
+  customer: '/customer/dashboard', 'farm-owner': '/farm/dashboard',
+  driver: '/driver/dashboard', admin: '/admin/dashboard',
+  manager: '/manager/dashboard', 'super-admin': '/super-admin/system-statistics',
 }
 
 export function Login() {
-  const navigate = useNavigate()
-  const setSession = useAuthStore((s) => s.setSession)
-  const pushToast = useToastStore((s) => s.pushToast)
-  const [loading, setLoading] = useState(false)
+  const navigate   = useNavigate()
+  const setSession = useAuthStore(s => s.setSession)
+  const pushToast  = useToastStore(s => s.pushToast)
+  const [loading, setLoading]   = useState(false)
+  const [showPwd, setShowPwd]   = useState(false)
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      const result = await authService.login(data)
+      const result   = await authService.login(data)
       const userRole = result.user?.role || result.role || 'customer'
       setSession({ user: result.user, role: userRole, token: result.token })
-      pushToast({ title: 'Muvaffaqiyatli kirdingiz!', variant: 'success' })
+      pushToast({ title: 'Xush kelibsiz! 👋', variant: 'success' })
       navigate(ROLE_ROUTES[userRole] || '/customer/dashboard')
     } catch (err) {
       pushToast({ title: err.message || "Telefon yoki parol noto'g'ri", variant: 'error' })
@@ -47,18 +45,86 @@ export function Login() {
 
   return (
     <AuthFormShell
-      title="Kirish"
-      description="Telefon raqam va parol orqali platformaga kiring."
-      footer={<>Akkount yo'qmi? <Link className="font-bold text-ocean-600" to="/register">Ro'yxatdan o'tish</Link></>}
+      title="Xush kelibsiz 👋"
+      description="Platformaga kirish uchun ma'lumotlaringizni kiriting."
+      footer={<>Akkount yo'qmi? <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/register">Ro'yxatdan o'tish</Link></>}
     >
-      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
-        <FormInput label="Telefon" placeholder="+998 90 000 00 00" {...register('phone')} error={formState.errors.phone?.message} />
-        <FormInput label="Parol" type="password" placeholder="••••••••" {...register('password')} error={formState.errors.password?.message} />
-        <div className="flex justify-end">
-          <Link className="text-sm font-semibold text-ocean-600" to="/forgot-password">Parolni unutdingizmi?</Link>
+      <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+
+        {/* Phone */}
+        <div>
+          <label className="mb-1.5 block text-[13px] font-semibold text-white/60">Telefon raqam</label>
+          <div className="relative">
+            <Phone className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
+            <input
+              {...register('phone')}
+              placeholder="+998 90 000 00 00"
+              className="h-11 w-full rounded-xl pl-10 pr-4 text-[14px] outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.07)',
+                border: `1.5px solid ${formState.errors.phone ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                color: '#f0f6ff',
+                fontFamily: 'inherit',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(56,189,248,0.5)'; e.target.style.background = 'rgba(255,255,255,0.1)' }}
+              onBlur={e => { e.target.style.borderColor = formState.errors.phone ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.07)' }}
+            />
+          </div>
+          {formState.errors.phone && <p className="mt-1.5 text-[12px] font-medium text-rose-400">{formState.errors.phone.message}</p>}
         </div>
-        <button className="primary-button w-full" type="submit" disabled={loading}>
-          {loading ? 'Kirilmoqda...' : 'Kirish'}
+
+        {/* Password */}
+        <div>
+          <label className="mb-1.5 block text-[13px] font-semibold text-white/60">Parol</label>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
+            <input
+              {...register('password')}
+              type={showPwd ? 'text' : 'password'}
+              placeholder="••••••••"
+              className="h-11 w-full rounded-xl pl-10 pr-11 text-[14px] outline-none transition-all"
+              style={{
+                background: 'rgba(255,255,255,0.07)',
+                border: `1.5px solid ${formState.errors.password ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.1)'}`,
+                color: '#f0f6ff',
+                fontFamily: 'inherit',
+              }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(56,189,248,0.5)'; e.target.style.background = 'rgba(255,255,255,0.1)' }}
+              onBlur={e => { e.target.style.borderColor = formState.errors.password ? 'rgba(248,113,113,0.5)' : 'rgba(255,255,255,0.1)'; e.target.style.background = 'rgba(255,255,255,0.07)' }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPwd(v => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-white/10"
+              style={{ color: 'rgba(255,255,255,0.3)' }}
+            >
+              {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+          {formState.errors.password && <p className="mt-1.5 text-[12px] font-medium text-rose-400">{formState.errors.password.message}</p>}
+        </div>
+
+        <div className="flex justify-end">
+          <Link className="text-[13px] font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/forgot-password">
+            Parolni unutdingizmi?
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl text-[14px] font-semibold text-white transition-all disabled:opacity-50"
+          style={{
+            background: loading ? 'rgba(14,165,233,0.6)' : 'linear-gradient(135deg,#0ea5e9,#0284c7)',
+            boxShadow: loading ? 'none' : '0 4px 20px rgba(14,165,233,0.35)',
+          }}
+          onMouseEnter={e => { if (!loading) e.currentTarget.style.background = 'linear-gradient(135deg,#38bdf8,#0ea5e9)' }}
+          onMouseLeave={e => { if (!loading) e.currentTarget.style.background = 'linear-gradient(135deg,#0ea5e9,#0284c7)' }}
+        >
+          {loading
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> Kirilmoqda...</>
+            : <>Kirish <ArrowRight className="h-4 w-4" /></>
+          }
         </button>
       </form>
     </AuthFormShell>

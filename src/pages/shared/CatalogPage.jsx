@@ -1,108 +1,128 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Search, Star } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
+import { Search, Star, ShoppingCart, Eye, Package } from 'lucide-react'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
-import { fishService, httpClient } from '../../services/api/index.js'
+import { fishService } from '../../services/api/index.js'
 import { useCartStore } from '../../store/cartStore.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { formatCurrency } from '../../utils/formatters.js'
+import { CardSkeleton } from '../../components/common/LoadingSkeleton.jsx'
 
-// ─── Yulduz reytingi ─────────────────────────────────────────────
-function StarRating({ rating = 0, count = 0, size = 14 }) {
+function StarRating({ rating = 0, count = 0 }) {
   return (
     <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((s) => (
-        <Star
-          key={s}
-          className={`h-${size === 14 ? 3.5 : 4} w-${size === 14 ? 3.5 : 4} ${
-            s <= Math.round(rating)
-              ? 'fill-amber-400 text-amber-400'
-              : 'fill-transparent text-slate-300'
-          }`}
-          style={{ width: size, height: size }}
-        />
+      {[1,2,3,4,5].map(s => (
+        <Star key={s} style={{ width:12, height:12 }}
+          className={s <= Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'fill-transparent text-slate-200 dark:text-white/10'} />
       ))}
-      <span className="text-xs text-slate-500 font-medium">
-        {rating > 0 ? rating.toFixed(1) : 'Yangi'}
-        {count > 0 && ` (${count})`}
+      <span className="text-[11px] font-medium text-slate-400 ml-0.5">
+        {rating > 0 ? rating.toFixed(1) : 'Yangi'}{count > 0 && ` (${count})`}
       </span>
     </div>
   )
 }
 
-// ─── Baliq kartasi ───────────────────────────────────────────────
 function FishCard({ fish, onAdd, onDetail }) {
-  const rating = fish.farm_rating || fish.farm?.rating || 0
+  const [hovered, setHovered] = useState(false)
+  const rating      = fish.farm_rating || fish.farm?.rating || 0
   const ratingCount = fish.farm_rating_count || fish.farm?.rating_count || 0
-  const farmName = fish.farm_name || fish.farm?.farmName || ''
+  const farmName    = fish.farm_name || fish.farm?.farmName || ''
+  const inStock     = fish.stock > 0
 
   return (
-    <div className="glass-card flex flex-col p-5 relative overflow-hidden">
-      {/* Ferma reytingi — yuqori o'ng burchak */}
-      <div className="absolute top-3 right-3 flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 px-2 py-0.5">
-        <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-        <span className="text-xs font-black text-amber-700 dark:text-amber-300">
-          {rating > 0 ? rating.toFixed(1) : 'Yangi'}
-        </span>
-      </div>
-
-      {/* Rasm yoki emoji */}
-      <div className="mb-3 h-32 rounded-2xl bg-gradient-to-br from-ocean-100 to-emerald-100 dark:from-ocean-900/30 dark:to-emerald-900/20 flex items-center justify-center overflow-hidden">
-        {fish.image_url ? (
-          <img src={fish.image_url} alt={fish.name} className="h-full w-full object-cover rounded-2xl" />
-        ) : (
-          <span className="text-5xl">🐟</span>
+    <div
+      className="glass-card flex flex-col overflow-hidden group cursor-pointer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={() => onDetail(fish.id)}
+    >
+      {/* Image */}
+      <div className="relative h-40 overflow-hidden bg-gradient-to-br from-sky-50 to-emerald-50 dark:from-sky-900/20 dark:to-emerald-900/10">
+        {fish.image_url
+          ? <img src={fish.image_url} alt={fish.name} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          : <div className="flex h-full w-full items-center justify-center">
+              <span className="text-6xl transition-transform duration-300 group-hover:scale-110">🐟</span>
+            </div>
+        }
+        {/* Rating badge */}
+        <div className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-full border border-amber-200/80 dark:border-amber-700/50 bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-1">
+          <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+          <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
+            {rating > 0 ? rating.toFixed(1) : 'Yangi'}
+          </span>
+        </div>
+        {/* Out of stock */}
+        {!inStock && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <span className="rounded-full border border-white/20 bg-black/60 px-3 py-1.5 text-[12px] font-bold text-white">Tugagan</span>
+          </div>
         )}
-      </div>
-
-      <div className="flex-1">
-        <p className="text-xs font-bold uppercase tracking-wider text-ocean-600">{fish.category}</p>
-        <h3 className="mt-0.5 text-lg font-black">{fish.name}</h3>
-
-        {/* Ferma nomi — bir xil baliqlarni farqlash uchun */}
-        {farmName && (
-          <p className="text-xs text-slate-500 font-medium mt-0.5 flex items-center gap-1">
-            🏡 {farmName}
-          </p>
-        )}
-
-        <p className="mt-1 text-xl font-black text-ocean-600">
-          {formatCurrency(fish.price)}/{fish.unit}
-        </p>
-        <p className="text-xs text-slate-500 mt-0.5">Zaxira: {fish.stock} {fish.unit}</p>
-
-        <div className="mt-1.5">
-          <StarRating rating={rating} count={ratingCount} size={13} />
+        {/* Hover overlay */}
+        <div className={`absolute inset-0 flex items-center justify-center gap-2 bg-black/40 backdrop-blur-sm transition-all duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}>
+          <button
+            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-slate-700 shadow-lg hover:bg-white transition-colors"
+            onClick={e => { e.stopPropagation(); onDetail(fish.id) }}
+          >
+            <Eye className="h-4 w-4" />
+          </button>
+          {inStock && (
+            <button
+              className="flex h-10 w-10 items-center justify-center rounded-full text-white shadow-lg transition-colors"
+              style={{ background: 'linear-gradient(135deg,#0ea5e9,#0284c7)' }}
+              onClick={e => { e.stopPropagation(); onAdd(fish) }}
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="mt-4 flex gap-2">
-        <button
-          className="secondary-button flex-1 text-sm"
-          onClick={() => onDetail(fish.id)}
-        >
-          Batafsil
-        </button>
-        <button
-          className="primary-button flex-1 text-sm"
-          onClick={() => onAdd(fish)}
-          disabled={!fish.stock}
-        >
-          Savatga
-        </button>
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-4">
+        <span className="mb-1 text-[10px] font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">{fish.category}</span>
+        <h3 className="text-[15px] font-bold text-slate-900 dark:text-white leading-tight">{fish.name}</h3>
+        {farmName && (
+          <p className="mt-0.5 text-[12px] text-slate-400 flex items-center gap-1">🏡 {farmName}</p>
+        )}
+        <div className="mt-2 flex items-end justify-between">
+          <div>
+            <p className="text-[18px] font-extrabold text-sky-600 dark:text-sky-400 leading-none">{formatCurrency(fish.price)}</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">/{fish.unit}</p>
+          </div>
+          <p className="text-[11px] font-medium text-slate-400 flex items-center gap-1">
+            <Package className="h-3 w-3" />{fish.stock} {fish.unit}
+          </p>
+        </div>
+        <div className="mt-2">
+          <StarRating rating={rating} count={ratingCount} />
+        </div>
+
+        {/* Action buttons */}
+        <div className="mt-3 flex gap-2">
+          <button
+            className="secondary-button flex-1 text-[13px] py-2"
+            onClick={e => { e.stopPropagation(); onDetail(fish.id) }}
+          >Batafsil</button>
+          <button
+            className="primary-button flex-1 text-[13px] py-2"
+            onClick={e => { e.stopPropagation(); onAdd(fish) }}
+            disabled={!inStock}
+          >
+            <ShoppingCart className="h-3.5 w-3.5" /> Savat
+          </button>
+        </div>
       </div>
     </div>
   )
 }
 
-// ─── Asosiy CatalogPage ──────────────────────────────────────────
 export function CatalogPage() {
   usePageTitle('Baliqlar katalogi')
-  const navigate = useNavigate()
-  const addItem = useCartStore((state) => state.addItem)
-  const pushToast = useToastStore((state) => state.pushToast)
-  const [search, setSearch] = useState('')
+  const navigate  = useNavigate()
+  const addItem   = useCartStore(s => s.addItem)
+  const pushToast = useToastStore(s => s.pushToast)
+  const [search, setSearch]     = useState('')
   const [category, setCategory] = useState('')
 
   const { data = [], isLoading } = useQuery({
@@ -110,56 +130,80 @@ export function CatalogPage() {
     queryFn: () => fishService.list({ search, ...(category ? { category } : {}) }),
   })
 
-  const categories = [...new Set((Array.isArray(data) ? data : []).map((f) => f.category).filter(Boolean))]
+  const fishList   = Array.isArray(data) ? data : []
+  const categories = [...new Set(fishList.map(f => f.category).filter(Boolean))]
 
-  const handleAdd = (fish) => {
+  const handleAdd = fish => {
     addItem({ id: fish.id, name: fish.name, price: fish.price, unit: fish.unit, quantity: 1, fish_id: fish.id })
     pushToast({ title: `${fish.name} savatchaga qo'shildi ✅`, variant: 'success' })
   }
 
   return (
-    <div className="space-y-6">
-      <section className="glass-card p-6">
-        <h2 className="text-3xl font-black">Baliqlar katalogi</h2>
-        <p className="mt-2 text-slate-500">Narx, vazn va ferma bo'yicha qidiruv.</p>
-        <div className="mt-5 flex gap-3 flex-wrap">
-          <div className="relative flex-1 min-w-48">
-            <Search className="absolute left-4 top-3.5 h-4 w-4 text-slate-400" />
-            <input
-              className="soft-input pl-10 w-full"
-              placeholder="Baliq nomi bo'yicha qidirish"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+    <div className="space-y-5 animate-fade-in">
+
+      {/* Header */}
+      <div className="glass-card p-5">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Baliqlar katalogi</h2>
+            <p className="text-[14px] text-slate-400 mt-0.5">
+              {isLoading ? 'Yuklanmoqda...' : `${fishList.length} ta baliq topildi`}
+            </p>
           </div>
-          {categories.length > 0 && (
-            <select
-              className="soft-input"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">Barcha kategoriyalar</option>
-              {categories.map((c) => <option key={c}>{c}</option>)}
-            </select>
-          )}
+          <div className="flex flex-wrap gap-2.5 flex-1 justify-end min-w-0 max-w-sm">
+            <div className="relative flex-1 min-w-[160px]">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <input
+                className="soft-input h-10 pl-9 w-full text-[13.5px]"
+                placeholder="Qidirish..."
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            {categories.length > 0 && (
+              <select
+                className="soft-input h-10 text-[13.5px] min-w-[140px]"
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+              >
+                <option value="">Barchasi</option>
+                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            )}
+          </div>
         </div>
-      </section>
+
+        {/* Category pills */}
+        {categories.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              onClick={() => setCategory('')}
+              className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all ${!category ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/[0.1]'}`}
+            >Barchasi</button>
+            {categories.map(c => (
+              <button key={c} onClick={() => setCategory(c)}
+                className={`rounded-full px-3.5 py-1.5 text-[12px] font-semibold transition-all ${category === c ? 'bg-sky-500 text-white shadow-md shadow-sky-500/25' : 'bg-slate-100 dark:bg-white/[0.06] text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/[0.1]'}`}
+              >{c}</button>
+            ))}
+          </div>
+        )}
+      </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {[...Array(8)].map((_, i) => <div key={i} className="glass-card h-64 animate-pulse" />)}
+        <CardSkeleton count={8} />
+      ) : fishList.length === 0 ? (
+        <div className="glass-card flex flex-col items-center justify-center py-20 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-white/[0.05]">
+            <span className="text-4xl">🐟</span>
+          </div>
+          <p className="text-[16px] font-bold text-slate-500">Baliq topilmadi</p>
+          <p className="mt-1 text-[13px] text-slate-400">Boshqa kalit so'z bilan qidiring</p>
+          <button onClick={() => { setSearch(''); setCategory('') }} className="secondary-button mt-4">Tozalash</button>
         </div>
-      ) : data.length === 0 ? (
-        <div className="glass-card p-12 text-center text-slate-500">Baliq topilmadi</div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {(Array.isArray(data) ? data : []).map((fish) => (
-            <FishCard
-              key={fish.id}
-              fish={fish}
-              onAdd={handleAdd}
-              onDetail={(id) => navigate(`/customer/product/${id}`)}
-            />
+          {fishList.map(fish => (
+            <FishCard key={fish.id} fish={fish} onAdd={handleAdd} onDetail={id => navigate(`/customer/product/${id}`)} />
           ))}
         </div>
       )}

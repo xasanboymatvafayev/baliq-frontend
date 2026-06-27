@@ -322,88 +322,229 @@ export function FarmOrders() { return <OrdersPage title="Ferma buyurtmalari" /> 
 export function FarmChat() { return <ChatPage title="Ferma chat" /> }
 export function FarmProfile() { return <ProfilePage /> }
 
-// ===== FARM REPORTS — Soliq hisob-kitobi =====
+// ===== FARM REPORTS — PRO darajada hisobotlar =====
 import { formatCurrency, formatNumber, calcFarmRevenue } from '../../utils/formatters.js'
+import {
+  AreaChart, Area, BarChart, Bar, CartesianGrid, XAxis, YAxis,
+  Tooltip, ResponsiveContainer, Cell,
+} from 'recharts'
+import { TrendingUp, DollarSign, Receipt, PiggyBank, ArrowUpRight } from 'lucide-react'
+
+const fmtM = v => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}K` : v
+
+function ReportTooltip({ active, payload, label }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-2xl border border-black/[0.06] dark:border-white/[0.08] bg-white dark:bg-[#0d1829] p-3 shadow-float text-[13px]">
+      <p className="font-bold text-slate-600 dark:text-slate-300 mb-1">{label}</p>
+      {payload.map(p => (
+        <p key={p.dataKey} className="flex items-center gap-2 mt-0.5">
+          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
+          <span className="text-slate-400">{p.name}:</span>
+          <span className="font-bold text-slate-800 dark:text-white">{formatCurrency(p.value)}</span>
+        </p>
+      ))}
+    </div>
+  )
+}
 
 export function FarmReports() {
   usePageTitle('Hisobotlar')
-  const { data: ordersRaw } = useQuery({
+  const { data: ordersRaw, isLoading } = useQuery({
     queryKey: ['farm-orders-report'],
     queryFn: () => httpClient.get('/orders?limit=200'),
   })
-  const orders = (ordersRaw?.data || ordersRaw || []).filter(
-    (o) => o.status === 'DELIVERED'
-  )
+  const orders = (ordersRaw?.data || ordersRaw || []).filter(o => o.status === 'DELIVERED')
 
   const totals = useMemo(() => {
     const gross = orders.reduce((s, o) => s + (o.total || 0), 0)
     return calcFarmRevenue(gross)
   }, [orders])
 
-  return (
-    <div className="space-y-6">
-      <section className="glass-card p-6">
-        <h2 className="text-3xl font-black">Hisobotlar</h2>
-        <p className="mt-2 text-slate-500">Yetkazilgan buyurtmalar asosida hisob-kitob</p>
-      </section>
+  // Oylik statistika
+  const monthly = useMemo(() => {
+    const map = {}
+    orders.forEach(o => {
+      const d = new Date(o.created_at)
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+      const label = d.toLocaleDateString('uz-UZ', { month: 'short', year: '2-digit' })
+      if (!map[key]) map[key] = { name: label, gross: 0, net: 0, count: 0 }
+      const r = calcFarmRevenue(o.total || 0)
+      map[key].gross += r.gross
+      map[key].net   += r.net
+      map[key].count += 1
+    })
+    return Object.values(map).slice(-6)
+  }, [orders])
 
-      {/* Soliq hisob-kitobi kartasi */}
-      <div className="glass-card p-6 space-y-4">
-        <h3 className="font-black text-lg">💰 Daromad va soliq hisob-kitobi</h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <div className="rounded-2xl bg-ocean-50 dark:bg-ocean-900/20 p-4">
-            <p className="text-xs font-bold uppercase text-slate-500 mb-1">Umumiy sotuv</p>
-            <p className="text-2xl font-black text-ocean-700 dark:text-ocean-300">{formatCurrency(totals.gross)}</p>
-          </div>
-          <div className="rounded-2xl bg-rose-50 dark:bg-rose-900/20 p-4">
-            <p className="text-xs font-bold uppercase text-slate-500 mb-1">Soliq (12%)</p>
-            <p className="text-2xl font-black text-rose-600 dark:text-rose-400">− {formatCurrency(totals.tax)}</p>
-          </div>
-          <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 p-4 border-2 border-green-300 dark:border-green-700">
-            <p className="text-xs font-bold uppercase text-slate-500 mb-1">Sof daromad</p>
-            <p className="text-2xl font-black text-green-700 dark:text-green-300">{formatCurrency(totals.net)}</p>
-          </div>
+  const STATS = [
+    { label: 'Umumiy sotuv',  value: totals.gross, icon: DollarSign, tone: 'from-sky-500 to-blue-600',       glow: 'rgba(14,165,233,0.2)',  soft: 'bg-sky-50 dark:bg-sky-500/10',      text: 'text-sky-600 dark:text-sky-400' },
+    { label: 'Soliq (12%)',   value: totals.tax,   icon: Receipt,    tone: 'from-rose-500 to-pink-600',       glow: 'rgba(244,63,94,0.2)',   soft: 'bg-rose-50 dark:bg-rose-500/10',    text: 'text-rose-600 dark:text-rose-400' },
+    { label: 'Sof daromad',   value: totals.net,   icon: PiggyBank,  tone: 'from-emerald-500 to-teal-600',   glow: 'rgba(16,185,129,0.2)',  soft: 'bg-emerald-50 dark:bg-emerald-500/10', text: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Buyurtmalar',   value: orders.length, icon: TrendingUp, tone: 'from-amber-500 to-orange-500',  glow: 'rgba(245,158,11,0.2)',  soft: 'bg-amber-50 dark:bg-amber-500/10',  text: 'text-amber-600 dark:text-amber-400', count: true },
+  ]
+
+  return (
+    <div className="space-y-5 animate-fade-in">
+
+      {/* Header */}
+      <div className="glass-card p-6 flex items-center gap-5">
+        <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25">
+          <TrendingUp className="h-7 w-7" />
         </div>
-        <p className="text-xs text-slate-400">
-          * Hisoblash: Umumiy sotuv × 12% = Soliq. Sof daromad = Umumiy sotuv − Soliq.
-          Masalan: {formatCurrency(360000)} → Soliq: {formatCurrency(43200)} → Sof: {formatCurrency(316800)}
-        </p>
+        <div>
+          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Moliyaviy hisobot</h2>
+          <p className="text-[14px] text-slate-400 mt-0.5">Yetkazilgan buyurtmalar asosida daromad va soliq hisob-kitobi</p>
+        </div>
       </div>
 
-      {/* Buyurtmalar jadvali */}
-      <div className="glass-card overflow-hidden">
-        <div className="p-4 border-b border-slate-200 dark:border-white/10">
-          <h4 className="font-bold">Yetkazilgan buyurtmalar ({orders.length} ta)</h4>
+      {/* Stat cards */}
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {STATS.map(s => {
+          const Icon = s.icon
+          return (
+            <div key={s.label} className="glass-card p-5">
+              <div className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br ${s.tone} text-white shadow-lg mb-4`} style={{ boxShadow: `0 4px 14px ${s.glow}` }}>
+                <Icon className="h-5 w-5" />
+              </div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 mb-1">{s.label}</p>
+              <p className="text-[24px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">
+                {s.count ? s.value.toLocaleString() : formatCurrency(s.value)}
+              </p>
+              <div className={`mt-3 h-0.5 w-full rounded-full bg-gradient-to-r ${s.tone} opacity-30`} />
+            </div>
+          )
+        })}
+      </div>
+
+      {/* Charts row */}
+      <div className="grid gap-4 xl:grid-cols-2">
+
+        {/* Area chart — oylik daromad */}
+        <div className="glass-card p-5">
+          <div className="mb-4">
+            <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Oylik daromad</h3>
+            <p className="text-[12px] text-slate-400 mt-0.5">Umumiy sotuv va sof daromad taqqoslama</p>
+          </div>
+          {monthly.length === 0 ? (
+            <div className="h-[220px] flex items-center justify-center">
+              <p className="text-[13px] text-slate-400">Ma'lumot yetarli emas</p>
+            </div>
+          ) : (
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthly} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="gGross" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#0ea5e9" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="gNet" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#10b981" stopOpacity={0.25} />
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis tickFormatter={fmtM} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip content={<ReportTooltip />} />
+                  <Area type="monotone" dataKey="gross" name="Umumiy sotuv" stroke="#0ea5e9" strokeWidth={2} fill="url(#gGross)" dot={false} activeDot={{ r: 4 }} />
+                  <Area type="monotone" dataKey="net"   name="Sof daromad"  stroke="#10b981" strokeWidth={2} fill="url(#gNet)"   dot={false} activeDot={{ r: 4 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
+
+        {/* Bar chart — oylik buyurtmalar */}
+        <div className="glass-card p-5">
+          <div className="mb-4">
+            <h3 className="text-[15px] font-bold text-slate-800 dark:text-white">Oylik buyurtmalar</h3>
+            <p className="text-[12px] text-slate-400 mt-0.5">Har oyda yetkazilgan buyurtmalar soni</p>
+          </div>
+          {monthly.length === 0 ? (
+            <div className="h-[220px] flex items-center justify-center">
+              <p className="text-[13px] text-slate-400">Ma'lumot yetarli emas</p>
+            </div>
+          ) : (
+            <div className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthly} margin={{ top: 4, right: 4, left: -20, bottom: 0 }} barSize={28}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
+                  <Tooltip formatter={v => [v, 'Buyurtmalar']} contentStyle={{ borderRadius: 14, fontSize: 13 }} />
+                  <Bar dataKey="count" name="Buyurtmalar" radius={[8, 8, 0, 0]}>
+                    {monthly.map((_, i) => (
+                      <Cell key={i} fill={`rgba(14,165,233,${0.5 + (i / monthly.length) * 0.5})`} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="glass-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-black/[0.04] dark:border-white/[0.04]">
+          <div>
+            <h4 className="text-[15px] font-bold text-slate-800 dark:text-white">Buyurtmalar ro'yxati</h4>
+            <p className="text-[12px] text-slate-400 mt-0.5">{orders.length} ta yetkazilgan buyurtma</p>
+          </div>
+          <span className="badge badge-green">{orders.length} ta</span>
+        </div>
+
         {orders.length === 0 ? (
-          <div className="p-8 text-center text-slate-500">Hali yetkazilgan buyurtma yo'q</div>
+          <div className="flex flex-col items-center justify-center py-16 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 dark:bg-white/[0.05] mb-4">
+              <Receipt className="h-6 w-6 text-slate-400" />
+            </div>
+            <p className="text-[15px] font-semibold text-slate-500">Hali yetkazilgan buyurtma yo'q</p>
+            <p className="text-[13px] text-slate-400 mt-1">Buyurtmalar yetkazilganidan keyin bu yerda ko'rinadi</p>
+          </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 dark:border-white/10">
-              <tr className="text-left text-xs font-bold uppercase text-slate-500">
-                <th className="p-4">ID</th>
-                <th className="p-4">Umumiy</th>
-                <th className="p-4">Soliq (12%)</th>
-                <th className="p-4">Sof</th>
-                <th className="p-4 hidden sm:table-cell">Sana</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {orders.map((o) => {
-                const r = calcFarmRevenue(o.total)
-                return (
-                  <tr key={o.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                    <td className="p-4 font-mono text-xs">#{o.id?.slice(-6)}</td>
-                    <td className="p-4 font-bold">{formatCurrency(r.gross)}</td>
-                    <td className="p-4 text-rose-500">− {formatCurrency(r.tax)}</td>
-                    <td className="p-4 font-black text-green-700 dark:text-green-400">{formatCurrency(r.net)}</td>
-                    <td className="p-4 text-slate-500 hidden sm:table-cell">{new Date(o.created_at).toLocaleDateString('uz')}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Umumiy sotuv</th>
+                  <th>Soliq (12%)</th>
+                  <th>Sof daromad</th>
+                  <th className="hidden sm:table-cell">Sana</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map(o => {
+                  const r = calcFarmRevenue(o.total)
+                  return (
+                    <tr key={o.id}>
+                      <td><span className="font-mono text-[12px] font-semibold text-slate-500">#{o.id?.slice(-6)}</span></td>
+                      <td><span className="font-semibold text-slate-800 dark:text-slate-200">{formatCurrency(r.gross)}</span></td>
+                      <td><span className="text-rose-500 font-medium">−{formatCurrency(r.tax)}</span></td>
+                      <td><span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(r.net)}</span></td>
+                      <td className="hidden sm:table-cell"><span className="text-slate-400 text-[13px]">{new Date(o.created_at).toLocaleDateString('uz-UZ')}</span></td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
+      </div>
+
+      {/* Formula note */}
+      <div className="glass-card px-5 py-4 flex items-start gap-3">
+        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-amber-50 dark:bg-amber-500/10">
+          <Receipt className="h-4 w-4 text-amber-500" />
+        </div>
+        <p className="text-[13px] text-slate-500 dark:text-slate-500 leading-relaxed">
+          <span className="font-semibold text-slate-700 dark:text-slate-400">Soliq formulasi:</span>{' '}
+          Umumiy sotuv × 12% = Soliq · Sof daromad = Umumiy sotuv − Soliq.
+          Masalan: {formatCurrency(360_000)} → Soliq: {formatCurrency(43_200)} → Sof: {formatCurrency(316_800)}
+        </p>
       </div>
     </div>
   )
