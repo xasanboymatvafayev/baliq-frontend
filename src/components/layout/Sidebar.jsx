@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom'
-import { Fish, X, LogOut } from 'lucide-react'
+import { Fish, X, LogOut, ChevronRight } from 'lucide-react'
 import { cn } from '../../utils/cn.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
@@ -23,40 +23,60 @@ export function Sidebar({ navigation, open, onClose }) {
     : 'BS'
 
   const roleLabels = {
-    customer: 'Mijoz', 'farm-owner': 'Ferma egasi', driver: 'Haydovchi',
-    admin: 'Admin', manager: 'Menejer', 'super-admin': 'Super Admin',
+    customer: 'Mijoz',
+    'farm-owner': 'Ferma egasi',
+    driver: 'Haydovchi',
+    admin: 'Administrator',
+    manager: 'Menejer',
+    'super-admin': 'Super Admin',
+  }
+
+  const roleColors = {
+    customer: 'from-sky-500 to-blue-600',
+    'farm-owner': 'from-emerald-500 to-teal-600',
+    driver: 'from-orange-500 to-amber-600',
+    admin: 'from-purple-500 to-violet-600',
+    manager: 'from-rose-500 to-pink-600',
+    'super-admin': 'from-red-500 to-orange-600',
   }
 
   return (
     <>
       {/* Overlay */}
       <div
-        className={cn('fixed inset-0 z-30 bg-black/60 backdrop-blur-sm lg:hidden transition-opacity',
-          open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none')}
+        className={cn(
+          'fixed inset-0 z-30 lg:hidden transition-all duration-300',
+          open ? 'bg-black/50 backdrop-blur-sm pointer-events-auto' : 'bg-transparent pointer-events-none opacity-0',
+        )}
         onClick={onClose}
       />
 
       <aside className={cn(
-        'fixed inset-y-0 left-0 z-40 flex w-72 flex-col transition-transform duration-300 ease-out lg:static lg:translate-x-0',
-        'border-r border-white/[0.07] bg-[#07101e]',
+        'fixed inset-y-0 left-0 z-40 flex flex-col transition-transform duration-300 ease-out lg:static lg:translate-x-0',
+        'w-[260px]',
         open ? 'translate-x-0' : '-translate-x-full',
-      )}>
+      )}
+        style={{ background: 'linear-gradient(180deg, #080f1e 0%, #060c17 100%)', borderRight: '1px solid rgba(255,255,255,0.05)' }}
+      >
+
         {/* Logo */}
-        <div className="flex h-[72px] items-center justify-between px-5 border-b border-white/[0.06]">
+        <div className="flex h-[68px] items-center justify-between px-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
           <div className="flex items-center gap-3">
-            <div className="rounded-2xl bg-gradient-to-br from-ocean-500 to-ocean-700 p-2.5 shadow-glow-sm">
-              <Fish className="h-5 w-5 text-white" />
+            <div className="relative flex h-9 w-9 items-center justify-center rounded-2xl" style={{ background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', boxShadow: '0 4px 12px rgba(14,165,233,0.4)' }}>
+              <Fish className="h-4.5 w-4.5 text-white" />
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-[#080f1e]" />
             </div>
             <div>
-              <p className="text-[15px] font-black text-white leading-tight">Baliq Savdosi</p>
-              <p className="text-[10px] text-slate-500 font-medium tracking-wide">Enterprise Platform</p>
+              <p className="text-[14px] font-bold text-white leading-tight tracking-tight">Baliq Savdosi</p>
+              <p className="text-[10px] font-medium tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>Platform</p>
             </div>
           </div>
           <button
-            className="lg:hidden rounded-xl p-1.5 text-slate-500 hover:bg-white/10 hover:text-white transition"
+            className="lg:hidden flex h-7 w-7 items-center justify-center rounded-xl transition"
+            style={{ color: 'rgba(255,255,255,0.4)' }}
             onClick={onClose}
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
@@ -68,46 +88,57 @@ export function Sidebar({ navigation, open, onClose }) {
               to={item.to}
               onClick={onClose}
               className={({ isActive }) => cn(
-                'flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold transition-all duration-150',
+                'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150',
                 isActive
-                  ? 'bg-ocean-600 text-white shadow-glow-sm'
-                  : 'text-slate-400 hover:bg-white/[0.06] hover:text-white',
+                  ? 'text-white'
+                  : 'hover:text-white',
               )}
+              style={({ isActive }) => isActive
+                ? { background: 'linear-gradient(135deg, rgba(14,165,233,0.2), rgba(14,165,233,0.08))', border: '1px solid rgba(14,165,233,0.2)', color: '#38bdf8' }
+                : { color: 'rgba(255,255,255,0.45)', border: '1px solid transparent' }
+              }
             >
               {({ isActive }) => (
                 <>
-                  <div className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-xl transition-colors',
-                    isActive ? 'bg-white/20' : 'bg-white/[0.04]',
-                  )}>
-                    <item.icon className="h-4 w-4" />
+                  <div
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all"
+                    style={isActive
+                      ? { background: 'rgba(14,165,233,0.25)', color: '#38bdf8' }
+                      : { background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.4)' }
+                    }
+                  >
+                    <item.icon className="h-3.5 w-3.5" />
                   </div>
-                  {item.label}
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {isActive && <ChevronRight className="h-3 w-3 opacity-60" />}
                 </>
               )}
             </NavLink>
           ))}
         </nav>
 
-        {/* User va logout */}
-        <div className="px-3 pb-5 pt-3 border-t border-white/[0.06]">
+        {/* User card */}
+        <div className="px-3 pb-4 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           {user && (
-            <div className="flex items-center gap-3 rounded-2xl px-3 py-3 mb-2 bg-white/[0.04]">
-              <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 flex items-center justify-center text-xs font-black text-white shrink-0">
+            <div className="mb-2 flex items-center gap-3 rounded-xl px-3 py-2.5" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-[11px] font-bold text-white ${roleColors[role] || 'from-sky-500 to-blue-600'}`}>
                 {initials}
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-white truncate">{user.firstName} {user.lastName}</p>
-                <p className="text-xs text-slate-500 truncate">{roleLabels[role] || role}</p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold text-white leading-tight">{user.firstName} {user.lastName}</p>
+                <p className="truncate text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{roleLabels[role] || role}</p>
               </div>
             </div>
           )}
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-slate-400 transition hover:bg-rose-500/10 hover:text-rose-400"
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-150 hover:text-rose-400"
+            style={{ color: 'rgba(255,255,255,0.35)', border: '1px solid transparent' }}
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.08)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.15)' }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = 'transparent' }}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/[0.04]">
-              <LogOut className="h-4 w-4" />
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg" style={{ background: 'rgba(255,255,255,0.05)' }}>
+              <LogOut className="h-3.5 w-3.5" />
             </div>
             Tizimdan chiqish
           </button>

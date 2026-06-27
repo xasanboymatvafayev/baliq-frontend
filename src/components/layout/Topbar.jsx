@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { Menu, Search, LogOut, X, Fish, Store, ExternalLink } from 'lucide-react'
+import { Menu, Search, X, Fish, Store, ExternalLink, Bell } from 'lucide-react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { ThemeToggle } from '../common/ThemeToggle.jsx'
 import { NotificationBell } from '../common/NotificationBell.jsx'
@@ -21,12 +21,10 @@ function SearchDropdown({ query, onClose, role }) {
   const [results, setResults] = useState({ fish: [], farms: [] })
   const [loading, setLoading] = useState(false)
   const debouncedQ = useDebounce(query)
+  const isCustomer = ['customer', 'farm-owner'].includes(role)
 
   useEffect(() => {
-    if (!debouncedQ || debouncedQ.length < 2) {
-      setResults({ fish: [], farms: [] })
-      return
-    }
+    if (!debouncedQ || debouncedQ.length < 2) { setResults({ fish: [], farms: [] }); return }
     setLoading(true)
     Promise.allSettled([
       httpClient.get(`/fish?search=${encodeURIComponent(debouncedQ)}&limit=5`),
@@ -43,43 +41,44 @@ function SearchDropdown({ query, onClose, role }) {
   }, [debouncedQ])
 
   const total = results.fish.length + results.farms.length
-  const isCustomer = ['customer', 'farm-owner'].includes(role)
-
   const goTo = (path) => { navigate(path); onClose() }
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 z-50 glass-card overflow-hidden shadow-xl border border-slate-200/80 dark:border-white/[0.06] max-h-[70vh] overflow-y-auto">
+    <div
+      className="absolute top-full left-0 right-0 mt-2 z-50 overflow-hidden animate-scale-in"
+      style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: '16px', boxShadow: '0 8px 40px rgba(0,0,0,0.12)', maxHeight: '70vh', overflowY: 'auto' }}
+    >
       {loading && (
-        <div className="p-4 flex items-center gap-3">
-          <div className="h-4 w-4 rounded-full border-2 border-ocean-500 border-t-transparent animate-spin" />
-          <span className="text-sm text-slate-500">Qidirilmoqda...</span>
+        <div className="flex items-center gap-3 p-4">
+          <div className="h-4 w-4 rounded-full border-2 border-sky-500 border-t-transparent animate-spin" />
+          <span className="text-sm text-slate-400">Qidirilmoqda...</span>
         </div>
       )}
 
       {!loading && debouncedQ.length >= 2 && total === 0 && (
-        <div className="p-6 text-center">
-          <p className="text-sm font-semibold text-slate-500">"{debouncedQ}" bo'yicha natija topilmadi</p>
+        <div className="p-8 text-center">
+          <p className="text-sm font-semibold text-slate-400">"{debouncedQ}" bo'yicha natija topilmadi</p>
         </div>
       )}
 
       {!loading && results.fish.length > 0 && (
         <div>
-          <p className="px-4 pt-3 pb-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Baliqlar</p>
+          <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">🐟 Baliqlar</p>
           {results.fish.map((fish) => (
             <button
               key={fish.id}
               onClick={() => goTo(isCustomer ? `/customer/product/${fish.id}` : `/farm/fish`)}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition"
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-slate-50"
             >
               {fish.image_url
                 ? <img src={fish.image_url} alt={fish.name} className="h-9 w-9 rounded-xl object-cover flex-shrink-0" />
-                : <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-ocean-100 dark:bg-ocean-900/30 flex-shrink-0">
-                    <Fish className="h-4 w-4 text-ocean-600" />
+                : <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: 'rgba(14,165,233,0.1)' }}>
+                    <Fish className="h-4 w-4 text-sky-500" />
                   </div>
               }
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-sm truncate">{fish.name}</p>
-                <p className="text-xs text-slate-500">{fish.price?.toLocaleString()} so'm/kg · {fish.category}</p>
+                <p className="text-sm font-semibold text-slate-800 truncate">{fish.name}</p>
+                <p className="text-xs text-slate-400">{fish.price?.toLocaleString()} so'm/kg</p>
               </div>
               <ExternalLink className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
             </button>
@@ -88,20 +87,20 @@ function SearchDropdown({ query, onClose, role }) {
       )}
 
       {!loading && results.farms.length > 0 && (
-        <div>
-          <p className="px-4 pt-3 pb-1 text-[10px] font-black uppercase tracking-widest text-slate-400">Fermalar</p>
+        <div style={{ borderTop: results.fish.length > 0 ? '1px solid #f1f5f9' : 'none' }}>
+          <p className="px-4 pt-3 pb-1 text-[10px] font-bold uppercase tracking-widest text-slate-400">🏡 Fermalar</p>
           {results.farms.map((farm) => (
             <button
               key={farm.id}
-              onClick={() => goTo(`/customer/farms`)}
-              className="flex w-full items-center gap-3 px-4 py-2.5 text-left hover:bg-slate-50 dark:hover:bg-white/[0.04] transition"
+              onClick={() => goTo('/customer/farms')}
+              className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition hover:bg-slate-50"
             >
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30 flex-shrink-0">
-                <Store className="h-4 w-4 text-emerald-600" />
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl flex-shrink-0" style={{ background: 'rgba(16,185,129,0.1)' }}>
+                <Store className="h-4 w-4 text-emerald-500" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-sm truncate">{farm.farmName || farm.name}</p>
-                <p className="text-xs text-slate-500">{farm.region}, {farm.district}</p>
+                <p className="text-sm font-semibold text-slate-800 truncate">{farm.farmName || farm.name}</p>
+                <p className="text-xs text-slate-400">{farm.region}, {farm.district}</p>
               </div>
               <ExternalLink className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
             </button>
@@ -110,10 +109,10 @@ function SearchDropdown({ query, onClose, role }) {
       )}
 
       {!loading && total > 0 && isCustomer && (
-        <div className="border-t border-slate-100 dark:border-white/5 p-2">
+        <div style={{ borderTop: '1px solid #f1f5f9' }}>
           <button
-            onClick={() => goTo(`/customer/fish-catalog`)}
-            className="w-full rounded-xl px-4 py-2 text-sm font-semibold text-ocean-600 hover:bg-ocean-50 dark:hover:bg-ocean-900/20 transition text-center"
+            onClick={() => goTo('/customer/fish-catalog')}
+            className="w-full px-4 py-3 text-sm font-semibold text-sky-600 transition hover:bg-sky-50 text-center"
           >
             Barcha katalogni ko'rish →
           </button>
@@ -133,23 +132,12 @@ export function Topbar({ onMenuClick, title }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocused, setSearchFocused] = useState(false)
   const searchRef = useRef(null)
-  const dropdownRef = useRef(null)
 
-  // Reset search on route change
-  useEffect(() => {
-    setSearchQuery('')
-    setSearchFocused(false)
-  }, [location.pathname])
+  useEffect(() => { setSearchQuery(''); setSearchFocused(false) }, [location.pathname])
 
-  // Close dropdown on outside click
   useEffect(() => {
     const handler = (e) => {
-      if (
-        searchRef.current && !searchRef.current.contains(e.target) &&
-        dropdownRef.current && !dropdownRef.current.contains(e.target)
-      ) {
-        setSearchFocused(false)
-      }
+      if (searchRef.current && !searchRef.current.contains(e.target)) setSearchFocused(false)
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
@@ -164,12 +152,6 @@ export function Topbar({ onMenuClick, title }) {
     'super-admin': '/super-admin/system-settings',
   }
 
-  const handleLogout = () => {
-    logout()
-    pushToast({ title: 'Tizimdan chiqildi', variant: 'success' })
-    navigate('/login')
-  }
-
   const initials = user
     ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}`.toUpperCase()
     : 'BS'
@@ -177,78 +159,67 @@ export function Topbar({ onMenuClick, title }) {
   const showDropdown = searchFocused && searchQuery.length >= 2
 
   return (
-    <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/80 px-4 py-3 backdrop-blur-xl dark:border-white/[0.06] dark:bg-[#07101e]/90 sm:px-6">
-      <div className="flex items-center gap-3">
-        {/* Mobile menu */}
-        <button
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:bg-slate-50 dark:border-white/10 dark:bg-white/5 dark:text-slate-400 lg:hidden"
-          onClick={onMenuClick}
-          aria-label="Menyu"
-        >
-          <Menu className="h-4.5 w-4.5" />
-        </button>
+    <header
+      className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 sm:px-6"
+      style={{
+        background: 'rgba(240,244,248,0.92)',
+        backdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(0,0,0,0.05)',
+      }}
+    >
+      {/* Mobile menu */}
+      <button
+        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl transition lg:hidden"
+        style={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', color: '#64748b' }}
+        onClick={onMenuClick}
+      >
+        <Menu className="h-4 w-4" />
+      </button>
 
-        {/* Title */}
-        <div className="min-w-0 flex-1">
-          <h1 className="truncate text-lg font-black tracking-tight text-slate-900 dark:text-white sm:text-xl">
-            {title}
-          </h1>
-        </div>
+      {/* Title */}
+      <h1 className="flex-shrink-0 text-[17px] font-bold tracking-tight text-slate-800 hidden sm:block">{title}</h1>
 
-        {/* Search */}
-        <div className="relative hidden max-w-52 flex-1 md:block lg:max-w-xs" ref={searchRef}>
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none z-10" />
-          <input
-            className="h-9 w-full rounded-xl border border-slate-200 bg-slate-50 pl-9 pr-8 text-sm outline-none transition
-                       focus:border-ocean-400 focus:bg-white focus:ring-2 focus:ring-ocean-100
-                       dark:border-white/10 dark:bg-white/5 dark:focus:bg-white/10 dark:focus:ring-ocean-900/40"
-            placeholder="Qidirish..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => { setSearchQuery(''); setSearchFocused(false) }}
-              className="absolute right-2 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full hover:bg-slate-200 dark:hover:bg-white/10 transition"
-            >
-              <X className="h-3 w-3 text-slate-400" />
-            </button>
-          )}
-          {showDropdown && (
-            <div ref={dropdownRef}>
-              <SearchDropdown
-                query={searchQuery}
-                onClose={() => { setSearchQuery(''); setSearchFocused(false) }}
-                role={role}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Right buttons */}
-        <div className="flex items-center gap-1.5">
-          <ThemeToggle />
-          <NotificationBell />
-
-          {/* Avatar */}
-          <Link
-            to={profileRoutes[role] || '/customer/profile'}
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 text-xs font-black text-white shadow-glow-sm transition hover:shadow-glow hover:scale-105"
-            title={user ? `${user.firstName} ${user.lastName}` : 'Profil'}
-          >
-            {initials}
-          </Link>
-
-          {/* Logout */}
+      {/* Search */}
+      <div className="relative flex-1 max-w-xs ml-auto sm:ml-4" ref={searchRef}>
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 z-10" />
+        <input
+          className="h-9 w-full rounded-xl pl-9 pr-8 text-[13px] outline-none transition-all"
+          style={{
+            background: '#fff',
+            border: '1.5px solid rgba(0,0,0,0.08)',
+            color: '#0f172a',
+            fontFamily: 'inherit',
+          }}
+          placeholder="Qidirish..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          onFocus={() => setSearchFocused(true)}
+        />
+        {searchQuery && (
           <button
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-500 dark:border-white/10 dark:bg-white/5 dark:hover:bg-rose-900/20 dark:hover:text-rose-400"
-            onClick={handleLogout}
-            title="Tizimdan chiqish"
+            onClick={() => { setSearchQuery(''); setSearchFocused(false) }}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full transition hover:bg-slate-100"
           >
-            <LogOut className="h-4 w-4" />
+            <X className="h-3 w-3 text-slate-400" />
           </button>
-        </div>
+        )}
+        {showDropdown && (
+          <SearchDropdown query={searchQuery} onClose={() => { setSearchQuery(''); setSearchFocused(false) }} role={role} />
+        )}
+      </div>
+
+      {/* Right side */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <ThemeToggle />
+        <NotificationBell />
+
+        <Link
+          to={profileRoutes[role] || '/customer/profile'}
+          className="flex h-9 w-9 items-center justify-center rounded-xl text-[12px] font-bold text-white transition hover:scale-105"
+          style={{ background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', boxShadow: '0 2px 8px rgba(14,165,233,0.3)' }}
+        >
+          {initials}
+        </Link>
       </div>
     </header>
   )
