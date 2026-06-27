@@ -2,26 +2,12 @@ import { Moon, Sun } from 'lucide-react'
 import { useThemeStore } from '../../store/themeStore.js'
 
 export function ThemeToggle() {
-  const theme = useThemeStore(s=>s.theme)
-  const toggle = useThemeStore(s=>s.toggleTheme)
+  const theme  = useThemeStore(s => s.theme)
+  const toggle = useThemeStore(s => s.toggleTheme)
   return (
-    <button
-      onClick={toggle}
-      aria-label="Mavzuni almashtirish"
-      style={{
-        width:36, height:36, borderRadius:10,
-        border:'1.5px solid var(--border)',
-        background:'var(--surface)',
-        color:'var(--text-2)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        cursor:'pointer', transition:'all 0.15s', flexShrink:0,
-      }}
-      onMouseEnter={e=>{e.currentTarget.style.borderColor='rgba(14,165,233,0.35)';e.currentTarget.style.color='var(--brand)'}}
-      onMouseLeave={e=>{e.currentTarget.style.borderColor='var(--border)';e.currentTarget.style.color='var(--text-2)'}}
-    >
-      {theme==='dark'
-        ? <Sun  style={{ width:16, height:16 }}/>
-        : <Moon style={{ width:16, height:16 }}/>}
+    <button onClick={toggle} aria-label="Mavzuni almashtirish"
+      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] text-slate-500 dark:text-slate-400 hover:border-ocean-300 dark:hover:border-ocean-600/40 hover:text-ocean-600 dark:hover:text-ocean-400 transition-colors">
+      {theme === 'dark' ? <Sun className="h-[15px] w-[15px]" /> : <Moon className="h-[15px] w-[15px]" />}
     </button>
   )
 }

@@ -3,34 +3,20 @@ import { Link } from 'react-router-dom'
 export function AuthFormShell({ title, description, children, footer }) {
   return (
     <div className="animate-scale-in">
-      <div style={{ marginBottom:24 }}>
-        <h2 style={{ fontSize:24, fontWeight:800, color:'#f0f6ff', letterSpacing:'-0.02em', margin:0 }}>{title}</h2>
-        {description && <p style={{ marginTop:6, fontSize:14, color:'rgba(255,255,255,0.4)', lineHeight:1.6 }}>{description}</p>}
+      <div className="mb-6">
+        <h2 className="text-[22px] font-black text-white tracking-tight">{title}</h2>
+        {description && <p className="mt-1.5 text-[14px] leading-relaxed text-white/40">{description}</p>}
       </div>
-
-      <div>{children}</div>
-
-      {footer && (
-        <div style={{ marginTop:20, textAlign:'center', fontSize:13.5, color:'rgba(255,255,255,0.38)' }}>{footer}</div>
-      )}
-
-      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:16 }}>
+      {children}
+      {footer && <div className="mt-5 text-center text-[13.5px] text-white/35">{footer}</div>}
+      <div className="mt-5 grid grid-cols-2 gap-2">
         {[
-          { to:'/farm-registration',   emoji:'🏡', label:"Ferma ro'yxati" },
-          { to:'/driver-registration', emoji:'🚚', label:"Haydovchi ro'yxati" },
-        ].map(({to,emoji,label})=>(
-          <Link key={to} to={to} style={{
-            display:'flex', alignItems:'center', justifyContent:'center', gap:6,
-            padding:'9px 12px', borderRadius:10,
-            border:'1px solid rgba(255,255,255,0.08)',
-            background:'rgba(255,255,255,0.04)',
-            fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.38)',
-            textDecoration:'none', transition:'all 0.15s',
-          }}
-          onMouseEnter={e=>{e.currentTarget.style.background='rgba(14,165,233,0.08)';e.currentTarget.style.borderColor='rgba(14,165,233,0.2)';e.currentTarget.style.color='rgba(255,255,255,0.7)'}}
-          onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.04)';e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.color='rgba(255,255,255,0.38)'}}
-          >
-            {emoji} {label}
+          { to: '/farm-registration',   e: '🏡', l: "Ferma ro'yxati" },
+          { to: '/driver-registration', e: '🚚', l: "Haydovchi ro'yxati" },
+        ].map(({ to, e, l }) => (
+          <Link key={to} to={to}
+            className="flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[12px] font-semibold text-white/35 transition-all hover:border-sky-500/25 hover:bg-sky-500/[0.07] hover:text-white/65">
+            {e} {l}
           </Link>
         ))}
       </div>

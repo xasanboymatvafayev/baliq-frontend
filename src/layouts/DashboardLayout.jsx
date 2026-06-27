@@ -4,59 +4,47 @@ import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { Topbar } from '../components/layout/Topbar.jsx'
 
 function BottomNav({ navigation }) {
-  const loc = useLocation()
-  const items = navigation.slice(0, 5)
+  const { pathname } = useLocation()
   return (
-    <nav className="lg:hidden" style={{
-      position:'fixed', bottom:0, left:0, right:0, zIndex:50,
-      background:'rgba(8,15,29,0.96)', backdropFilter:'blur(24px)',
-      borderTop:'1px solid rgba(255,255,255,0.06)',
-      paddingBottom:'env(safe-area-inset-bottom)',
-      display:'flex',
-    }}>
-      {items.map(item=>{
-        const active = loc.pathname===item.to
-        return (
-          <NavLink key={item.to} to={item.to} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding:'10px 4px', textDecoration:'none' }}>
-            <div style={{
-              width:36, height:36, borderRadius:11,
-              display:'flex', alignItems:'center', justifyContent:'center',
-              transition:'all 0.2s',
-              background: active ? 'rgba(14,165,233,0.18)' : 'transparent',
-              border: active ? '1px solid rgba(14,165,233,0.22)' : '1px solid transparent',
-              color: active ? '#38bdf8' : 'rgba(255,255,255,0.3)',
-              transform: active ? 'scale(1.08)' : 'scale(1)',
-            }}>
-              <item.icon style={{ width:18, height:18 }}/>
-            </div>
-            <span style={{ fontSize:10, fontWeight:600, color: active ? '#38bdf8' : 'rgba(255,255,255,0.28)', maxWidth:52, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-              {item.label}
-            </span>
-          </NavLink>
-        )
-      })}
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-white/[0.06] bg-[#09101f]/95 backdrop-blur-xl" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+      <div className="flex">
+        {navigation.slice(0, 5).map(item => {
+          const active = pathname === item.to
+          return (
+            <NavLink key={item.to} to={item.to}
+              className="flex flex-1 flex-col items-center gap-1 py-2.5">
+              <div className={`flex h-9 w-9 items-center justify-center rounded-2xl transition-all duration-200 ${active ? 'bg-sky-500/20 border border-sky-500/25 scale-110' : 'border border-transparent'}`}>
+                <item.icon className={`h-[18px] w-[18px] transition-colors ${active ? 'text-sky-400' : 'text-white/30'}`} />
+              </div>
+              <span className={`text-[10px] font-semibold truncate max-w-[54px] text-center transition-colors ${active ? 'text-sky-400' : 'text-white/25'}`}>
+                {item.label}
+              </span>
+            </NavLink>
+          )
+        })}
+      </div>
     </nav>
   )
 }
 
 export function DashboardLayout({ navigation, title }) {
   const [open, setOpen] = useState(false)
-  const loc = useLocation()
+  const location = useLocation()
   const activeTitle = useMemo(
-    ()=>navigation.find(i=>i.to===loc.pathname)?.label||title,
-    [loc.pathname,navigation,title]
+    () => navigation.find(i => i.to === location.pathname)?.label || title,
+    [location.pathname, navigation, title]
   )
 
   return (
-    <div style={{ minHeight:'100vh', display:'flex', background:'var(--bg)' }}>
-      <Sidebar navigation={navigation} open={open} onClose={()=>setOpen(false)}/>
-      <div style={{ flex:1, minWidth:0, display:'flex', flexDirection:'column', paddingBottom:68 }} className="lg:pb-0">
-        <Topbar title={activeTitle} onMenuClick={()=>setOpen(true)}/>
-        <main className="animate-fade-in" style={{ flex:1, padding:'20px 20px 40px' }} >
-          <Outlet/>
+    <div className="min-h-screen bg-slate-50 dark:bg-[#050a14] lg:flex">
+      <Sidebar navigation={navigation} open={open} onClose={() => setOpen(false)} />
+      <div className="flex flex-1 min-w-0 flex-col pb-[68px] lg:pb-0">
+        <Topbar title={activeTitle} onMenuClick={() => setOpen(true)} />
+        <main className="flex-1 p-4 sm:p-5 lg:p-6 animate-fade-in">
+          <Outlet />
         </main>
       </div>
-      <BottomNav navigation={navigation}/>
+      <BottomNav navigation={navigation} />
     </div>
   )
 }

@@ -3,43 +3,36 @@ import { CheckCircle2, XCircle, Info, X } from 'lucide-react'
 import { useToastStore } from '../../store/toastStore.js'
 
 const CFG = {
-  success: { icon:CheckCircle2, color:'#10b981', bg:'rgba(16,185,129,0.08)', border:'rgba(16,185,129,0.2)' },
-  error:   { icon:XCircle,      color:'#ef4444', bg:'rgba(239,68,68,0.08)',   border:'rgba(239,68,68,0.2)' },
-  info:    { icon:Info,         color:'#0ea5e9', bg:'rgba(14,165,233,0.08)',  border:'rgba(14,165,233,0.2)' },
+  success: { Icon: CheckCircle2, ring: 'border-emerald-200 dark:border-emerald-500/20', iconCls: 'text-emerald-500 bg-emerald-50 dark:bg-emerald-500/10' },
+  error:   { Icon: XCircle,      ring: 'border-rose-200 dark:border-rose-500/20',    iconCls: 'text-rose-500 bg-rose-50 dark:bg-rose-500/10' },
+  info:    { Icon: Info,         ring: 'border-sky-200 dark:border-sky-500/20',      iconCls: 'text-sky-500 bg-sky-50 dark:bg-sky-500/10' },
 }
 
 export function ToastHost() {
-  const toasts = useToastStore(s => s.toasts)
+  const toasts  = useToastStore(s => s.toasts)
   const dismiss = useToastStore(s => s.dismissToast)
-  useEffect(()=>{
-    const timers = toasts.map(t => window.setTimeout(()=>dismiss(t.id), 4000))
-    return ()=>timers.forEach(window.clearTimeout)
-  },[toasts, dismiss])
+  useEffect(() => {
+    const ts = toasts.map(t => window.setTimeout(() => dismiss(t.id), 4200))
+    return () => ts.forEach(window.clearTimeout)
+  }, [toasts, dismiss])
 
   return (
-    <div style={{ position:'fixed', top:16, right:16, zIndex:999, display:'flex', flexDirection:'column', gap:8, width:320, maxWidth:'calc(100vw - 32px)' }}>
-      {toasts.map(toast=>{
-        const cfg = CFG[toast.variant] || CFG.info
-        const Icon = cfg.icon
+    <div className="fixed right-4 top-4 z-[999] flex w-[340px] max-w-[calc(100vw-32px)] flex-col gap-2.5">
+      {toasts.map(toast => {
+        const c = CFG[toast.variant] || CFG.info
         return (
-          <div key={toast.id} className="animate-toast-in" style={{
-            display:'flex', alignItems:'flex-start', gap:12, padding:'14px 16px',
-            borderRadius:14, border:`1px solid ${cfg.border}`,
-            background:'var(--surface)', backdropFilter:'blur(20px)',
-            boxShadow:'0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06)',
-          }}>
-            <div style={{ width:34, height:34, borderRadius:9, background:cfg.bg, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-              <Icon style={{ width:17, height:17, color:cfg.color }}/>
+          <div key={toast.id}
+            className={`animate-toast-in flex items-start gap-3 rounded-2xl border bg-white dark:bg-[#0d1829] p-4 shadow-float ${c.ring}`}>
+            <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl ${c.iconCls}`}>
+              <c.Icon className="h-4.5 w-4.5" />
             </div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <p style={{ fontSize:14, fontWeight:600, color:'var(--text-1)', lineHeight:1.3 }}>{toast.title}</p>
-              {toast.description && <p style={{ fontSize:13, color:'var(--text-3)', marginTop:2 }}>{toast.description}</p>}
+            <div className="flex-1 min-w-0 pt-0.5">
+              <p className="text-[14px] font-semibold text-slate-800 dark:text-slate-100">{toast.title}</p>
+              {toast.description && <p className="mt-0.5 text-[13px] text-slate-500">{toast.description}</p>}
             </div>
-            <button onClick={()=>dismiss(toast.id)} style={{ flexShrink:0, width:24, height:24, borderRadius:6, border:'none', background:'transparent', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'var(--text-3)', transition:'all 0.15s' }}
-              onMouseEnter={e=>e.currentTarget.style.background='var(--surface-2)'}
-              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
-            >
-              <X style={{ width:14, height:14 }}/>
+            <button onClick={() => dismiss(toast.id)}
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-white/[0.07] transition-colors">
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
         )

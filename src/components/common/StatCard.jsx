@@ -1,46 +1,29 @@
 const TONES = {
-  ocean:   { g:'linear-gradient(135deg,#0ea5e9,#0284c7)', glow:'rgba(14,165,233,0.22)', soft:'rgba(14,165,233,0.08)', text:'#0ea5e9' },
-  emerald: { g:'linear-gradient(135deg,#10b981,#059669)', glow:'rgba(16,185,129,0.22)', soft:'rgba(16,185,129,0.08)', text:'#10b981' },
-  amber:   { g:'linear-gradient(135deg,#f59e0b,#d97706)', glow:'rgba(245,158,11,0.22)',  soft:'rgba(245,158,11,0.08)',  text:'#f59e0b' },
-  rose:    { g:'linear-gradient(135deg,#f43f5e,#e11d48)', glow:'rgba(244,63,94,0.22)',   soft:'rgba(244,63,94,0.08)',   text:'#f43f5e' },
-  purple:  { g:'linear-gradient(135deg,#8b5cf6,#7c3aed)', glow:'rgba(139,92,246,0.22)',  soft:'rgba(139,92,246,0.08)',  text:'#8b5cf6' },
+  ocean:   { from:'from-sky-500',    to:'to-blue-600',     glow:'shadow-sky-500/25',    soft:'bg-sky-50 dark:bg-sky-500/10',    bar:'from-sky-500 to-blue-600' },
+  emerald: { from:'from-emerald-500',to:'to-teal-600',     glow:'shadow-emerald-500/25',soft:'bg-emerald-50 dark:bg-emerald-500/10', bar:'from-emerald-500 to-teal-600' },
+  amber:   { from:'from-amber-500',  to:'to-orange-500',   glow:'shadow-amber-500/25',  soft:'bg-amber-50 dark:bg-amber-500/10',  bar:'from-amber-500 to-orange-500' },
+  rose:    { from:'from-rose-500',   to:'to-pink-600',     glow:'shadow-rose-500/25',   soft:'bg-rose-50 dark:bg-rose-500/10',   bar:'from-rose-500 to-pink-600' },
+  purple:  { from:'from-purple-500', to:'to-violet-600',   glow:'shadow-purple-500/25', soft:'bg-purple-50 dark:bg-purple-500/10',bar:'from-purple-500 to-violet-600' },
 }
 
-export function StatCard({ title, value='—', description, icon:Icon, tone='ocean', trend }) {
+export function StatCard({ title, value = '—', description, icon: Icon, tone = 'ocean', trend }) {
   const t = TONES[tone] || TONES.ocean
   return (
-    <article
-      className="glass-card"
-      style={{ padding:20, cursor:'default', userSelect:'none' }}
-    >
-      <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:12, marginBottom:16 }}>
-        {/* Icon */}
-        <div style={{
-          width:44, height:44, borderRadius:12, flexShrink:0,
-          background:t.g, boxShadow:`0 4px 14px ${t.glow}`,
-          display:'flex', alignItems:'center', justifyContent:'center',
-          color:'#fff', transition:'transform 0.2s',
-        }}
-        onMouseEnter={e=>e.currentTarget.style.transform='scale(1.1) rotate(-4deg)'}
-        onMouseLeave={e=>e.currentTarget.style.transform='scale(1) rotate(0)'}
-        >
-          {Icon && <Icon style={{ width:20, height:20 }}/>}
+    <article className="glass-card p-5 select-none">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${t.from} ${t.to} text-white shadow-lg ${t.glow} transition-transform duration-200 hover:scale-110 hover:-rotate-3`}>
+          {Icon && <Icon className="h-5 w-5" />}
         </div>
-
-        {/* Trend */}
-        {trend!=null && (
-          <div style={{ padding:'4px 10px', borderRadius:99, background:t.soft, color:t.text, fontSize:12, fontWeight:700 }}>
-            {trend>0?'+':''}{trend}%
-          </div>
+        {trend != null && (
+          <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ${t.soft}`}>
+            {trend > 0 ? '↑' : '↓'} {Math.abs(trend)}%
+          </span>
         )}
       </div>
-
-      <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:4 }}>{title}</p>
-      <p style={{ fontSize:30, fontWeight:800, color:'var(--text-1)', lineHeight:1.1, letterSpacing:'-0.02em' }}>{value}</p>
-      {description && <p style={{ fontSize:13, color:'var(--text-3)', marginTop:4 }}>{description}</p>}
-
-      {/* Accent bottom */}
-      <div style={{ marginTop:16, height:2, borderRadius:99, background:t.g, opacity:0.35 }}/>
+      <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 mb-1.5">{title}</p>
+      <p className="text-[28px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">{value}</p>
+      {description && <p className="mt-1.5 text-[13px] text-slate-400 dark:text-slate-600">{description}</p>}
+      <div className={`mt-4 h-0.5 w-full rounded-full bg-gradient-to-r ${t.bar} opacity-30`} />
     </article>
   )
 }

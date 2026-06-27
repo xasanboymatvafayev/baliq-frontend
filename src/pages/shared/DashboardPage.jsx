@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { ClipboardCheck, Fish, Store, Truck, Activity, ArrowUpRight } from 'lucide-react'
+import { ClipboardCheck, Fish, Store, Truck, Activity } from 'lucide-react'
 import { DashboardCharts } from '../../components/charts/DashboardCharts.jsx'
 import { StatCard } from '../../components/common/StatCard.jsx'
 import { analyticsService } from '../../services/api/index.js'
@@ -8,57 +8,55 @@ import { useAuthStore } from '../../store/authStore.js'
 
 export function DashboardPage({ title, subtitle }) {
   usePageTitle(title)
-  const user = useAuthStore(s=>s.user)
+  const user = useAuthStore(s => s.user)
   const { data, isLoading } = useQuery({
-    queryKey:['dashboard',title],
-    queryFn:()=>analyticsService.dashboard({ scope:title }),
-    staleTime:30_000, retry:2, onError:()=>{},
+    queryKey: ['dashboard', title],
+    queryFn: () => analyticsService.dashboard({ scope: title }),
+    staleTime: 30_000, retry: 2, onError: () => {},
   })
 
   const h = new Date().getHours()
-  const greet = h<5?'Xayrli kech':h<12?'Xayrli tong':h<18?'Xayrli kun':'Xayrli kech'
+  const greet = h < 5 ? 'Xayrli kech' : h < 12 ? 'Xayrli tong' : h < 18 ? 'Xayrli kun' : 'Xayrli kech'
 
   return (
-    <div style={{ display:'flex', flexDirection:'column', gap:20 }}>
+    <div className="space-y-5">
 
-      {/* ── Hero banner ── */}
-      <section style={{ position:'relative', overflow:'hidden', borderRadius:22, padding:'28px 32px', background:'linear-gradient(135deg,#0ea5e9 0%,#0284c7 55%,#0369a1 100%)', boxShadow:'0 8px 40px rgba(14,165,233,0.32)' }}>
-        {/* decorations */}
-        <div style={{ position:'absolute', top:-60, right:-60, width:260, height:260, borderRadius:'50%', background:'rgba(255,255,255,0.06)', pointerEvents:'none' }}/>
-        <div style={{ position:'absolute', bottom:-80, left:'40%', width:320, height:320, borderRadius:'50%', background:'rgba(255,255,255,0.04)', pointerEvents:'none' }}/>
-        <Fish style={{ position:'absolute', right:28, bottom:-10, width:120, height:120, color:'rgba(255,255,255,0.08)', pointerEvents:'none' }}/>
+      {/* Hero */}
+      <section className="relative overflow-hidden rounded-2xl p-7"
+        style={{ background: 'linear-gradient(135deg,#0ea5e9 0%,#0284c7 55%,#0369a1 100%)', boxShadow: '0 8px 32px rgba(14,165,233,0.28)' }}>
+        <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 rounded-full bg-white/[0.06]" />
+        <div className="pointer-events-none absolute -bottom-16 left-1/3 h-80 w-80 rounded-full bg-white/[0.04]" />
+        <Fish className="pointer-events-none absolute right-6 bottom-0 h-28 w-28 text-white/[0.08]" />
 
-        <div style={{ position:'relative', zIndex:1 }}>
-          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-            <span style={{ width:8, height:8, borderRadius:'50%', background:'#34d399', display:'inline-block' }} className="animate-pulse-soft"/>
-            <span style={{ fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.7)', textTransform:'uppercase', letterSpacing:'0.1em' }}>Jonli panel</span>
+        <div className="relative z-10">
+          <div className="mb-2 flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse-soft" />
+            <span className="text-[11px] font-bold uppercase tracking-widest text-white/60">Jonli panel</span>
           </div>
-          <h2 style={{ fontSize:30, fontWeight:800, color:'#fff', margin:0, letterSpacing:'-0.02em' }}>
+          <h2 className="text-3xl font-black text-white tracking-tight">
             {greet}{user?.firstName ? `, ${user.firstName}` : ''}! 👋
           </h2>
-          <p style={{ marginTop:6, fontSize:14, color:'rgba(255,255,255,0.6)', maxWidth:480 }}>{subtitle}</p>
-
-          <div style={{ display:'flex', flexWrap:'wrap', gap:10, marginTop:20 }}>
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 16px', borderRadius:99, background:'rgba(255,255,255,0.15)', backdropFilter:'blur(8px)', fontSize:13, fontWeight:600, color:'#fff' }}>
-              <Activity style={{ width:15,height:15 }}/> {title}
+          <p className="mt-1.5 text-[14px] text-white/55 max-w-lg">{subtitle}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur px-4 py-1.5 text-[13px] font-semibold text-white">
+              <Activity className="h-3.5 w-3.5" /> {title}
             </span>
-            <span style={{ display:'inline-flex', alignItems:'center', gap:6, padding:'7px 16px', borderRadius:99, background:'rgba(255,255,255,0.08)', fontSize:13, color:'rgba(255,255,255,0.7)' }}>
-              {new Date().toLocaleDateString('uz-UZ',{weekday:'long',day:'numeric',month:'long'})}
+            <span className="inline-flex items-center rounded-full bg-white/[0.08] px-4 py-1.5 text-[13px] text-white/60">
+              {new Date().toLocaleDateString('uz-UZ', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
           </div>
         </div>
       </section>
 
-      {/* ── Stats ── */}
-      <section style={{ display:'grid', gap:14, gridTemplateColumns:'repeat(2,1fr)' }} className="xl:grid-cols-4">
-        <StatCard title="Buyurtmalar" value={isLoading?'—':(data?.ordersCount??0).toLocaleString()} description="Jami buyurtmalar" icon={ClipboardCheck} tone="ocean" trend={data?.ordersTrend}/>
-        <StatCard title="Baliqlar"    value={isLoading?'—':(data?.fishCount??0).toLocaleString()}   description="Katalog va ombor"   icon={Fish}           tone="emerald"/>
-        <StatCard title="Fermalar"    value={isLoading?'—':(data?.farmCount??0).toLocaleString()}   description="Tasdiqlangan"      icon={Store}          tone="amber"/>
-        <StatCard title="Haydovchilar"value={isLoading?'—':(data?.driverCount??0).toLocaleString()} description="Faol haydovchilar" icon={Truck}           tone="rose"/>
-      </section>
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <StatCard title="Buyurtmalar" value={isLoading ? '—' : (data?.ordersCount ?? 0).toLocaleString()} description="Jami buyurtmalar" icon={ClipboardCheck} tone="ocean"   trend={data?.ordersTrend} />
+        <StatCard title="Baliqlar"    value={isLoading ? '—' : (data?.fishCount ?? 0).toLocaleString()}   description="Katalog va ombor"   icon={Fish}           tone="emerald" />
+        <StatCard title="Fermalar"    value={isLoading ? '—' : (data?.farmCount ?? 0).toLocaleString()}   description="Tasdiqlangan"      icon={Store}          tone="amber" />
+        <StatCard title="Haydovchilar"value={isLoading ? '—' : (data?.driverCount ?? 0).toLocaleString()} description="Faol haydovchilar" icon={Truck}           tone="rose" />
+      </div>
 
-      {/* ── Charts ── */}
-      <DashboardCharts series={data?.series}/>
+      <DashboardCharts series={data?.series} />
     </div>
   )
 }

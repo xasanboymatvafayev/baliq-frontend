@@ -1,37 +1,32 @@
-import { NavLink, useNavigate, useLocation } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { Fish, X, LogOut } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
 
-const ROLE_COLORS = {
-  customer:     ['#0ea5e9','#0284c7'],
-  'farm-owner': ['#10b981','#059669'],
-  driver:       ['#f59e0b','#d97706'],
-  admin:        ['#8b5cf6','#7c3aed'],
-  manager:      ['#ec4899','#db2777'],
-  'super-admin':['#f43f5e','#e11d48'],
-}
-const ROLE_LABELS = {
-  customer:'Mijoz','farm-owner':'Ferma egasi',driver:'Haydovchi',
-  admin:'Administrator',manager:'Menejer','super-admin':'Super Admin',
+const ROLE_CFG = {
+  customer:     { label:'Mijoz',         from:'from-sky-500',    to:'to-blue-600',     ring:'shadow-sky-500/30' },
+  'farm-owner': { label:'Ferma egasi',   from:'from-emerald-500',to:'to-teal-600',     ring:'shadow-emerald-500/30' },
+  driver:       { label:'Haydovchi',     from:'from-amber-500',  to:'to-orange-600',   ring:'shadow-amber-500/30' },
+  admin:        { label:'Administrator', from:'from-purple-500', to:'to-violet-600',   ring:'shadow-purple-500/30' },
+  manager:      { label:'Menejer',       from:'from-rose-500',   to:'to-pink-600',     ring:'shadow-rose-500/30' },
+  'super-admin':{ label:'Super Admin',   from:'from-red-500',    to:'to-orange-500',   ring:'shadow-red-500/30' },
 }
 
 export function Sidebar({ navigation, open, onClose }) {
-  const logout     = useAuthStore(s => s.logout)
-  const user       = useAuthStore(s => s.user)
-  const role       = useAuthStore(s => s.role)
-  const pushToast  = useToastStore(s => s.pushToast)
-  const navigate   = useNavigate()
-  const location   = useLocation()
+  const logout    = useAuthStore(s => s.logout)
+  const user      = useAuthStore(s => s.user)
+  const role      = useAuthStore(s => s.role)
+  const pushToast = useToastStore(s => s.pushToast)
+  const navigate  = useNavigate()
 
-  const initials = user
-    ? `${user.firstName?.[0]||''}${user.lastName?.[0]||''}`.toUpperCase()
-    : 'BS'
-  const [c1, c2] = ROLE_COLORS[role] || ['#0ea5e9','#0284c7']
+  const cfg = ROLE_CFG[role] || ROLE_CFG.customer
+  const initials = user ? `${user.firstName?.[0]||''}${user.lastName?.[0]||''}`.toUpperCase() : 'BS'
 
   const handleLogout = () => {
-    logout(); pushToast({ title:'Tizimdan chiqildi', variant:'success' })
-    navigate('/login'); onClose?.()
+    logout()
+    pushToast({ title: "Tizimdan chiqildi", variant: 'success' })
+    navigate('/login')
+    onClose?.()
   }
 
   return (
@@ -39,127 +34,86 @@ export function Sidebar({ navigation, open, onClose }) {
       {/* Overlay */}
       <div
         onClick={onClose}
-        style={{
-          position:'fixed', inset:0, zIndex:30,
-          background:'rgba(0,0,0,0.55)',
-          backdropFilter:'blur(4px)',
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? 'auto' : 'none',
-          transition:'opacity 0.25s ease',
-        }}
-        className="lg:hidden"
+        className={`fixed inset-0 z-30 lg:hidden transition-opacity duration-300 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+        style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
       />
 
       {/* Sidebar */}
-      <aside style={{
-        position:'fixed', top:0, left:0, bottom:0, zIndex:40,
-        width:'var(--sidebar-w)',
-        display:'flex', flexDirection:'column',
-        background:'linear-gradient(180deg,#080f1d 0%,#05090f 100%)',
-        borderRight:'1px solid rgba(255,255,255,0.06)',
-        transform: open ? 'translateX(0)' : 'translateX(-100%)',
-        transition:'transform 0.28s cubic-bezier(0.16,1,0.3,1)',
-      }}
-      className="lg:static lg:translate-x-0"
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 flex flex-col lg:static lg:translate-x-0 transition-transform duration-300 ease-out ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        style={{
+          width: 256,
+          background: 'linear-gradient(180deg, #09101f 0%, #060b16 100%)',
+          borderRight: '1px solid rgba(255,255,255,0.06)',
+        }}
       >
-
-        {/* ── Logo ── */}
-        <div style={{
-          height:64, display:'flex', alignItems:'center', justifyContent:'space-between',
-          padding:'0 18px', borderBottom:'1px solid rgba(255,255,255,0.05)',
-          flexShrink:0,
-        }}>
-          <div style={{ display:'flex', alignItems:'center', gap:10 }}>
-            <div style={{
-              width:36, height:36, borderRadius:10, flexShrink:0,
-              background:`linear-gradient(135deg,${c1},${c2})`,
-              boxShadow:`0 4px 14px ${c1}55`,
-              display:'flex', alignItems:'center', justifyContent:'center',
-            }}>
-              <Fish style={{ width:18, height:18, color:'#fff' }} />
+        {/* Logo */}
+        <div className="flex items-center justify-between px-5 flex-shrink-0" style={{ height: 62, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div className="flex items-center gap-3">
+            <div className={`relative flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${cfg.from} ${cfg.to} shadow-lg ${cfg.ring}`}>
+              <Fish className="h-[18px] w-[18px] text-white" />
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 border-2 border-[#09101f] animate-pulse-soft" />
             </div>
             <div>
-              <p style={{ fontSize:14, fontWeight:700, color:'#f0f6ff', lineHeight:1.2 }}>Baliq Savdosi</p>
-              <p style={{ fontSize:10, fontWeight:500, color:'rgba(255,255,255,0.28)', letterSpacing:'0.1em', textTransform:'uppercase' }}>Platform</p>
+              <p className="text-[14px] font-bold leading-tight" style={{ color: '#f0f6ff' }}>Baliq Savdosi</p>
+              <p className="text-[10px] font-medium uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.28)' }}>Platform</p>
             </div>
           </div>
-          <button onClick={onClose} className="lg:hidden" style={{ color:'rgba(255,255,255,0.3)', padding:4, borderRadius:8, transition:'color 0.15s' }}>
-            <X style={{ width:18, height:18 }} />
+          <button onClick={onClose} className="lg:hidden flex h-7 w-7 items-center justify-center rounded-lg transition-colors hover:bg-white/10" style={{ color: 'rgba(255,255,255,0.4)' }}>
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        {/* ── Nav ── */}
-        <nav style={{ flex:1, overflowY:'auto', padding:'10px 10px' }}>
-          {navigation.map(item => {
-            const isActive = location.pathname === item.to
-            return (
-              <NavLink
-                key={item.to} to={item.to} onClick={onClose}
-                style={{
-                  display:'flex', alignItems:'center', gap:10,
-                  padding:'9px 10px', borderRadius:11, marginBottom:2,
-                  fontSize:13.5, fontWeight:500, textDecoration:'none',
-                  transition:'all 0.15s ease',
-                  background: isActive ? `linear-gradient(135deg,${c1}22,${c1}10)` : 'transparent',
-                  border: isActive ? `1px solid ${c1}33` : '1px solid transparent',
-                  color: isActive ? c1 : 'rgba(255,255,255,0.42)',
-                }}
-                onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background='rgba(255,255,255,0.05)'; e.currentTarget.style.color='rgba(255,255,255,0.75)' } }}
-                onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='rgba(255,255,255,0.42)' } }}
-              >
-                <div style={{
-                  width:30, height:30, borderRadius:8, flexShrink:0,
-                  display:'flex', alignItems:'center', justifyContent:'center',
-                  background: isActive ? `${c1}22` : 'rgba(255,255,255,0.06)',
-                  color: isActive ? c1 : 'rgba(255,255,255,0.4)',
-                  transition:'all 0.15s',
-                }}>
-                  <item.icon style={{ width:15, height:15 }} />
-                </div>
-                <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{item.label}</span>
-                {isActive && (
-                  <div style={{ width:4, height:4, borderRadius:'50%', background:c1, flexShrink:0 }} />
-                )}
-              </NavLink>
-            )
-          })}
+        {/* Nav links */}
+        <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+          {navigation.map(item => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              onClick={onClose}
+              className={({ isActive }) =>
+                `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-medium transition-all duration-150 border
+                 ${isActive
+                   ? `bg-white/[0.07] border-white/[0.08] text-white`
+                   : `border-transparent hover:bg-white/[0.04] hover:border-white/[0.05]`
+                 }`
+              }
+              style={({ isActive }) => ({ color: isActive ? '#fff' : 'rgba(255,255,255,0.42)' })}
+            >
+              {({ isActive }) => (
+                <>
+                  <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all ${isActive ? `bg-gradient-to-br ${cfg.from} ${cfg.to}` : 'bg-white/[0.06] group-hover:bg-white/[0.09]'}`}>
+                    <item.icon className="h-3.5 w-3.5 text-white" />
+                  </div>
+                  <span className="flex-1 truncate">{item.label}</span>
+                  {isActive && <div className={`h-1.5 w-1.5 rounded-full bg-gradient-to-br ${cfg.from} ${cfg.to} flex-shrink-0`} />}
+                </>
+              )}
+            </NavLink>
+          ))}
         </nav>
 
-        {/* ── User ── */}
-        <div style={{ padding:'10px', borderTop:'1px solid rgba(255,255,255,0.05)', flexShrink:0 }}>
+        {/* User footer */}
+        <div className="flex-shrink-0 p-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
           {user && (
-            <div style={{
-              display:'flex', alignItems:'center', gap:10,
-              padding:'10px 12px', borderRadius:12, marginBottom:6,
-              background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)',
-            }}>
-              <div style={{
-                width:34, height:34, borderRadius:9, flexShrink:0,
-                background:`linear-gradient(135deg,${c1},${c2})`,
-                display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:12, fontWeight:700, color:'#fff',
-              }}>{initials}</div>
-              <div style={{ minWidth:0, flex:1 }}>
-                <p style={{ fontSize:13, fontWeight:600, color:'#f0f6ff', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                  {user.firstName} {user.lastName}
-                </p>
-                <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>{ROLE_LABELS[role]||role}</p>
+            <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 mb-1" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${cfg.from} ${cfg.to} text-[11px] font-bold text-white`}>
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-semibold" style={{ color: '#f0f6ff' }}>{user.firstName} {user.lastName}</p>
+                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{cfg.label}</p>
               </div>
             </div>
           )}
+
           <button
             onClick={handleLogout}
-            style={{
-              width:'100%', display:'flex', alignItems:'center', gap:10,
-              padding:'9px 12px', borderRadius:11, border:'1px solid transparent',
-              background:'transparent', cursor:'pointer', fontSize:13.5, fontWeight:500,
-              color:'rgba(255,255,255,0.35)', transition:'all 0.15s', fontFamily:'inherit',
-            }}
-            onMouseEnter={e => { e.currentTarget.style.background='rgba(239,68,68,0.1)'; e.currentTarget.style.color='#f87171'; e.currentTarget.style.borderColor='rgba(239,68,68,0.18)' }}
-            onMouseLeave={e => { e.currentTarget.style.background='transparent'; e.currentTarget.style.color='rgba(255,255,255,0.35)'; e.currentTarget.style.borderColor='transparent' }}
+            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13.5px] font-medium transition-all duration-150 border border-transparent hover:bg-rose-500/10 hover:border-rose-500/20 hover:text-rose-400 group"
+            style={{ color: 'rgba(255,255,255,0.38)', fontFamily: 'inherit', cursor: 'pointer', background: 'transparent' }}
           >
-            <div style={{ width:30, height:30, borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', background:'rgba(255,255,255,0.05)' }}>
-              <LogOut style={{ width:15, height:15 }} />
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] group-hover:bg-rose-500/15 transition-colors">
+              <LogOut className="h-3.5 w-3.5" />
             </div>
             Tizimdan chiqish
           </button>
