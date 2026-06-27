@@ -51,10 +51,13 @@ const STATUS_LABELS = {
   DELIVERED: 'Yetkazildi', CANCELLED: 'Bekor qilindi',
 }
 const STATUS_COLORS = {
-  PENDING: 'bg-amber-100 text-amber-700', CONFIRMED: 'bg-blue-100 text-blue-700',
-  DRIVER_ASSIGNED: 'bg-purple-100 text-purple-700', LOADING: 'bg-orange-100 text-orange-700',
-  IN_TRANSIT: 'bg-cyan-100 text-cyan-700', DELIVERED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-rose-100 text-rose-700',
+  PENDING:         'bg-amber-100  text-amber-700  dark:bg-amber-500/20  dark:text-amber-300',
+  CONFIRMED:       'bg-blue-100   text-blue-700   dark:bg-blue-500/20   dark:text-blue-300',
+  DRIVER_ASSIGNED: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
+  LOADING:         'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-300',
+  IN_TRANSIT:      'bg-cyan-100   text-cyan-700   dark:bg-cyan-500/20   dark:text-cyan-300',
+  DELIVERED:       'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300',
+  CANCELLED:       'bg-rose-100   text-rose-700   dark:bg-rose-500/20   dark:text-rose-300',
 }
 
 // ─── Bir buyurtma kartasi (ro'yxatda) ───────────────────────────
@@ -356,7 +359,22 @@ export function DriverOrders() {
           />
         </div>
       ) : isLoading ? (
-        <div className="space-y-3">{[...Array(3)].map((_, i) => <div key={i} className="glass-card h-20 animate-pulse" />)}</div>
+        <div className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="glass-card p-4 flex items-center gap-4 animate-pulse" style={{ animationDelay: `${i * 80}ms` }}>
+              <div className="space-y-2 flex-1">
+                <div className="flex gap-2">
+                  <div className="h-5 w-24 rounded-full bg-slate-200 dark:bg-white/10" />
+                  <div className="h-5 w-20 rounded-full bg-slate-100 dark:bg-white/[0.06]" />
+                </div>
+                <div className="h-5 w-36 rounded-lg bg-slate-200 dark:bg-white/10" />
+                <div className="h-4 w-48 rounded-lg bg-slate-100 dark:bg-white/[0.06]" />
+                <div className="h-4 w-28 rounded-lg bg-slate-100 dark:bg-white/[0.06]" />
+              </div>
+              <div className="h-5 w-5 rounded bg-slate-200 dark:bg-white/10 shrink-0" />
+            </div>
+          ))}
+        </div>
       ) : displayOrders.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <div className="text-5xl mb-3">🚚</div>

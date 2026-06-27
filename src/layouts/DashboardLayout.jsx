@@ -40,8 +40,10 @@ export function DashboardLayout({ navigation, title }) {
       <Sidebar navigation={navigation} open={open} onClose={() => setOpen(false)} />
       <div className="flex flex-1 min-w-0 flex-col pb-[68px] lg:pb-0">
         <Topbar title={activeTitle} onMenuClick={() => setOpen(true)} />
-        <main className="flex-1 p-4 sm:p-5 lg:p-6 animate-fade-in">
-          <Outlet />
+        <main className="flex-1 p-4 sm:p-5 lg:p-6">
+          <div key={location.pathname} className="animate-fade-in h-full">
+            <Outlet />
+          </div>
         </main>
       </div>
       <BottomNav navigation={navigation} />

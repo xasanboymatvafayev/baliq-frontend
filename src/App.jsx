@@ -4,6 +4,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary.jsx'
 import { ToastHost } from './components/common/ToastHost.jsx'
 import { useThemeStore } from './store/themeStore.js'
 import { PwaInstallBanner } from './components/common/PwaInstallBanner.jsx'
+import { OfflineBanner } from './components/common/OfflineBanner.jsx'
 
 export default function App() {
   const theme = useThemeStore((state) => state.theme)
@@ -16,7 +17,7 @@ export default function App() {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         () => {},
-        (error) => console.warn('GPS:', error.message),
+        () => {},
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       )
     }
@@ -27,6 +28,7 @@ export default function App() {
       <AppRoutes />
       <ToastHost />
       <PwaInstallBanner />
+      <OfflineBanner />
     </ErrorBoundary>
   )
 }

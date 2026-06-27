@@ -76,42 +76,69 @@ export function FarmFish() {
         <div><h2 className="text-3xl font-black">Baliqlar</h2><p className="mt-2 text-slate-500">Ferma mahsulotlari</p></div>
         <a href="/farm/add-fish" className="primary-button">+ Qo'shish</a>
       </section>
-      {isLoading ? <div className="glass-card h-32 animate-pulse" /> : data.length === 0 ? <div className="glass-card p-12 text-center text-slate-500">Baliq qo'shilmagan</div> : (
+      {isLoading ? (
         <div className="glass-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="border-b border-slate-200 dark:border-white/10">
-              <tr className="text-left text-xs font-bold uppercase text-slate-500">
-                <th className="p-4">Rasm</th><th className="p-4">Nomi</th><th className="p-4">Narx</th><th className="p-4">Zaxira</th><th className="p-4">Kategoriya</th><th className="p-4">Amallar</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
-              {data.map((fish) => (
-                <tr key={fish.id} className="hover:bg-slate-50 dark:hover:bg-white/5">
-                  <td className="p-4">
-                    {fish.image_url ? (
-                      <img src={fish.image_url} alt={fish.name} className="h-10 w-10 rounded-xl object-cover" />
-                    ) : (
-                      <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-white/10 flex items-center justify-center text-slate-400">🐟</div>
-                    )}
-                  </td>
-                  <td className="p-4 font-semibold">{fish.name}</td>
-                  <td className="p-4 font-bold text-ocean-600">{fish.price?.toLocaleString()} so'm/{fish.unit}</td>
-                  <td className="p-4">{fish.stock} {fish.unit}</td>
-                  <td className="p-4 text-slate-500">{fish.category}</td>
-                  <td className="p-4">
-                    <div className="flex gap-2">
-                      <button className="p-2 rounded-xl text-ocean-600 hover:bg-ocean-50 dark:hover:bg-ocean-900/20" onClick={() => setEditingFish(fish)} title="Tahrirlash">
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20" onClick={() => setDeleteTarget(fish)} title="O'chirish">
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+          <div className="border-b border-slate-200 dark:border-white/10 px-4 py-3 flex gap-4">
+            {['w-10','flex-1','w-24','w-20','w-28','w-16'].map((w,i) => (
+              <div key={i} className={`h-3 ${w} rounded-lg bg-slate-200 dark:bg-white/10 animate-pulse`} style={{ animationDelay: `${i*50}ms` }} />
+            ))}
+          </div>
+          <div className="divide-y divide-slate-100 dark:divide-white/5">
+            {Array.from({length: 5}).map((_,row) => (
+              <div key={row} className="flex items-center gap-4 px-4 py-3" style={{ animationDelay: `${row*80}ms` }}>
+                <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-white/[0.06] animate-pulse shrink-0" />
+                <div className="h-4 flex-1 rounded-lg bg-slate-100 dark:bg-white/[0.06] animate-pulse" />
+                <div className="h-4 w-24 rounded-lg bg-slate-100 dark:bg-white/[0.06] animate-pulse" />
+                <div className="h-4 w-16 rounded-lg bg-slate-100 dark:bg-white/[0.06] animate-pulse" />
+                <div className="h-4 w-28 rounded-lg bg-slate-100 dark:bg-white/[0.06] animate-pulse hidden sm:block" />
+                <div className="h-8 w-16 rounded-xl bg-slate-100 dark:bg-white/[0.06] animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : data.length === 0 ? (
+        <div className="glass-card p-12 text-center">
+          <div className="text-4xl mb-3">🐟</div>
+          <p className="text-slate-500 font-medium">Baliq qo'shilmagan</p>
+        </div>
+      ) : (
+        <div className="glass-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
+              <thead className="border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+                <tr className="text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  <th className="p-4">Rasm</th><th className="p-4">Nomi</th><th className="p-4">Narx</th><th className="p-4">Zaxira</th><th className="p-4 hidden sm:table-cell">Kategoriya</th><th className="p-4">Amallar</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                {data.map((fish) => (
+                  <tr key={fish.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                    <td className="p-4">
+                      {fish.image_url ? (
+                        <img src={fish.image_url} alt={fish.name} className="h-10 w-10 rounded-xl object-cover" />
+                      ) : (
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-ocean-100 to-cyan-100 dark:from-ocean-900/30 dark:to-cyan-900/30 flex items-center justify-center text-lg">🐟</div>
+                      )}
+                    </td>
+                    <td className="p-4 font-semibold whitespace-nowrap">{fish.name}</td>
+                    <td className="p-4 font-bold text-ocean-600 dark:text-ocean-400 whitespace-nowrap">{fish.price?.toLocaleString()} so'm/{fish.unit}</td>
+                    <td className="p-4 whitespace-nowrap">{fish.stock} {fish.unit}</td>
+                    <td className="p-4 text-slate-500 hidden sm:table-cell">{fish.category}</td>
+                    <td className="p-4">
+                      <div className="flex gap-2">
+                        <button className="p-2 rounded-xl text-ocean-600 hover:bg-ocean-50 dark:hover:bg-ocean-900/20 transition" onClick={() => setEditingFish(fish)} title="Tahrirlash">
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition" onClick={() => setDeleteTarget(fish)} title="O'chirish">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
@@ -265,20 +292,27 @@ export function FarmInventory() {
         <div className="ml-auto text-right"><p className="text-sm text-slate-500">Umumiy zaxira</p><p className="text-2xl font-black text-ocean-600">{totalStock} kg</p></div>
       </section>
       <div className="glass-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 dark:border-white/10">
-            <tr className="text-left text-xs font-bold uppercase text-slate-500">
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[400px]">
+          <thead className="border-b border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/[0.02]">
+            <tr className="text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               <th className="p-4">Baliq</th><th className="p-4">Zaxira</th><th className="p-4">Narx</th><th className="p-4">Holat</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
             {data.map((fish) => (
-              <tr key={fish.id}>
-                <td className="p-4 font-semibold">{fish.name}</td>
-                <td className="p-4">{fish.stock} {fish.unit}</td>
-                <td className="p-4">{fish.price?.toLocaleString()} so'm</td>
+              <tr key={fish.id} className="hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors">
+                <td className="p-4 font-semibold whitespace-nowrap">{fish.name}</td>
+                <td className="p-4 whitespace-nowrap">{fish.stock} {fish.unit}</td>
+                <td className="p-4 whitespace-nowrap">{fish.price?.toLocaleString()} so'm</td>
                 <td className="p-4">
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${fish.stock > 50 ? 'bg-green-100 text-green-700' : fish.stock > 0 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`}>
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    fish.stock > 50
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300'
+                      : fish.stock > 0
+                        ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300'
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300'
+                  }`}>
                     {fish.stock > 50 ? 'Yetarli' : fish.stock > 0 ? 'Kam' : 'Tugagan'}
                   </span>
                 </td>
@@ -286,6 +320,7 @@ export function FarmInventory() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

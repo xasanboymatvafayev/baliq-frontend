@@ -1,12 +1,13 @@
 import { useState, useCallback } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ShoppingBag, Trash2, MapPin, Navigation, Loader2, CheckCircle2, CreditCard, Banknote } from 'lucide-react'
+import { ShoppingBag, Trash2, MapPin, Navigation, Loader2, CheckCircle2, CreditCard, Tag, X, Minus, Plus } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { useCartStore } from '../../store/cartStore.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { orderService, httpClient } from '../../services/api/index.js'
 import { formatCurrency, formatNumber } from '../../utils/formatters.js'
+import { ConfirmModal } from '../../components/common/ConfirmModal.jsx'
 
 async function reverseGeocode(lat, lng) {
   try {
@@ -49,19 +50,87 @@ function LocationPicker({ value, onChange }) {
       </label>
       <button type="button" onClick={getLocation} disabled={loading}
         className={`w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-4 font-bold transition
-          ${value ? 'border-emerald-400 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20' : 'border-ocean-300 bg-ocean-50/50 text-ocean-700 hover:bg-ocean-100 dark:bg-ocean-900/20'}`}>
+          ${value ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
+            : 'border-ocean-300 bg-ocean-50/50 dark:bg-ocean-900/20 text-ocean-700 dark:text-ocean-300 hover:bg-ocean-100 dark:hover:bg-ocean-900/30'}`}>
         {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Aniqlanmoqda...</>
           : value ? <><CheckCircle2 className="h-5 w-5" /> Lokatsiya aniqlandi</>
           : <><Navigation className="h-5 w-5" /> Hozirgi joylashuvimni aniqlash</>}
       </button>
       {value && (
-        <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3 text-sm">
-          <p className="font-semibold">{value.address}</p>
-          <p className="font-mono text-xs text-slate-400 mt-0.5">{value.coords}</p>
-          <button onClick={() => onChange(null)} className="text-xs text-rose-500 font-bold mt-1">Qayta aniqlash</button>
+        <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/50 p-3 text-sm">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-semibold text-slate-800 dark:text-slate-200 leading-tight">{value.address}</p>
+              <p className="font-mono text-xs text-slate-400 mt-0.5">{value.coords}</p>
+            </div>
+            <button onClick={() => onChange(null)} className="text-slate-400 hover:text-rose-500 transition shrink-0 mt-0.5">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       )}
-      {error && <p className="text-xs text-rose-500 font-semibold">⚠️ {error}</p>}
+      {error && <p className="text-xs text-rose-500 font-semibold flex items-center gap-1">⚠️ {error}</p>}
+    </div>
+  )
+}
+
+function PromoCodeInput({ onApply, appliedPromo }) {
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const pushToast = useToastStore((s) => s.pushToast)
+
+  const handleApply = async () => {
+    if (!code.trim()) return
+    setLoading(true)
+    try {
+      const res = await httpClient.post('/promo/validate', { code: code.trim().toUpperCase() })
+      onApply(res)
+      pushToast({ title: `Promo-kod qo'llandi! ${res.discount_percent}% chegirma ✅`, variant: 'success' })
+    } catch (err) {
+      pushToast({ title: err?.response?.data?.detail || "Promo-kod noto'g'ri", variant: 'error' })
+    } finally { setLoading(false) }
+  }
+
+  if (appliedPromo) {
+    return (
+      <div className="flex items-center justify-between rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/50 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Tag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+            {appliedPromo.code} — {appliedPromo.discount_percent}% chegirma
+          </span>
+        </div>
+        <button onClick={() => onApply(null)} className="text-slate-400 hover:text-rose-500 transition">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm font-bold">
+        <Tag className="h-4 w-4 text-ocean-600" />
+        Promo-kod (ixtiyoriy)
+      </label>
+      <div className="flex gap-2">
+        <input
+          className="soft-input flex-1 font-mono uppercase tracking-widest"
+          placeholder="BALIQ2026"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          maxLength={20}
+          onKeyDown={(e) => e.key === 'Enter' && handleApply()}
+        />
+        <button
+          type="button"
+          onClick={handleApply}
+          disabled={loading || !code.trim()}
+          className="secondary-button shrink-0"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Qo'llash"}
+        </button>
+      </div>
     </div>
   )
 }
@@ -73,11 +142,15 @@ export function CartPage() {
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [location, setLocation] = useState(null)
-  const [payMethod, setPayMethod] = useState('')   // 'cash' | 'click' | 'payme'
+  const [payMethod, setPayMethod] = useState('')
   const [locationError, setLocationError] = useState(false)
   const [payError, setPayError] = useState(false)
+  const [appliedPromo, setAppliedPromo] = useState(null)
+  const [confirmRemove, setConfirmRemove] = useState(null)
 
-  const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  const discount = appliedPromo ? Math.round(subtotal * appliedPromo.discount_percent / 100) : 0
+  const total = subtotal - discount
 
   const orderMutation = useMutation({
     mutationFn: async () => {
@@ -90,14 +163,11 @@ export function CartPage() {
         delivery_lng: location.lng,
         delivery_coords: location.coords,
         payment_method: payMethod,
+        promo_code: appliedPromo?.code || undefined,
       })
-      // Karta tanlansa Telegram invoice yuborish
       if (payMethod !== 'cash') {
         try {
-          await httpClient.post('/telegram-payment/send-invoice', {
-            order_id: order.id,
-            provider: payMethod,
-          })
+          await httpClient.post('/telegram-payment/send-invoice', { order_id: order.id, provider: payMethod })
         } catch (_) {}
       }
       return order
@@ -116,67 +186,104 @@ export function CartPage() {
   })
 
   return (
-    <div className="space-y-6">
-      <section className="glass-card p-6 flex items-center justify-between">
+    <div className="space-y-5">
+      <ConfirmModal
+        open={!!confirmRemove}
+        onClose={() => setConfirmRemove(null)}
+        onConfirm={() => { removeItem(confirmRemove); setConfirmRemove(null) }}
+        title="Mahsulotni o'chirish"
+        description="Bu mahsulotni savatchadan olib tashlaysizmi?"
+        confirmText="Ha, o'chirish"
+        cancelText="Bekor qilish"
+      />
+
+      <section className="glass-card p-5 flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-black">Savatcha</h2>
-          <p className="mt-1 text-slate-500">{items.length} ta mahsulot</p>
+          <h2 className="text-2xl font-black">Savatcha</h2>
+          <p className="text-sm text-slate-500 mt-0.5">{items.length} ta mahsulot</p>
         </div>
-        <ShoppingBag className="h-10 w-10 text-ocean-600" />
+        <div className="h-12 w-12 rounded-2xl bg-ocean-100 dark:bg-ocean-900/30 flex items-center justify-center">
+          <ShoppingBag className="h-6 w-6 text-ocean-600 dark:text-ocean-400" />
+        </div>
       </section>
 
       {items.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <p className="text-slate-500">Savatcha bo'sh</p>
-          <button className="primary-button mt-4" onClick={() => navigate('/customer/fish-catalog')}>Katalogga o'tish</button>
+        <div className="glass-card p-14 text-center space-y-4">
+          <div className="text-5xl">🛒</div>
+          <p className="text-slate-500 font-medium">Savatcha bo'sh</p>
+          <button className="primary-button" onClick={() => navigate('/customer/fish-catalog')}>Katalogga o'tish</button>
         </div>
       ) : (
         <>
-          <div className="glass-card divide-y divide-slate-100 dark:divide-white/5">
-            {items.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 p-4">
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold truncate">{item.name}</p>
-                  <p className="text-sm text-ocean-600">{formatNumber(item.price)} so'm/{item.unit || 'kg'}</p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
+          {/* Items list */}
+          <div className="glass-card overflow-hidden">
+            <div className="p-4 border-b border-slate-100 dark:border-white/5">
+              <h3 className="font-bold text-sm text-slate-500 uppercase tracking-wide">Mahsulotlar</h3>
+            </div>
+            <div className="divide-y divide-slate-100 dark:divide-white/5">
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center gap-4 p-4 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition">
+                  {/* Image placeholder */}
+                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-ocean-100 to-cyan-100 dark:from-ocean-900/30 dark:to-cyan-900/30 flex items-center justify-center shrink-0 text-2xl shadow-sm">
+                    🐟
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold truncate">{item.name}</p>
+                    <p className="text-sm text-ocean-600 dark:text-ocean-400 font-semibold">{formatNumber(item.price)} so'm/{item.unit || 'kg'}</p>
+                  </div>
+                  {/* Quantity controls */}
+                  <div className="flex items-center gap-1 shrink-0 bg-slate-100 dark:bg-white/5 rounded-2xl p-1">
+                    <button
+                      className="h-8 w-8 rounded-xl hover:bg-white dark:hover:bg-white/10 flex items-center justify-center transition text-slate-600 dark:text-slate-300 font-bold"
+                      onClick={() => updateQuantity(item.id, Math.max(1, (parseFloat(item.quantity) || 1) - 1))}
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={1}
+                      className="w-14 text-center font-bold text-sm bg-transparent outline-none text-slate-800 dark:text-white"
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        if (v === '') { updateQuantity(item.id, ''); return }
+                        const num = parseFloat(v)
+                        if (!isNaN(num)) updateQuantity(item.id, num)
+                      }}
+                      onBlur={(e) => {
+                        const num = parseFloat(e.target.value)
+                        if (isNaN(num) || num < 1) updateQuantity(item.id, 1)
+                      }}
+                    />
+                    <button
+                      className="h-8 w-8 rounded-xl hover:bg-white dark:hover:bg-white/10 flex items-center justify-center transition text-slate-600 dark:text-slate-300 font-bold"
+                      onClick={() => updateQuantity(item.id, (parseFloat(item.quantity) || 0) + 1)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  <p className="w-28 text-right font-black shrink-0 hidden sm:block text-sm">{formatCurrency(item.price * item.quantity)}</p>
                   <button
-                    className="secondary-button px-2 py-1 text-sm"
-                    onClick={() => updateQuantity(item.id, Math.max(1, (parseFloat(item.quantity) || 1) - 1))}
-                  >−</button>
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    min={1}
-                    className="w-16 text-center font-bold rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 py-1.5 outline-none focus:border-ocean-400 focus:ring-2 focus:ring-ocean-100 dark:focus:ring-ocean-900/40"
-                    value={item.quantity}
-                    onChange={(e) => {
-                      const v = e.target.value
-                      if (v === '') { updateQuantity(item.id, ''); return }
-                      const num = parseFloat(v)
-                      if (!isNaN(num)) updateQuantity(item.id, num)
-                    }}
-                    onBlur={(e) => {
-                      const num = parseFloat(e.target.value)
-                      if (isNaN(num) || num < 1) updateQuantity(item.id, 1)
-                    }}
-                  />
-                  <button
-                    className="secondary-button px-2 py-1 text-sm"
-                    onClick={() => updateQuantity(item.id, (parseFloat(item.quantity) || 0) + 1)}
-                  >+</button>
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition shrink-0"
+                    onClick={() => setConfirmRemove(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-                <p className="w-28 text-right font-bold shrink-0 hidden sm:block">{formatCurrency(item.price * item.quantity)}</p>
-                <button className="text-rose-500" onClick={() => removeItem(item.id)}><Trash2 className="h-4 w-4" /></button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="glass-card p-6 space-y-5">
+          {/* Checkout form */}
+          <div className="glass-card p-6 space-y-6">
             {/* Lokatsiya */}
             <div className={locationError && !location ? 'ring-2 ring-rose-400 rounded-2xl p-3 -m-3' : ''}>
               <LocationPicker value={location} onChange={(v) => { setLocation(v); setLocationError(false) }} />
             </div>
+
+            {/* Promo code */}
+            <PromoCodeInput onApply={setAppliedPromo} appliedPromo={appliedPromo} />
 
             {/* To'lov usuli */}
             <div className={`space-y-3 ${payError && !payMethod ? 'ring-2 ring-rose-400 rounded-2xl p-3 -m-3' : ''}`}>
@@ -185,26 +292,25 @@ export function CartPage() {
                 To'lov usuli <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-3 gap-3">
-                {/* Naqt pul — tez orada */}
-                <div className="relative flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 py-4 font-bold text-sm opacity-50 cursor-not-allowed select-none">
+                <div className="relative flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 py-4 font-bold text-sm opacity-40 cursor-not-allowed select-none">
                   <span className="text-2xl">💵</span>
-                  <span className="text-slate-400">Naqt pul</span>
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-black text-amber-900 whitespace-nowrap">Tez orada</span>
+                  <span className="text-slate-400 text-xs">Naqt pul</span>
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-black text-amber-900 whitespace-nowrap">Tez orada</span>
                 </div>
                 {[
-                  { id: 'click', icon: '💳', label: 'Click' },
-                  { id: 'payme', icon: '💳', label: 'Payme' },
+                  { id: 'click', icon: '💳', label: 'Click', sub: 'Telegram invoice' },
+                  { id: 'payme', icon: '💳', label: 'Payme', sub: 'Telegram invoice' },
                 ].map((opt) => (
                   <button key={opt.id} type="button"
                     onClick={() => { setPayMethod(opt.id); setPayError(false) }}
-                    className={`flex flex-col items-center gap-2 rounded-2xl border-2 py-4 font-bold text-sm transition
+                    className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 py-4 font-bold text-sm transition-all
                       ${payMethod === opt.id
-                        ? 'border-ocean-500 bg-ocean-50 text-ocean-700 dark:bg-ocean-900/30 dark:text-ocean-300'
-                        : 'border-slate-200 hover:border-ocean-300 dark:border-white/10'}`}
+                        ? 'border-ocean-500 bg-ocean-50 dark:bg-ocean-900/30 text-ocean-700 dark:text-ocean-300 shadow-md shadow-ocean-500/10'
+                        : 'border-slate-200 dark:border-white/10 hover:border-ocean-300 dark:hover:border-ocean-700'}`}
                   >
                     <span className="text-2xl">{opt.icon}</span>
                     {opt.label}
-                    <span className="text-[10px] text-slate-400">Telegram invoice</span>
+                    <span className="text-[10px] text-slate-400 font-normal">{opt.sub}</span>
                   </button>
                 ))}
               </div>
@@ -215,18 +321,33 @@ export function CartPage() {
               )}
             </div>
 
-            {/* Jami va buyurtma */}
-            <div className="flex items-center justify-between pt-2 border-t border-slate-200 dark:border-white/10">
-              <div>
-                <p className="text-sm text-slate-500">Jami summa</p>
-                <p className="text-3xl font-black text-ocean-600">{formatCurrency(total)}</p>
+            {/* Summary */}
+            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-4 space-y-2.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">Mahsulotlar ({items.length} ta)</span>
+                <span className="font-semibold">{formatCurrency(subtotal)}</span>
               </div>
-              <button className="primary-button text-lg px-8 py-3"
-                onClick={() => orderMutation.mutate()}
-                disabled={orderMutation.isPending}>
-                {orderMutation.isPending ? 'Yuborilmoqda...' : 'Buyurtma berish'}
-              </button>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-600 font-semibold">Chegirma ({appliedPromo?.discount_percent}%)</span>
+                  <span className="font-bold text-emerald-600">−{formatCurrency(discount)}</span>
+                </div>
+              )}
+              <div className="pt-2.5 border-t border-slate-200 dark:border-white/10 flex justify-between items-center">
+                <span className="font-bold">Jami summa</span>
+                <span className="text-2xl font-black text-ocean-600">{formatCurrency(total)}</span>
+              </div>
             </div>
+
+            <button
+              className="primary-button w-full text-base py-3.5 shadow-xl shadow-ocean-500/25"
+              onClick={() => orderMutation.mutate()}
+              disabled={orderMutation.isPending}
+            >
+              {orderMutation.isPending
+                ? <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> Yuborilmoqda...</>
+                : '🎉 Buyurtma berish'}
+            </button>
           </div>
         </>
       )}

@@ -1,8 +1,9 @@
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { AuthLayout } from '../layouts/AuthLayout.jsx'
 import { DashboardLayout } from '../layouts/DashboardLayout.jsx'
 import { ProtectedRoute } from './ProtectedRoute.jsx'
 import { LandingPage } from '../pages/LandingPage.jsx'
+import { NotFoundPage } from '../pages/NotFoundPage.jsx'
 import { DriverRegistration } from '../pages/auth/DriverRegistration.jsx'
 import { FarmRegistration } from '../pages/auth/FarmRegistration.jsx'
 import { ForgotPassword } from '../pages/auth/ForgotPassword.jsx'
@@ -49,8 +50,9 @@ import {
 } from './navigation.js'
 
 export function AppRoutes() {
+  const location = useLocation()
   return (
-    <Routes>
+    <Routes location={location} key={location.pathname}>
       {/* Ochiq sahifalar */}
       <Route path="/" element={<LandingPage />} />
       <Route element={<AuthLayout />}>
@@ -168,7 +170,8 @@ export function AppRoutes() {
         <Route path="system-settings" element={<SystemSettings />} />
       </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* 404 */}
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }
