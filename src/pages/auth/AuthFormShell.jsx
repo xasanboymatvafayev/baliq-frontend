@@ -1,35 +1,38 @@
 import { Link } from 'react-router-dom'
-import { Fish } from 'lucide-react'
 
 export function AuthFormShell({ title, description, children, footer }) {
   return (
-    <div className="animate-slide-up">
-      <div className="mb-7">
-        <h2 className="text-2xl font-black tracking-tight text-white">{title}</h2>
-        {description && (
-          <p className="mt-1.5 text-sm text-slate-400">{description}</p>
-        )}
+    <div className="animate-scale-in">
+      <div style={{ marginBottom:24 }}>
+        <h2 style={{ fontSize:24, fontWeight:800, color:'#f0f6ff', letterSpacing:'-0.02em', margin:0 }}>{title}</h2>
+        {description && <p style={{ marginTop:6, fontSize:14, color:'rgba(255,255,255,0.4)', lineHeight:1.6 }}>{description}</p>}
       </div>
 
-      <div className="space-y-1">{children}</div>
+      <div>{children}</div>
 
       {footer && (
-        <div className="mt-6 text-center text-sm text-slate-400">{footer}</div>
+        <div style={{ marginTop:20, textAlign:'center', fontSize:13.5, color:'rgba(255,255,255,0.38)' }}>{footer}</div>
       )}
 
-      <div className="mt-5 grid grid-cols-2 gap-2.5">
-        <Link
-          to="/farm-registration"
-          className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-semibold text-slate-400 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
-        >
-          🏡 Ferma ro'yxati
-        </Link>
-        <Link
-          to="/driver-registration"
-          className="flex items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-semibold text-slate-400 transition hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
-        >
-          🚚 Haydovchi ro'yxati
-        </Link>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:16 }}>
+        {[
+          { to:'/farm-registration',   emoji:'🏡', label:"Ferma ro'yxati" },
+          { to:'/driver-registration', emoji:'🚚', label:"Haydovchi ro'yxati" },
+        ].map(({to,emoji,label})=>(
+          <Link key={to} to={to} style={{
+            display:'flex', alignItems:'center', justifyContent:'center', gap:6,
+            padding:'9px 12px', borderRadius:10,
+            border:'1px solid rgba(255,255,255,0.08)',
+            background:'rgba(255,255,255,0.04)',
+            fontSize:12, fontWeight:600, color:'rgba(255,255,255,0.38)',
+            textDecoration:'none', transition:'all 0.15s',
+          }}
+          onMouseEnter={e=>{e.currentTarget.style.background='rgba(14,165,233,0.08)';e.currentTarget.style.borderColor='rgba(14,165,233,0.2)';e.currentTarget.style.color='rgba(255,255,255,0.7)'}}
+          onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.04)';e.currentTarget.style.borderColor='rgba(255,255,255,0.08)';e.currentTarget.style.color='rgba(255,255,255,0.38)'}}
+          >
+            {emoji} {label}
+          </Link>
+        ))}
       </div>
     </div>
   )

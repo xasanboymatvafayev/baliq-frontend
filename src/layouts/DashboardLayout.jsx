@@ -2,78 +2,61 @@ import { useMemo, useState } from 'react'
 import { Outlet, useLocation, NavLink } from 'react-router-dom'
 import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { Topbar } from '../components/layout/Topbar.jsx'
-import { cn } from '../utils/cn.js'
 
-function MobileBottomNav({ navigation }) {
-  const location = useLocation()
+function BottomNav({ navigation }) {
+  const loc = useLocation()
   const items = navigation.slice(0, 5)
-
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 lg:hidden"
-      style={{
-        background: 'rgba(8,15,30,0.97)',
-        backdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
-      <div className="flex">
-        {items.map((item) => {
-          const isActive = location.pathname === item.to
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className="flex flex-1 flex-col items-center gap-1 py-2.5 transition-all"
-            >
-              <div
-                className={cn(
-                  'flex h-9 w-9 items-center justify-center rounded-2xl transition-all duration-200',
-                  isActive ? 'scale-110' : '',
-                )}
-                style={isActive
-                  ? { background: 'linear-gradient(135deg, rgba(14,165,233,0.25), rgba(14,165,233,0.1))', color: '#38bdf8', border: '1px solid rgba(14,165,233,0.2)' }
-                  : { color: 'rgba(255,255,255,0.35)' }
-                }
-              >
-                <item.icon className="h-[18px] w-[18px]" />
-              </div>
-              <span
-                className="text-[10px] font-semibold max-w-[52px] truncate text-center"
-                style={{ color: isActive ? '#38bdf8' : 'rgba(255,255,255,0.3)' }}
-              >
-                {item.label}
-              </span>
-            </NavLink>
-          )
-        })}
-      </div>
+    <nav className="lg:hidden" style={{
+      position:'fixed', bottom:0, left:0, right:0, zIndex:50,
+      background:'rgba(8,15,29,0.96)', backdropFilter:'blur(24px)',
+      borderTop:'1px solid rgba(255,255,255,0.06)',
+      paddingBottom:'env(safe-area-inset-bottom)',
+      display:'flex',
+    }}>
+      {items.map(item=>{
+        const active = loc.pathname===item.to
+        return (
+          <NavLink key={item.to} to={item.to} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3, padding:'10px 4px', textDecoration:'none' }}>
+            <div style={{
+              width:36, height:36, borderRadius:11,
+              display:'flex', alignItems:'center', justifyContent:'center',
+              transition:'all 0.2s',
+              background: active ? 'rgba(14,165,233,0.18)' : 'transparent',
+              border: active ? '1px solid rgba(14,165,233,0.22)' : '1px solid transparent',
+              color: active ? '#38bdf8' : 'rgba(255,255,255,0.3)',
+              transform: active ? 'scale(1.08)' : 'scale(1)',
+            }}>
+              <item.icon style={{ width:18, height:18 }}/>
+            </div>
+            <span style={{ fontSize:10, fontWeight:600, color: active ? '#38bdf8' : 'rgba(255,255,255,0.28)', maxWidth:52, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+              {item.label}
+            </span>
+          </NavLink>
+        )
+      })}
     </nav>
   )
 }
 
 export function DashboardLayout({ navigation, title }) {
   const [open, setOpen] = useState(false)
-  const location = useLocation()
+  const loc = useLocation()
   const activeTitle = useMemo(
-    () => navigation.find((item) => item.to === location.pathname)?.label || title,
-    [location.pathname, navigation, title],
+    ()=>navigation.find(i=>i.to===loc.pathname)?.label||title,
+    [loc.pathname,navigation,title]
   )
 
   return (
-    <div className="min-h-screen lg:flex" style={{ background: '#f0f4f8' }}>
-      <style>{`.dark .dashboard-bg { background: #060c17; }`}</style>
-      <div className="min-h-screen lg:flex w-full dashboard-bg" style={{ background: '#f0f4f8' }}>
-        <Sidebar navigation={navigation} open={open} onClose={() => setOpen(false)} />
-        <div className="min-w-0 flex-1 flex flex-col pb-[68px] lg:pb-0">
-          <Topbar title={activeTitle} onMenuClick={() => setOpen(true)} />
-          <main className="flex-1 p-4 sm:p-6 animate-slide-up">
-            <Outlet />
-          </main>
-        </div>
-        <MobileBottomNav navigation={navigation} />
+    <div style={{ minHeight:'100vh', display:'flex', background:'var(--bg)' }}>
+      <Sidebar navigation={navigation} open={open} onClose={()=>setOpen(false)}/>
+      <div style={{ flex:1, minWidth:0, display:'flex', flexDirection:'column', paddingBottom:68 }} className="lg:pb-0">
+        <Topbar title={activeTitle} onMenuClick={()=>setOpen(true)}/>
+        <main className="animate-fade-in" style={{ flex:1, padding:'20px 20px 40px' }} >
+          <Outlet/>
+        </main>
       </div>
+      <BottomNav navigation={navigation}/>
     </div>
   )
 }

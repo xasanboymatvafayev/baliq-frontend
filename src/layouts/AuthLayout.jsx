@@ -1,154 +1,120 @@
 import { Link, Outlet } from 'react-router-dom'
 import { Fish, Zap, Shield, TrendingUp, Waves, Star } from 'lucide-react'
-import { ThemeToggle } from '../components/common/ThemeToggle.jsx'
 
 const FEATURES = [
-  { icon: Zap, label: 'Real-vaqt', text: 'Buyurtmalarni jonli kuzating' },
-  { icon: Shield, label: 'Xavfsiz', text: "To'lovlar va ma'lumotlar himoyasi" },
-  { icon: TrendingUp, label: 'Analitika', text: 'Kuchli hisobot va statistika' },
-  { icon: Waves, label: 'GPS', text: 'Navigatsiya va yetkazib berish' },
+  { icon:Zap,        t:'Real-vaqt',  d:"Buyurtmalarni jonli kuzating" },
+  { icon:Shield,     t:'Xavfsiz',    d:"To'lovlar himoyalangan" },
+  { icon:TrendingUp, t:'Analitika',  d:'Kuchli hisobot paneli' },
+  { icon:Waves,      t:'GPS',        d:'Navigatsiya va yetkazish' },
 ]
-
 const STATS = [
-  { value: '500+', label: 'Fermalar' },
-  { value: '12K+', label: 'Mijozlar' },
-  { value: '98%', label: 'Mamnunlik' },
+  { v:'500+', l:'Fermalar' },
+  { v:'12K+', l:'Mijozlar' },
+  { v:'98%',  l:'Mamnunlik' },
 ]
 
 export function AuthLayout() {
   return (
-    <div className="relative min-h-screen overflow-hidden" style={{ background: 'linear-gradient(135deg, #05090f 0%, #080f1e 50%, #060c15 100%)' }}>
+    <div style={{ minHeight:'100vh', background:'linear-gradient(145deg,#04080f 0%,#071220 60%,#050c18 100%)', position:'relative', overflow:'hidden' }}>
 
-      {/* Background effects */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -left-40 -top-40 h-96 w-96 rounded-full opacity-20" style={{ background: 'radial-gradient(circle, #0ea5e9 0%, transparent 70%)' }} />
-        <div className="absolute -bottom-20 -right-20 h-80 w-80 rounded-full opacity-10" style={{ background: 'radial-gradient(circle, #10b981 0%, transparent 70%)' }} />
-        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full opacity-5" style={{ background: 'radial-gradient(circle, #a855f7 0%, transparent 70%)' }} />
-        {/* Dot grid */}
-        <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+      {/* BG glows */}
+      <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:-200, left:-200, width:600, height:600, borderRadius:'50%', background:'radial-gradient(circle,rgba(14,165,233,0.12) 0%,transparent 70%)' }}/>
+        <div style={{ position:'absolute', bottom:-100, right:-100, width:500, height:500, borderRadius:'50%', background:'radial-gradient(circle,rgba(16,185,129,0.08) 0%,transparent 70%)' }}/>
+        <div style={{ position:'absolute', inset:0, backgroundImage:'radial-gradient(rgba(255,255,255,0.04) 1px,transparent 1px)', backgroundSize:'28px 28px' }}/>
       </div>
 
-      <div className="relative z-10 grid min-h-screen lg:grid-cols-[1fr_480px]">
+      <div style={{ position:'relative', zIndex:1, display:'grid', minHeight:'100vh', gridTemplateColumns:'1fr 460px' }} className="lg:grid block">
 
-        {/* LEFT PANEL */}
-        <section className="hidden lg:flex flex-col justify-between p-12 xl:p-16">
+        {/* ── LEFT ── */}
+        <section className="hidden lg:flex" style={{ flexDirection:'column', justifyContent:'space-between', padding:'48px 56px' }}>
 
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-3 w-fit group">
-            <div
-              className="relative flex h-10 w-10 items-center justify-center rounded-2xl transition-transform duration-300 group-hover:scale-105"
-              style={{ background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', boxShadow: '0 4px 20px rgba(14,165,233,0.4)' }}
-            >
-              <Fish className="h-5 w-5 text-white" />
-              <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-emerald-400 border-2 border-[#05090f] animate-pulse" />
+          <Link to="/" style={{ display:'inline-flex', alignItems:'center', gap:12, textDecoration:'none' }}>
+            <div style={{ width:40, height:40, borderRadius:12, background:'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow:'0 4px 20px rgba(14,165,233,0.45)', display:'flex', alignItems:'center', justifyContent:'center', position:'relative' }}>
+              <Fish style={{ width:20, height:20, color:'#fff' }}/>
+              <span style={{ position:'absolute', top:-3, right:-3, width:10, height:10, borderRadius:'50%', background:'#34d399', border:'2px solid #04080f' }} className="animate-pulse-soft"/>
             </div>
             <div>
-              <p className="text-[15px] font-bold text-white">Baliq Savdosi</p>
-              <p className="text-[10px] font-medium tracking-widest uppercase text-white/30">Enterprise Platform</p>
+              <p style={{ fontSize:15, fontWeight:700, color:'#f0f6ff' }}>Baliq Savdosi</p>
+              <p style={{ fontSize:10, color:'rgba(255,255,255,0.25)', textTransform:'uppercase', letterSpacing:'0.12em' }}>Enterprise Platform</p>
             </div>
           </Link>
 
           {/* Hero */}
-          <div className="max-w-xl">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-[11px] font-semibold" style={{ background: 'rgba(14,165,233,0.1)', border: '1px solid rgba(14,165,233,0.2)', color: '#38bdf8' }}>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              O'zbekistonning №1 baliq savdo platformasi
+          <div>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, padding:'6px 14px', borderRadius:99, background:'rgba(14,165,233,0.1)', border:'1px solid rgba(14,165,233,0.2)', marginBottom:24 }}>
+              <span style={{ width:7, height:7, borderRadius:'50%', background:'#34d399' }} className="animate-pulse-soft"/>
+              <span style={{ fontSize:12, fontWeight:600, color:'#38bdf8' }}>O'zbekistonning №1 baliq savdo platformasi</span>
             </div>
 
-            <h1 className="text-[52px] font-black leading-[1.05] tracking-tight text-white xl:text-[60px]">
+            <h1 style={{ fontSize:52, fontWeight:900, lineHeight:1.05, color:'#f0f6ff', letterSpacing:'-0.02em', margin:0 }}>
               Ferma, logistika{' '}
-              <span style={{ background: 'linear-gradient(135deg, #38bdf8, #34d399)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <span style={{ background:'linear-gradient(135deg,#38bdf8,#34d399)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
                 va savdoni
               </span>
               {' '}bitta panelda.
             </h1>
 
-            <p className="mt-5 text-[15px] leading-relaxed text-white/40">
+            <p style={{ fontSize:15, color:'rgba(255,255,255,0.38)', marginTop:16, lineHeight:1.65, maxWidth:480 }}>
               Mijoz, Fermer, Haydovchi va Admin rollari uchun professional boshqaruv tizimi. Real-vaqt kuzatuv, GPS logistika va kuchli analitika.
             </p>
 
-            {/* Stats */}
-            <div className="mt-8 flex items-center gap-6">
-              {STATS.map((s) => (
-                <div key={s.label}>
-                  <p className="text-2xl font-black text-white">{s.value}</p>
-                  <p className="text-[11px] font-medium text-white/35">{s.label}</p>
+            {/* Stats row */}
+            <div style={{ display:'flex', alignItems:'center', gap:32, marginTop:32 }}>
+              {STATS.map(s=>(
+                <div key={s.l}>
+                  <p style={{ fontSize:26, fontWeight:800, color:'#f0f6ff', lineHeight:1 }}>{s.v}</p>
+                  <p style={{ fontSize:12, color:'rgba(255,255,255,0.3)', marginTop:2 }}>{s.l}</p>
                 </div>
               ))}
-              <div className="h-10 w-px bg-white/10" />
-              <div className="flex -space-x-2">
-                {['#0ea5e9','#10b981','#f59e0b','#a855f7'].map((c, i) => (
-                  <div key={i} className="h-8 w-8 rounded-full border-2 border-[#05090f] flex items-center justify-center text-xs font-bold text-white" style={{ background: `linear-gradient(135deg, ${c}, ${c}99)` }}>
-                    {['A','F','H','M'][i]}
-                  </div>
-                ))}
-              </div>
-              <div className="flex items-center gap-1">
-                {[1,2,3,4,5].map(i => <Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />)}
+              <div style={{ width:1, height:40, background:'rgba(255,255,255,0.08)' }}/>
+              <div style={{ display:'flex', alignItems:'center', gap:2 }}>
+                {[1,2,3,4,5].map(i=><Star key={i} style={{ width:14, height:14, fill:'#fbbf24', color:'#fbbf24' }}/>)}
               </div>
             </div>
 
-            {/* Features grid */}
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              {FEATURES.map(({ icon: Icon, label, text }) => (
-                <div
-                  key={label}
-                  className="flex items-center gap-3 rounded-2xl p-4 transition-all duration-200 hover:scale-[1.02]"
-                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            {/* Feature grid */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:28 }}>
+              {FEATURES.map(({icon:Icon,t,d})=>(
+                <div key={t} style={{ display:'flex', alignItems:'center', gap:12, padding:'14px 16px', borderRadius:14, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', transition:'all 0.2s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.background='rgba(14,165,233,0.06)';e.currentTarget.style.borderColor='rgba(14,165,233,0.15)'}}
+                  onMouseLeave={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderColor='rgba(255,255,255,0.06)'}}
                 >
-                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: 'rgba(14,165,233,0.12)', color: '#38bdf8' }}>
-                    <Icon className="h-4 w-4" />
+                  <div style={{ width:34, height:34, borderRadius:9, background:'rgba(14,165,233,0.12)', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                    <Icon style={{ width:16, height:16, color:'#38bdf8' }}/>
                   </div>
                   <div>
-                    <p className="text-[12px] font-bold text-white">{label}</p>
-                    <p className="text-[11px] text-white/35">{text}</p>
+                    <p style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.85)' }}>{t}</p>
+                    <p style={{ fontSize:11, color:'rgba(255,255,255,0.3)' }}>{d}</p>
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] text-white/20">© 2025 Baliq Savdosi. Barcha huquqlar himoyalangan.</p>
-            <div className="flex items-center gap-2 text-[11px] text-white/20">
-              <span>React 19</span><span>·</span><span>FastAPI</span><span>·</span><span>MongoDB</span>
-            </div>
-          </div>
+          <p style={{ fontSize:11, color:'rgba(255,255,255,0.18)' }}>© 2025 Baliq Savdosi · React 19 · FastAPI · MongoDB</p>
         </section>
 
-        {/* RIGHT PANEL — Form */}
-        <section
-          className="flex min-h-screen flex-col items-center justify-center p-5"
-          style={{ background: 'rgba(255,255,255,0.02)', backdropFilter: 'blur(40px)', borderLeft: '1px solid rgba(255,255,255,0.05)' }}
-        >
-          {/* Mobile logo */}
-          <div className="mb-6 flex w-full max-w-[400px] items-center justify-between lg:hidden">
-            <Link to="/" className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg, #0ea5e9, #0284c7)' }}>
-                <Fish className="h-4 w-4 text-white" />
-              </div>
-              <span className="font-bold text-white text-[15px]">Baliq Savdosi</span>
-            </Link>
-            <ThemeToggle />
-          </div>
+        {/* ── RIGHT (Form) ── */}
+        <section style={{ display:'flex', alignItems:'center', justifyContent:'center', padding:24, minHeight:'100vh', background:'rgba(255,255,255,0.02)', backdropFilter:'blur(40px)', borderLeft:'1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ width:'100%', maxWidth:390 }}>
 
-          {/* Card */}
-          <div className="w-full max-w-[400px]">
-            <div
-              className="rounded-3xl p-8"
-              style={{
-                background: 'rgba(255,255,255,0.04)',
-                border: '1px solid rgba(255,255,255,0.08)',
-                backdropFilter: 'blur(24px)',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.4)',
-              }}
-            >
-              <Outlet />
+            {/* Mobile logo */}
+            <div className="lg:hidden" style={{ display:'flex', alignItems:'center', gap:10, marginBottom:28 }}>
+              <div style={{ width:34, height:34, borderRadius:10, background:'linear-gradient(135deg,#0ea5e9,#0284c7)', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                <Fish style={{ width:17, height:17, color:'#fff' }}/>
+              </div>
+              <span style={{ fontSize:15, fontWeight:700, color:'#f0f6ff' }}>Baliq Savdosi</span>
             </div>
 
-            <p className="mt-5 text-center text-[11px] text-white/20">
-              Platformaga kirib, <span className="underline cursor-pointer text-white/30">foydalanish shartlari</span>ga rozilik bildirasiz.
+            {/* Card */}
+            <div style={{ padding:32, borderRadius:22, background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', backdropFilter:'blur(20px)', boxShadow:'0 24px 64px rgba(0,0,0,0.45)' }}>
+              <Outlet/>
+            </div>
+
+            <p style={{ marginTop:16, textAlign:'center', fontSize:12, color:'rgba(255,255,255,0.2)' }}>
+              Platformaga kirib, foydalanish shartlariga rozilik bildirasiz.
             </p>
           </div>
         </section>
