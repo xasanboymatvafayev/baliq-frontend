@@ -223,9 +223,12 @@ export function CartPage() {
             <div className="divide-y divide-slate-100 dark:divide-white/5">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-4 p-4 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition">
-                  {/* Image placeholder */}
-                  <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-ocean-100 to-cyan-100 dark:from-ocean-900/30 dark:to-cyan-900/30 flex items-center justify-center shrink-0 text-2xl shadow-sm">
-                    🐟
+                  {/* Product image */}
+                  <div className="h-14 w-14 rounded-2xl shrink-0 overflow-hidden shadow-sm">
+                    {item.image_url
+                      ? <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+                      : <div className="h-full w-full bg-gradient-to-br from-ocean-100 to-cyan-100 dark:from-ocean-900/30 dark:to-cyan-900/30 flex items-center justify-center text-2xl">🐟</div>
+                    }
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold truncate">{item.name}</p>
