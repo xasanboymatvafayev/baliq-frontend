@@ -3,6 +3,7 @@ import { Menu, Search, X, Fish, Store, ExternalLink } from 'lucide-react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { ThemeToggle } from '../common/ThemeToggle.jsx'
 import { NotificationBell } from '../common/NotificationBell.jsx'
+import { LanguageSwitcher } from '../common/LanguageSwitcher.jsx'
 import { useAuthStore } from '../../store/authStore.js'
 import { httpClient } from '../../services/api/index.js'
 
@@ -147,6 +148,7 @@ export function Topbar({ onMenuClick, title }) {
       </div>
 
       <div className="flex items-center gap-1.5 flex-shrink-0">
+        <LanguageSwitcher />
         <ThemeToggle />
         <NotificationBell />
         <Link
