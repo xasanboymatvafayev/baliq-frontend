@@ -5,13 +5,19 @@ import { ToastHost } from './components/common/ToastHost.jsx'
 import { useThemeStore } from './store/themeStore.js'
 import { PwaInstallBanner } from './components/common/PwaInstallBanner.jsx'
 import { OfflineBanner } from './components/common/OfflineBanner.jsx'
+import { useI18nStore } from './store/i18nStore.js'
 
 export default function App() {
   const theme = useThemeStore((state) => state.theme)
+  const lang = useI18nStore((state) => state.lang)
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.lang = lang
+  }, [lang])
 
   useEffect(() => {
     if (navigator.geolocation) {
