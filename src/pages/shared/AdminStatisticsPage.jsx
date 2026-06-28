@@ -80,11 +80,37 @@ export function AdminStatisticsPage() {
 
   if (isLoading) return <PageSkeleton />
 
+  const handlePrint = () => {
+    const style = document.createElement('style')
+    style.id = '__print_style'
+    style.textContent = `
+      @media print {
+        body { background: white !important; color: black !important; }
+        .glass-card { background: white !important; border: 1px solid #e2e8f0 !important; box-shadow: none !important; border-radius: 8px !important; }
+        nav, aside, header, button, [data-no-print] { display: none !important; }
+        .space-y-6 > * { break-inside: avoid; margin-bottom: 16px; }
+        @page { margin: 20mm; }
+      }
+    `
+    document.head.appendChild(style)
+    window.print()
+    setTimeout(() => document.getElementById('__print_style')?.remove(), 1000)
+  }
+
   return (
     <div className="space-y-6">
-      <div className="glass-card p-6">
-        <h2 className="text-3xl font-black">📊 Statistika va hisobotlar</h2>
-        <p className="text-slate-500 mt-1">Real-time ko'rsatkichlar va tahlil</p>
+      <div className="glass-card p-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-3xl font-black">📊 Statistika va hisobotlar</h2>
+          <p className="text-slate-500 mt-1">Real-time ko'rsatkichlar va tahlil</p>
+        </div>
+        <button
+          onClick={handlePrint}
+          data-no-print
+          className="flex items-center gap-2 rounded-2xl border border-ocean-200 dark:border-ocean-700/50 bg-ocean-50 dark:bg-ocean-900/20 px-4 py-2.5 text-sm font-bold text-ocean-700 dark:text-ocean-300 hover:bg-ocean-100 dark:hover:bg-ocean-900/40 transition-all"
+        >
+          📄 PDF yuklash
+        </button>
       </div>
 
       {/* KPI kartalar */}
