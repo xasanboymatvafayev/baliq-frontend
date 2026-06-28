@@ -5,9 +5,10 @@ import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
 import { Pagination } from '../../components/common/Pagination.jsx'
+import { ReviewModal } from '../../components/common/ReviewModal.jsx'
 import { formatCurrency } from '../../utils/formatters.js'
 import { useState } from 'react'
-import { Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp } from 'lucide-react'
+import { Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp, Star } from 'lucide-react'
 
 const STATUS_LABELS = {
   AWAITING_PAYMENT: "To'lov kutilmoqda",
@@ -65,6 +66,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const [page, setPage] = useState(1)
   const [checkedIds, setCheckedIds] = useState([])
   const [showBatchPanel, setShowBatchPanel] = useState(false)
+  const [reviewOrder, setReviewOrder] = useState(null)
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'manager'
 
@@ -215,6 +217,18 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       </div>
     )
 
+    if (role === 'customer' && status === 'DELIVERED') return (
+      <div className="pt-4 border-t border-slate-200 dark:border-white/10">
+        <button
+          className="flex items-center justify-center gap-2 w-full rounded-2xl bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-200 dark:border-amber-700/50 text-amber-700 dark:text-amber-300 font-bold py-3 transition hover:bg-amber-100 dark:hover:bg-amber-900/30"
+          onClick={() => setReviewOrder(selected)}
+        >
+          <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+          Baho berish
+        </button>
+      </div>
+    )
+
     if (isAdmin && status === 'CONFIRMED') return (
       <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
         <h4 className="font-bold">🚚 Haydovchi biriktirish</h4>
@@ -261,6 +275,16 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
 
   return (
     <div className="space-y-6">
+      {reviewOrder && (
+        <ReviewModal
+          open={!!reviewOrder}
+          onClose={() => setReviewOrder(null)}
+          orderId={reviewOrder.id}
+          farmId={reviewOrder.farm_id}
+          driverId={reviewOrder.driver_id}
+          orderNum={reviewOrder.id?.slice(-6)}
+        />
+      )}
       <section className="glass-card p-6 flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-3xl font-black">{title}</h2>
         <div className="flex items-center gap-2 flex-wrap">
@@ -386,7 +410,18 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
                       <td className="p-4 font-bold">{formatCurrency(order.total)}</td>
                       <td className="p-4"><StatusBadge status={order.status} /></td>
                       <td className="p-4 text-slate-500 hidden sm:table-cell text-xs">{new Date(order.created_at).toLocaleDateString('uz')}</td>
-                      <td className="p-4"><button className="secondary-button text-xs px-3 py-1.5" onClick={() => setSelected(order)}>Ko'rish →</button></td>
+                      <td className="p-4 flex items-center gap-2">
+                        <button className="secondary-button text-xs px-3 py-1.5" onClick={() => setSelected(order)}>Ko'rish →</button>
+                        {user?.role === 'customer' && order.status === 'DELIVERED' && (
+                          <button
+                            className="flex items-center gap-1 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 text-amber-700 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 hover:bg-amber-100 transition"
+                            onClick={() => setReviewOrder(order)}
+                          >
+                            <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                            Baho
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
