@@ -13,6 +13,7 @@ import { Register } from '../pages/auth/Register.jsx'
 import { ResetPassword } from '../pages/auth/ResetPassword.jsx'
 import { TelegramLinkPage } from '../pages/auth/TelegramLinkPage.jsx'
 import { FirebaseOtpPage } from '../pages/auth/FirebaseOtpPage.jsx'
+import { FirebaseForgotOtpPage } from '../pages/auth/FirebaseForgotOtpPage.jsx'
 import {
   AdminAuditLog, AdminChatMonitoring, AdminDashboard, AdminDriverRequests,
   AdminFarmRequests, AdminGpsMonitoring, AdminOrders, AdminSettings, AdminUsers,
@@ -67,6 +68,7 @@ export function AppRoutes() {
       <Route path="/driver-registration" element={<DriverRegistration />} />
       <Route path="/telegram-link" element={<TelegramLinkPage />} />
       <Route path="/firebase-otp" element={<FirebaseOtpPage />} />
+      <Route path="/firebase-forgot-otp" element={<FirebaseForgotOtpPage />} />
 
       {/* Himoyalangan sahifalar */}
       <Route path="/customer" element={
