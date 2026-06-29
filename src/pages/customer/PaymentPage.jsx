@@ -42,13 +42,6 @@ export function PaymentPage() {
   })
   const orders = Array.isArray(ordersRaw) ? ordersRaw : (ordersRaw?.data || [])
 
-  const telegramPayMutation = useMutation({
-    mutationFn: ({ orderId, provider }) =>
-      httpClient.post('/telegram-payment/send-invoice', { order_id: orderId, provider }),
-    onSuccess: (data) => pushToast({ title: data.message, variant: 'success' }),
-    onError: (e) => pushToast({ title: e?.response?.data?.detail || "Telegram ulanmagan bo'lishi mumkin", variant: 'error' }),
-  })
-
   const payMutation = useMutation({
     mutationFn: ({ orderId, provider }) =>
       httpClient.post('/payments/create-link', { order_id: orderId, provider }),
@@ -176,24 +169,6 @@ export function PaymentPage() {
                   >
                     <ExternalLink className="h-5 w-5" />
                     <span className="text-sm">Payme (web)</span>
-                  </button>
-                  {/* Telegram Click */}
-                  <button
-                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-sky-400/30 bg-sky-400/5 p-4 font-bold text-sky-600 transition hover:border-sky-400/60 hover:bg-sky-400/10 active:scale-95 dark:text-sky-400"
-                    onClick={() => telegramPayMutation.mutate({ orderId: order.id, provider: 'click' })}
-                    disabled={telegramPayMutation.isPending}
-                  >
-                    <Send className="h-5 w-5" />
-                    <span className="text-sm">Telegram Click</span>
-                  </button>
-                  {/* Telegram Payme */}
-                  <button
-                    className="flex flex-col items-center gap-2 rounded-2xl border-2 border-indigo-400/30 bg-indigo-400/5 p-4 font-bold text-indigo-600 transition hover:border-indigo-400/60 hover:bg-indigo-400/10 active:scale-95 dark:text-indigo-400"
-                    onClick={() => telegramPayMutation.mutate({ orderId: order.id, provider: 'payme' })}
-                    disabled={telegramPayMutation.isPending}
-                  >
-                    <Send className="h-5 w-5" />
-                    <span className="text-sm">Telegram Payme</span>
                   </button>
                 </div>
               </div>
