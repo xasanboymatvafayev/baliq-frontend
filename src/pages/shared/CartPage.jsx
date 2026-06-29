@@ -167,14 +167,15 @@ export function CartPage() {
       })
       if (payMethod !== 'cash') {
         try {
-          await httpClient.post('/telegram-payment/send-invoice', { order_id: order.id, provider: payMethod })
+          const linkData = await httpClient.post('/payments/create-link', { order_id: order.id, provider: payMethod })
+          if (linkData?.url) window.open(linkData.url, '_blank')
         } catch (_) {}
       }
       return order
     },
     onSuccess: () => {
       clearCart()
-      pushToast({ title: payMethod === 'cash' ? 'Buyurtma yaratildi! 🎉' : 'Buyurtma yaratildi! Telegram ga invoice yuborildi 📱', variant: 'success' })
+      pushToast({ title: payMethod === 'cash' ? 'Buyurtma yaratildi! 🎉' : "Buyurtma yaratildi! To'lov sahifasi ochildi ✅", variant: 'success' })
       queryClient.invalidateQueries(['orders'])
       navigate('/customer/orders')
     },
@@ -317,7 +318,7 @@ export function CartPage() {
                   </button>
                 ))}
               </div>
-              {payMethod && payMethod !== 'cash' && (
+              {payMethod && payMethod !== 'cash' && false && (
                 <div className="rounded-2xl bg-ocean-50 dark:bg-ocean-900/20 border border-ocean-200 dark:border-ocean-800 p-3 text-sm text-ocean-700 dark:text-ocean-300">
                   📱 Buyurtma yaratilgach Telegram ga <b>{payMethod === 'click' ? 'Click' : 'Payme'}</b> orqali to'lov invoice yuboriladi
                 </div>
