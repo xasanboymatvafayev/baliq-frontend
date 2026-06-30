@@ -1,5 +1,6 @@
 import { Link, Outlet } from 'react-router-dom'
 import { Fish, Zap, Shield, TrendingUp, Waves, Star } from 'lucide-react'
+import { LanguageSwitcher } from '../components/common/LanguageSwitcher.jsx'
 
 const FEATURES = [
   { icon: Zap,        title: 'Real-vaqt',  desc: "Buyurtmalarni jonli kuzating" },
@@ -85,14 +86,22 @@ export function AuthLayout() {
 
         {/* ── RIGHT ── */}
         <section
-          className="flex min-h-screen flex-col items-center justify-center p-6"
+          className="relative flex min-h-screen flex-col items-center justify-center p-6"
           style={{ background: 'rgba(255,255,255,0.025)', backdropFilter: 'blur(32px)', borderLeft: '1px solid rgba(255,255,255,0.05)' }}>
 
-          <div className="lg:hidden flex items-center gap-3 mb-8 self-start">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600">
-              <Fish className="h-4 w-4 text-white" />
+          <div className="lg:hidden flex items-center justify-between gap-3 mb-8 w-full max-w-[390px]">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-blue-600">
+                <Fish className="h-4 w-4 text-white" />
+              </div>
+              <span className="text-[15px] font-bold text-white/90">Baliq Savdosi</span>
             </div>
-            <span className="text-[15px] font-bold text-white/90">Baliq Savdosi</span>
+            <LanguageSwitcher />
+          </div>
+
+          {/* Desktop language switcher — top right */}
+          <div className="hidden lg:block absolute top-6 right-6">
+            <LanguageSwitcher />
           </div>
 
           <div className="w-full max-w-[390px]">

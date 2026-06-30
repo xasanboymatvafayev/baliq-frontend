@@ -2,6 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { Fish, X, LogOut } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
+import { useT } from '../../store/i18nStore.js'
 
 const ROLE_CFG = {
   customer:     { label:'Mijoz',         from:'from-sky-500',    to:'to-blue-600',     ring:'shadow-sky-500/30' },
@@ -20,6 +21,7 @@ export function Sidebar({ navigation, open, onClose }) {
   const navigate  = useNavigate()
 
   const cfg = ROLE_CFG[role] || ROLE_CFG.customer
+  const t = useT()
   const initials = user ? `${user.firstName?.[0]||''}${user.lastName?.[0]||''}`.toUpperCase() : 'BS'
 
   const handleLogout = () => {
@@ -85,7 +87,7 @@ export function Sidebar({ navigation, open, onClose }) {
                   <div className={`flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg transition-all ${isActive ? `bg-gradient-to-br ${cfg.from} ${cfg.to}` : 'bg-white/[0.06] group-hover:bg-white/[0.09]'}`}>
                     <item.icon className="h-3.5 w-3.5 text-white" />
                   </div>
-                  <span className="flex-1 truncate">{item.label}</span>
+                  <span className="flex-1 truncate">{item.key && t[item.key] ? t[item.key] : item.label}</span>
                   {isActive && <div className={`h-1.5 w-1.5 rounded-full bg-gradient-to-br ${cfg.from} ${cfg.to} flex-shrink-0`} />}
                 </>
               )}
@@ -115,7 +117,7 @@ export function Sidebar({ navigation, open, onClose }) {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/[0.06] group-hover:bg-rose-500/15 transition-colors">
               <LogOut className="h-3.5 w-3.5" />
             </div>
-            Tizimdan chiqish
+            {t.logout}
           </button>
         </div>
       </aside>

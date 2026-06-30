@@ -8,6 +8,7 @@ import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { authService } from '../../services/api/index.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 const schema = z.object({
   phone:    z.string().min(9, 'Telefon raqam kiriting'),
@@ -24,6 +25,7 @@ export function Login() {
   const navigate   = useNavigate()
   const setSession = useAuthStore(s => s.setSession)
   const pushToast  = useToastStore(s => s.pushToast)
+  const t = useT()
   const [loading, setLoading]     = useState(false)
   const [showPwd, setShowPwd]     = useState(false)
   const [remember, setRemember]   = useState(true)
@@ -65,9 +67,9 @@ export function Login() {
 
   return (
     <AuthFormShell
-      title="Xush kelibsiz 👋"
+      title={`${t.welcomeBack} 👋`}
       description="Platformaga kirish uchun ma'lumotlaringizni kiriting."
-      footer={<>Akkount yo'qmi? <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/register">Ro'yxatdan o'tish</Link></>}
+      footer={<>{t.noAccount} <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/register">{t.registerNow}</Link></>}
     >
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
 
@@ -139,11 +141,11 @@ export function Login() {
               {remember && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
             </button>
             <span className="text-[13px] font-medium text-white/55 group-hover:text-white/75 transition-colors">
-              Meni eslab qol
+              {t.rememberMe}
             </span>
           </label>
           <Link className="text-[13px] font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/forgot-password">
-            Parolni unutdingizmi?
+            {t.forgotPassword}
           </Link>
         </div>
 
@@ -160,7 +162,7 @@ export function Login() {
         >
           {loading
             ? <><Loader2 className="h-4 w-4 animate-spin" /> Kirilmoqda...</>
-            : <>Kirish <ArrowRight className="h-4 w-4" /></>
+            : <>{t.login} <ArrowRight className="h-4 w-4" /></>
           }
         </button>
       </form>

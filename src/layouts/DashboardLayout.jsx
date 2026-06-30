@@ -2,14 +2,17 @@ import { useMemo, useState } from 'react'
 import { Outlet, useLocation, NavLink } from 'react-router-dom'
 import { Sidebar } from '../components/layout/Sidebar.jsx'
 import { Topbar } from '../components/layout/Topbar.jsx'
+import { useT } from '../store/i18nStore.js'
 
 function BottomNav({ navigation }) {
   const { pathname } = useLocation()
+  const t = useT()
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-white/[0.06] bg-[#09101f]/95 backdrop-blur-xl" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="flex">
         {navigation.slice(0, 5).map(item => {
           const active = pathname === item.to
+          const label = item.key && t[item.key] ? t[item.key] : item.label
           return (
             <NavLink key={item.to} to={item.to}
               className="flex flex-1 flex-col items-center gap-1 py-2.5">
@@ -17,7 +20,7 @@ function BottomNav({ navigation }) {
                 <item.icon className={`h-[18px] w-[18px] transition-colors ${active ? 'text-sky-400' : 'text-white/30'}`} />
               </div>
               <span className={`text-[10px] font-semibold truncate max-w-[54px] text-center transition-colors ${active ? 'text-sky-400' : 'text-white/25'}`}>
-                {item.label}
+                {label}
               </span>
             </NavLink>
           )
@@ -30,10 +33,12 @@ function BottomNav({ navigation }) {
 export function DashboardLayout({ navigation, title }) {
   const [open, setOpen] = useState(false)
   const location = useLocation()
-  const activeTitle = useMemo(
-    () => navigation.find(i => i.to === location.pathname)?.label || title,
-    [location.pathname, navigation, title]
-  )
+  const t = useT()
+  const activeTitle = useMemo(() => {
+    const item = navigation.find(i => i.to === location.pathname)
+    if (item) return item.key && t[item.key] ? t[item.key] : item.label
+    return title
+  }, [location.pathname, navigation, title, t])
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#050a14] lg:flex">

@@ -6,6 +6,7 @@ import { NotificationBell } from '../common/NotificationBell.jsx'
 import { LanguageSwitcher } from '../common/LanguageSwitcher.jsx'
 import { useAuthStore } from '../../store/authStore.js'
 import { httpClient } from '../../services/api/index.js'
+import { useT } from '../../store/i18nStore.js'
 
 function useDebounce(value, delay = 350) {
   const [dv, setDv] = useState(value)
@@ -95,6 +96,7 @@ export function Topbar({ onMenuClick, title }) {
   const location = useLocation()
   const user = useAuthStore(s => s.user)
   const role = useAuthStore(s => s.role)
+  const t = useT()
   const [q, setQ] = useState('')
   const [focused, setFocused] = useState(false)
   const ref = useRef(null)
@@ -132,7 +134,7 @@ export function Topbar({ onMenuClick, title }) {
         <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 z-10" />
         <input
           className="h-9 w-full rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] pl-9 pr-8 text-[13.5px] text-slate-800 dark:text-slate-200 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:border-ocean-400 dark:focus:border-ocean-500 focus:ring-2 focus:ring-ocean-400/10 dark:focus:ring-ocean-500/15"
-          placeholder="Qidirish..."
+          placeholder={t.search}
           value={q}
           onChange={e => setQ(e.target.value)}
           onFocus={() => setFocused(true)}

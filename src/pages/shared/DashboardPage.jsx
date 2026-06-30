@@ -6,10 +6,13 @@ import { PageSkeleton } from '../../components/common/LoadingSkeleton.jsx'
 import { analyticsService } from '../../services/api/index.js'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { useAuthStore } from '../../store/authStore.js'
+import { useT, useI18nStore } from '../../store/i18nStore.js'
 
 export function DashboardPage({ title, subtitle }) {
   usePageTitle(title)
   const user = useAuthStore(s => s.user)
+  const t = useT()
+  const lang = useI18nStore(s => s.lang)
   const { data, isLoading } = useQuery({
     queryKey: ['dashboard', title],
     queryFn: () => analyticsService.dashboard({ scope: title }),
@@ -18,7 +21,7 @@ export function DashboardPage({ title, subtitle }) {
   })
 
   const h = new Date().getHours()
-  const greet = h < 5 ? 'Xayrli kech' : h < 12 ? 'Xayrli tong' : h < 18 ? 'Xayrli kun' : 'Xayrli kech'
+  const greet = h < 5 ? t.goodEvening : h < 12 ? t.goodMorning : h < 18 ? t.goodDay : t.goodEvening
 
   if (isLoading) return <PageSkeleton />
 
@@ -34,7 +37,7 @@ export function DashboardPage({ title, subtitle }) {
         <div className="relative z-10">
           <div className="mb-2 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse-soft" />
-            <span className="text-[11px] font-bold uppercase tracking-widest text-white/60">Jonli panel</span>
+            <span className="text-[11px] font-bold uppercase tracking-widest text-white/60">{t.liveDashboard}</span>
           </div>
           <h2 className="text-[28px] font-black text-white tracking-tight">
             {greet}{user?.firstName ? `, ${user.firstName}` : ''}! 👋
@@ -45,7 +48,7 @@ export function DashboardPage({ title, subtitle }) {
               <Activity className="h-3.5 w-3.5" /> {title}
             </span>
             <span className="inline-flex items-center rounded-full bg-white/[0.08] px-4 py-1.5 text-[13px] text-white/60">
-              {new Date().toLocaleDateString('uz-UZ', { weekday: 'long', day: 'numeric', month: 'long' })}
+              {new Date().toLocaleDateString(lang === 'ru' ? 'ru-RU' : 'uz-UZ', { weekday: 'long', day: 'numeric', month: 'long' })}
             </span>
           </div>
         </div>
@@ -53,10 +56,10 @@ export function DashboardPage({ title, subtitle }) {
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <StatCard title="Buyurtmalar" value={(data?.ordersCount ?? 0).toLocaleString()} description="Jami buyurtmalar" icon={ClipboardCheck} tone="ocean" trend={data?.ordersTrend} />
-        <StatCard title="Baliqlar"    value={(data?.fishCount ?? 0).toLocaleString()}   description="Katalog va ombor"   icon={Fish}           tone="emerald" />
-        <StatCard title="Fermalar"    value={(data?.farmCount ?? 0).toLocaleString()}   description="Tasdiqlangan"      icon={Store}          tone="amber" />
-        <StatCard title="Haydovchilar"value={(data?.driverCount ?? 0).toLocaleString()} description="Faol haydovchilar" icon={Truck}           tone="rose" />
+        <StatCard title={t.totalOrders}  value={(data?.ordersCount ?? 0).toLocaleString()} description={t.myOrders}    icon={ClipboardCheck} tone="ocean" trend={data?.ordersTrend} />
+        <StatCard title={t.totalFish}    value={(data?.fishCount ?? 0).toLocaleString()}   description={t.fishCatalog} icon={Fish}           tone="emerald" />
+        <StatCard title={t.totalFarms}   value={(data?.farmCount ?? 0).toLocaleString()}   description={t.farmList}    icon={Store}          tone="amber" />
+        <StatCard title={t.totalDrivers} value={(data?.driverCount ?? 0).toLocaleString()} description={t.liveTracking} icon={Truck}         tone="rose" />
       </div>
 
       <DashboardCharts series={data?.series} />
