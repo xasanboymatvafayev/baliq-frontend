@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { useState } from 'react'
-import { Eye, EyeOff, Phone, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Phone, Lock, ArrowRight, Loader2, Check } from 'lucide-react'
 import { useAuthStore } from '../../store/authStore.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { authService } from '../../services/api/index.js'
@@ -24,16 +24,36 @@ export function Login() {
   const navigate   = useNavigate()
   const setSession = useAuthStore(s => s.setSession)
   const pushToast  = useToastStore(s => s.pushToast)
-  const [loading, setLoading]   = useState(false)
-  const [showPwd, setShowPwd]   = useState(false)
+  const [loading, setLoading]     = useState(false)
+  const [showPwd, setShowPwd]     = useState(false)
+  const [remember, setRemember]   = useState(true)
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
   const onSubmit = async (data) => {
     setLoading(true)
     try {
       const result   = await authService.login(data)
+
+      // Yangi qurilma / shubhali login aniqlansa backend bu maydonni qaytaradi
+      if (result.suspicious_login || result.new_device) {
+        pushToast({
+          title: '🔐 Yangi qurilmadan kirish aniqlandi',
+          description: 'Tasdiqlash uchun Telegram botga xabar yuborildi. Agar bu siz bo\'lmasangiz, hisobingiz xavfsizligini tekshiring.',
+          variant: 'info',
+        })
+        navigate('/otp-verification', {
+          state: {
+            phone: data.phone,
+            userId: result.user_id,
+            securityCheck: true,
+            rememberMe: remember,
+          },
+        })
+        return
+      }
+
       const userRole = result.user?.role || result.role || 'customer'
-      setSession({ user: result.user, role: userRole, token: result.token })
+      setSession({ user: result.user, role: userRole, token: result.token, rememberMe: remember })
       pushToast({ title: 'Xush kelibsiz! 👋', variant: 'success' })
       navigate(ROLE_ROUTES[userRole] || '/customer/dashboard')
     } catch (err) {
@@ -104,7 +124,24 @@ export function Login() {
           {formState.errors.password && <p className="mt-1.5 text-[12px] font-medium text-rose-400">{formState.errors.password.message}</p>}
         </div>
 
-        <div className="flex justify-end">
+        {/* Remember me + Forgot password */}
+        <div className="flex items-center justify-between">
+          <label className="flex items-center gap-2 cursor-pointer select-none group">
+            <button
+              type="button"
+              onClick={() => setRemember(v => !v)}
+              className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center rounded-md border-[1.5px] transition-all"
+              style={{
+                background: remember ? 'linear-gradient(135deg,#0ea5e9,#0284c7)' : 'rgba(255,255,255,0.06)',
+                borderColor: remember ? '#0ea5e9' : 'rgba(255,255,255,0.18)',
+              }}
+            >
+              {remember && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
+            </button>
+            <span className="text-[13px] font-medium text-white/55 group-hover:text-white/75 transition-colors">
+              Meni eslab qol
+            </span>
+          </label>
           <Link className="text-[13px] font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/forgot-password">
             Parolni unutdingizmi?
           </Link>
