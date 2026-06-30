@@ -58,13 +58,6 @@ export function ForgotPassword() {
     >
       <div id="recaptcha-container" />
 
-      <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-        <MessageSquare className="h-4 w-4 shrink-0 text-emerald-400" />
-        <p className="text-[12px] font-medium text-emerald-300">
-          Telefon raqamingizga SMS kod yuboriladi (Firebase, bepul)
-        </p>
-      </div>
-
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>
           <label className="mb-1.5 block text-[13px] font-semibold text-white/60">Telefon</label>
