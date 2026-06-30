@@ -55,7 +55,7 @@ httpClient.interceptors.response.use(
     }
 
     // Network xatosi — bir marta avtomatik qayta urinib ko'ramiz (Railway cold start uchun)
-    if (!error.response && !error.config?._retried) {
+    if (!error.response && error.config && !error.config._retried) {
       error.config._retried = true
       await sleep(3000)
       try {
