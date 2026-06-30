@@ -7,13 +7,7 @@ import { Eye, EyeOff, User, Phone, Lock, ArrowRight, Loader2, MessageSquare } fr
 import { useToastStore } from '../../store/toastStore.js'
 import { useFirebasePhone } from '../../hooks/useFirebasePhone.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
-
-const schema = z.object({
-  firstName: z.string().min(2, 'Ism kiriting'),
-  lastName:  z.string().min(2, 'Familiya kiriting'),
-  phone:     z.string().min(9, 'Telefon kiriting'),
-  password:  z.string().min(6, 'Parol kamida 6 ta belgi'),
-})
+import { useT } from '../../store/i18nStore.js'
 
 function AuthField({ label, icon: Icon, error, type = 'text', hint, ...props }) {
   const [show, setShow] = useState(false)
@@ -50,7 +44,6 @@ function AuthField({ label, icon: Icon, error, type = 'text', hint, ...props }) 
   )
 }
 
-// Format phone to E.164 (+998XXXXXXXXX)
 function toE164(raw) {
   const digits = raw.replace(/\D/g, '')
   if (digits.startsWith('998')) return `+${digits}`
@@ -62,8 +55,17 @@ function toE164(raw) {
 export function Register({ pendingFarm = false, pendingDriver = false }) {
   const navigate  = useNavigate()
   const pushToast = useToastStore(s => s.pushToast)
+  const t = useT()
   const { sendSms, status, error: smsError } = useFirebasePhone()
   const [loading, setLoading] = useState(false)
+
+  const schema = z.object({
+    firstName: z.string().min(2, t.firstName + ' ' + (t.lang === 'ru' ? 'обязательно' : 'kiriting')),
+    lastName:  z.string().min(2, t.lastName + ' ' + (t.lang === 'ru' ? 'обязательно' : 'kiriting')),
+    phone:     z.string().min(9, t.phone + ' ' + (t.lang === 'ru' ? 'обязательно' : 'kiriting')),
+    password:  z.string().min(6, t.lang === 'ru' ? 'Пароль минимум 6 символов' : 'Parol kamida 6 ta belgi'),
+  })
+
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
   const e = formState.errors
 
@@ -71,27 +73,18 @@ export function Register({ pendingFarm = false, pendingDriver = false }) {
     setLoading(true)
     try {
       const e164 = toE164(data.phone)
-
-      // Send Firebase SMS
       const ok = await sendSms(e164)
       if (!ok) {
-        pushToast({ title: smsError || 'SMS yuborishda xato', variant: 'error' })
+        pushToast({ title: smsError || (t.lang === 'ru' ? 'Ошибка отправки SMS' : 'SMS yuborishda xato'), variant: 'error' })
         setLoading(false)
         return
       }
-
       pushToast({ title: `SMS yuborildi 📱 ${e164}`, variant: 'success' })
-      // Navigate to OTP page with form data + E.164 phone
       navigate('/firebase-otp', {
-        state: {
-          formData: data,
-          phone: e164,
-          pendingFarm,
-          pendingDriver,
-        },
+        state: { formData: data, phone: e164, pendingFarm, pendingDriver },
       })
     } catch (err) {
-      pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
+      pushToast({ title: err.message || (t.lang === 'ru' ? 'Ошибка' : 'Xatolik yuz berdi'), variant: 'error' })
     } finally {
       setLoading(false)
     }
@@ -99,44 +92,40 @@ export function Register({ pendingFarm = false, pendingDriver = false }) {
 
   return (
     <AuthFormShell
-      title="Ro'yxatdan o'tish"
-      description="SMS orqali telefon raqamingizni tasdiqlaymiz."
-      footer={<>Akkountingiz bormi? <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/login">Kirish</Link></>}
+      title={t.registerTitle}
+      description={t.registerDesc}
+      footer={<>{t.haveAccount} <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/login">{t.login}</Link></>}
     >
-      {/* Hidden recaptcha container (invisible reCAPTCHA) */}
       <div id="recaptcha-container" />
 
-      {/* Firebase badge */}
       <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
         <MessageSquare className="h-4 w-4 shrink-0 text-emerald-400" />
-        <p className="text-[12px] font-medium text-emerald-300">
-          Ro'yxatdan o'tish uchun telefon raqamingizga SMS kod yuboriladi (Firebase, bepul)
-        </p>
+        <p className="text-[12px] font-medium text-emerald-300">{t.registerSmsBadge}</p>
       </div>
 
       <form className="space-y-3.5" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="grid grid-cols-2 gap-3">
-          <AuthField label="Ism"      icon={User}  error={e.firstName?.message} {...register('firstName')} placeholder="Jasur" />
-          <AuthField label="Familiya" icon={User}  error={e.lastName?.message}  {...register('lastName')}  placeholder="Karimov" />
+          <AuthField label={t.firstName} icon={User}  error={e.firstName?.message} {...register('firstName')} placeholder={t.lang === 'ru' ? 'Иван' : 'Jasur'} />
+          <AuthField label={t.lastName}  icon={User}  error={e.lastName?.message}  {...register('lastName')}  placeholder={t.lang === 'ru' ? 'Иванов' : 'Karimov'} />
         </div>
         <AuthField
-          label="Telefon"
+          label={t.phone}
           icon={Phone}
           error={e.phone?.message}
           {...register('phone')}
-          placeholder="+998 90 000 00 00"
-          hint="Xalqaro format: +998901234567"
+          placeholder={t.phonePlaceholder}
+          hint={t.phoneHint}
           inputMode="tel"
         />
-        <AuthField label="Parol" icon={Lock} error={e.password?.message} {...register('password')} type="password" placeholder="••••••••" />
+        <AuthField label={t.password} icon={Lock} error={e.password?.message} {...register('password')} type="password" placeholder={t.passwordPlaceholder} />
 
         <button type="submit" disabled={loading || status === 'sending'}
           className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl text-[14px] font-semibold text-white transition-all disabled:opacity-50 mt-1"
           style={{ background: 'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}
         >
           {(loading || status === 'sending')
-            ? <><Loader2 className="h-4 w-4 animate-spin" /> SMS yuborilmoqda...</>
-            : <>SMS kod olish <ArrowRight className="h-4 w-4" /></>
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.sendingSms}</>
+            : <>{t.smsCodeBtn} <ArrowRight className="h-4 w-4" /></>
           }
         </button>
       </form>
