@@ -6,16 +6,27 @@ import { httpClient } from "../services/api/httpClient.js";
 export function useBackendOtp() {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
+  const [botLink, setBotLink] = useState(null);
   const phoneRef = useRef(null);
 
-  const clearError = () => setError("");
+  const clearError = () => { setError(""); setBotLink(null); };
 
   const sendSms = useCallback(async (phone) => {
     setStatus("sending");
     setError("");
+    setBotLink(null);
     phoneRef.current = phone;
     try {
-      await httpClient.post("/auth/send-otp-backend", { phone });
+      const res = await httpClient.post("/auth/send-otp-backend", { phone });
+      const data = res.data;
+
+      if (data?.sent_via === "none") {
+        setStatus("error");
+        setError("OTP yuborib bo'lmadi. Telegram botni ulang va qayta urinib ko'ring.");
+        setBotLink(data?.bot_link || null);
+        return false;
+      }
+
       setStatus("code_sent");
       return true;
     } catch (err) {
@@ -55,5 +66,5 @@ export function useBackendOtp() {
     }
   }, []);
 
-  return { sendSms, confirmCode, status, error, clearError };
+  return { sendSms, confirmCode, status, error, botLink, clearError };
 }
