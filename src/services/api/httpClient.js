@@ -37,9 +37,11 @@ const STATUS_MESSAGES = {
 
 let isRedirectingToLogin = false
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
 httpClient.interceptors.response.use(
   (response) => response.data,
-  (error) => {
+  async (error) => {
     const status = error.response?.status
 
     // 401 — token tugagan yoki noto'g'ri: avtomatik chiqarib login sahifasiga yo'naltiramiz
@@ -50,6 +52,17 @@ httpClient.interceptors.response.use(
         window.location.href = '/login'
       }
       return Promise.reject(new Error("Sessiya muddati tugagan. Qayta kiring."))
+    }
+
+    // Network xatosi — bir marta avtomatik qayta urinib ko'ramiz (Railway cold start uchun)
+    if (!error.response && !error.config?._retried) {
+      error.config._retried = true
+      await sleep(3000)
+      try {
+        return await httpClient(error.config)
+      } catch {
+        return Promise.reject(new Error("Internet aloqasi yo'q yoki server ishlamayapti."))
+      }
     }
 
     // Backend tomonidan kelgan o'zbek tilidagi xabar (detail field)
@@ -66,7 +79,7 @@ httpClient.interceptors.response.use(
     if (status && STATUS_MESSAGES[status]) {
       return Promise.reject(new Error(STATUS_MESSAGES[status]))
     }
-    // Network xatosi
+    // Network xatosi (retry ham muvaffaqiyatsiz bo'lsa)
     if (!error.response) {
       return Promise.reject(new Error("Internet aloqasi yo'q yoki server ishlamayapti."))
     }
