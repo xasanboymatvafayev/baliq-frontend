@@ -116,8 +116,8 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   })
 
   const resendInvoiceMutation = useMutation({
-    mutationFn: ({ orderId, provider }) => httpClient.post('/telegram-payment/send-invoice', { order_id: orderId, provider }),
-    onSuccess: (data) => pushToast({ title: data.message, variant: 'success' }),
+    mutationFn: ({ orderId, provider }) => httpClient.post('/payments/create-link', { order_id: orderId, provider }),
+    onSuccess: (data) => { if (data?.url) window.open(data.url, '_blank'); pushToast({ title: "To'lov sahifasi ochildi ✅", variant: 'success' }) },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
@@ -190,10 +190,10 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     if (role === 'customer' && status === 'AWAITING_PAYMENT') return (
       <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
         <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 p-3 text-sm text-amber-700 dark:text-amber-300">
-          💳 Telegram botda to'lovni yakunlang. To'lov amalga oshirilgach buyurtma fermerga yuboriladi.
+          💳 Click yoki Payme orqali to'lovni amalga oshiring. To'lov tasdiqlangach buyurtma fermerga yuboriladi.
         </div>
-        <button className="primary-button w-full" onClick={() => resendInvoiceMutation.mutate({ orderId: selected.id, provider: selected.payment_method })} disabled={resendInvoiceMutation.isPending}>
-          {resendInvoiceMutation.isPending ? 'Yuborilmoqda...' : '📱 Invoice ni qayta yuborish'}
+        <button className="primary-button w-full" onClick={() => resendInvoiceMutation.mutate({ orderId: selected.id, provider: selected.payment_method || 'click' })} disabled={resendInvoiceMutation.isPending}>
+          {resendInvoiceMutation.isPending ? 'Ochilmoqda...' : "💳 To'lov sahifasini ochish"}
         </button>
         <button className="danger-button w-full" onClick={() => cancelMutation.mutate(selected.id)} disabled={cancelMutation.isPending}>
           {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Buyurtmani bekor qilish'}

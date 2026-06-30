@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { MapPin, Navigation } from 'lucide-react'
+import { MapPin, Navigation, MessageSquare, Loader2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
@@ -7,8 +7,8 @@ import { useState, useEffect, useRef } from 'react'
 import { FileUpload } from '../../components/forms/FileUpload.jsx'
 import { FormInput } from '../../components/forms/FormInput.jsx'
 import { useToastStore } from '../../store/toastStore.js'
-import { useAuthStore } from '../../store/authStore.js'
-import { httpClient, fileService } from '../../services/api/index.js'
+import { useFirebasePhone } from '../../hooks/useFirebasePhone.js'
+import { fileService } from '../../services/api/index.js'
 
 const schema = z.object({
   firstName: z.string().min(2, 'Ism kiriting'),
@@ -22,7 +22,14 @@ const schema = z.object({
   farmImage: z.any().refine((files) => files && files.length > 0, 'Ferma rasmi majburiy'),
 })
 
-// Leaflet xarita komponenti
+function toE164(raw) {
+  const digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('998')) return `+${digits}`
+  if (digits.startsWith('0')) return `+998${digits.slice(1)}`
+  if (digits.length === 9) return `+998${digits}`
+  return `+${digits}`
+}
+
 function LocationPicker({ value, onChange }) {
   const mapRef = useRef(null)
   const leafletMapRef = useRef(null)
@@ -31,9 +38,7 @@ function LocationPicker({ value, onChange }) {
 
   function parseCoords(str) {
     const parts = str.split(',').map((s) => parseFloat(s.trim()))
-    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-      return { lat: parts[0], lng: parts[1] }
-    }
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return { lat: parts[0], lng: parts[1] }
     return { lat: 41.2995, lng: 69.2401 }
   }
 
@@ -43,23 +48,18 @@ function LocationPicker({ value, onChange }) {
     linkEl.rel = 'stylesheet'
     linkEl.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'
     document.head.appendChild(linkEl)
-
     const script = document.createElement('script')
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'
     script.onload = () => {
       const L = window.L
       const map = L.map(mapRef.current).setView([coords.lat, coords.lng], 13)
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map)
-      const icon = L.divIcon({
-        html: `<div style="background:#0ea5e9;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`,
-        iconSize: [28, 28], iconAnchor: [14, 28], className: '',
-      })
+      const icon = L.divIcon({ html: `<div style="background:#0ea5e9;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)"></div>`, iconSize: [28, 28], iconAnchor: [14, 28], className: '' })
       const marker = L.marker([coords.lat, coords.lng], { icon, draggable: true }).addTo(map)
       markerRef.current = marker
       const updateCoords = (lat, lng) => {
-        const rounded = { lat: Math.round(lat * 1000000) / 1000000, lng: Math.round(lng * 1000000) / 1000000 }
-        setCoords(rounded)
-        onChange(`${rounded.lat}, ${rounded.lng}`)
+        const r = { lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6 }
+        setCoords(r); onChange(`${r.lat}, ${r.lng}`)
       }
       marker.on('dragend', (e) => { const { lat, lng } = e.target.getLatLng(); updateCoords(lat, lng) })
       map.on('click', (e) => { marker.setLatLng([e.latlng.lat, e.latlng.lng]); updateCoords(e.latlng.lat, e.latlng.lng) })
@@ -72,120 +72,59 @@ function LocationPicker({ value, onChange }) {
   const useMyLocation = () => {
     if (!navigator.geolocation) return
     navigator.geolocation.getCurrentPosition((pos) => {
-      const lat = pos.coords.latitude
-      const lng = pos.coords.longitude
-      if (leafletMapRef.current && markerRef.current) {
-        leafletMapRef.current.setView([lat, lng], 15)
-        markerRef.current.setLatLng([lat, lng])
-      }
-      const rounded = { lat: Math.round(lat * 1000000) / 1000000, lng: Math.round(lng * 1000000) / 1000000 }
-      setCoords(rounded)
-      onChange(`${rounded.lat}, ${rounded.lng}`)
+      const lat = pos.coords.latitude, lng = pos.coords.longitude
+      if (leafletMapRef.current && markerRef.current) { leafletMapRef.current.setView([lat, lng], 15); markerRef.current.setLatLng([lat, lng]) }
+      const r = { lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6 }
+      setCoords(r); onChange(`${r.lat}, ${r.lng}`)
     })
   }
 
   return (
     <div className="md:col-span-2">
       <div className="mb-2 flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm font-semibold">
-          <MapPin className="h-4 w-4 text-ocean-600" /> Ferma joylashuvi (xaritada belgilang)
-        </span>
+        <span className="flex items-center gap-2 text-sm font-semibold"><MapPin className="h-4 w-4 text-ocean-600" /> Ferma joylashuvi (xaritada belgilang)</span>
         <button type="button" onClick={useMyLocation} className="flex items-center gap-1.5 rounded-xl bg-ocean-50 px-3 py-1.5 text-xs font-semibold text-ocean-700 hover:bg-ocean-100 dark:bg-ocean-900/30 dark:text-ocean-300">
           <Navigation className="h-3 w-3" /> Mening joylashuvim
         </button>
       </div>
       <div ref={mapRef} className="h-64 w-full rounded-2xl border border-slate-200 dark:border-white/10" style={{ zIndex: 0 }} />
-      <p className="mt-2 text-xs text-slate-500">
-        Xaritaga bosing yoki markerni torting • <span className="font-mono font-semibold text-ocean-600">{coords.lat}, {coords.lng}</span>
-      </p>
+      <p className="mt-2 text-xs text-slate-500">Xaritaga bosing yoki markerni torting • <span className="font-mono font-semibold text-ocean-600">{coords.lat}, {coords.lng}</span></p>
     </div>
   )
 }
 
 export function FarmRegistration() {
   const pushToast = useToastStore((state) => state.pushToast)
-  const setSession = useAuthStore((s) => s.setSession)
   const navigate = useNavigate()
   const [gpsLocation, setGpsLocation] = useState('41.2995, 69.2401')
   const [loading, setLoading] = useState(false)
+  const { sendSms, status, error: smsError } = useFirebasePhone()
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
-  // Rasmni serverga yuklash va URL olish (auth talab qilmaydigan public endpoint)
   const uploadImage = async (fileList) => {
     if (!fileList || fileList.length === 0) return null
     const formData = new FormData()
     formData.append('file', fileList[0])
-    try {
-      const result = await fileService.publicUpload(formData)
-      return result.url || result.file_url || null
-    } catch (err) {
-      console.error('Rasm yuklashda xatolik:', err)
-      return null
-    }
+    try { const r = await fileService.publicUpload(formData); return r.url || r.file_url || null } catch { return null }
   }
 
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      // Rasmni yuklash
       const farmImageUrl = await uploadImage(data.farmImage)
-
-      // 1. Ro'yxatdan o'tamiz
-      const regResult = await httpClient.post('/auth/register', {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        password: data.password,
-      })
-      const userId = regResult.user_id
-
-      pushToast({
-        title: "Ro'yxatdan o'tdingiz!",
-        description: "Telefon raqamingizni tasdiqlang, keyin ferma so'rovi avtomatik yuboriladi.",
-        variant: 'success',
-      })
       localStorage.setItem('pending-farm-registration', JSON.stringify({
-        farmName: data.farmName,
-        region: data.region,
-        district: data.district,
-        gpsLocation,
-        stir: data.stir,
-        farmImage: farmImageUrl,
+        farmName: data.farmName, region: data.region, district: data.district,
+        gpsLocation, stir: data.stir, farmImage: farmImageUrl,
       }))
-      navigate('/otp-verification', { state: { phone: data.phone, userId, redirect: '/farm/dashboard', pendingFarm: true } })
+      const e164 = toE164(data.phone)
+      const ok = await sendSms(e164)
+      if (!ok) { pushToast({ title: smsError || 'SMS yuborishda xato', variant: 'error' }); return }
+      pushToast({ title: `SMS yuborildi 📱 ${e164}`, variant: 'success' })
+      navigate('/firebase-otp', {
+        state: { formData: { firstName: data.firstName, lastName: data.lastName, phone: data.phone, password: data.password }, phone: e164, pendingFarm: true },
+      })
     } catch (err) {
-      if (err.message?.includes('allaqachon')) {
-        try {
-          const loginResult = await httpClient.post('/auth/login', { phone: data.phone, password: data.password })
-          const loginRole = loginResult.user?.role || loginResult.role || 'customer'
-          setSession({ user: loginResult.user, role: loginRole, token: loginResult.token })
-
-          const farmImageUrl = await uploadImage(data.farmImage)
-          await httpClient.post('/farms', {
-            farmName: data.farmName,
-            region: data.region,
-            district: data.district,
-            gpsLocation,
-            stir: data.stir,
-            farmImage: farmImageUrl,
-          })
-          pushToast({
-            title: "Ferma so'rovi yuborildi!",
-            description: "Admin tasdiqlashini kuting. Telegram bot orqali xabar olasiz.",
-            variant: 'success',
-          })
-          navigate('/farm/dashboard')
-        } catch (loginErr) {
-          if (loginErr.message?.includes('tasdiqlanmagan')) {
-            pushToast({ title: 'Avval OTP orqali telefon raqamingizni tasdiqlang', variant: 'warning' })
-            navigate('/otp-verification', { state: { phone: data.phone, pendingFarm: true } })
-          } else {
-            pushToast({ title: loginErr.message, variant: 'error' })
-          }
-        }
-      } else {
-        pushToast({ title: err.message, variant: 'error' })
-      }
+      pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
     } finally {
       setLoading(false)
     }
@@ -193,6 +132,7 @@ export function FarmRegistration() {
 
   return (
     <main className="min-h-screen bg-slate-50 p-4 dark:bg-slate-950 sm:p-6">
+      <div id="recaptcha-container" />
       <section className="mx-auto max-w-5xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -202,6 +142,12 @@ export function FarmRegistration() {
           </div>
           <Link className="secondary-button" to="/login">Kirishga qaytish</Link>
         </div>
+
+        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+          <MessageSquare className="h-4 w-4 shrink-0 text-emerald-400" />
+          <p className="text-[12px] font-medium text-emerald-300">Ro'yxatdan o'tish uchun telefon raqamingizga SMS kod yuboriladi (Firebase, bepul)</p>
+        </div>
+
         <form className="glass-card grid gap-5 p-6 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
           <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">👤 Shaxsiy ma'lumotlar</h3></div>
           <FormInput label="Ism" {...register('firstName')} error={formState.errors.firstName?.message} />
@@ -216,8 +162,8 @@ export function FarmRegistration() {
           <LocationPicker value={gpsLocation} onChange={setGpsLocation} />
           <FileUpload label="Ferma rasmi (majburiy)" name="farmImage" register={register} error={formState.errors.farmImage?.message} />
           <div className="flex items-end">
-            <button className="primary-button w-full" type="submit" disabled={loading}>
-              {loading ? 'Yuborilmoqda...' : "So'rov yuborish"}
+            <button className="primary-button w-full" type="submit" disabled={loading || status === 'sending'}>
+              {loading || status === 'sending' ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />SMS yuborilmoqda...</> : "So'rov yuborish"}
             </button>
           </div>
         </form>

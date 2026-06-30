@@ -1,0 +1,1 @@
+export { useBackendOtp as useFirebasePhone } from "./useBackendOtp.js";

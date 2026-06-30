@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { useState } from 'react'
+import { MessageSquare, Loader2 } from 'lucide-react'
 import { FileUpload } from '../../components/forms/FileUpload.jsx'
 import { FormInput } from '../../components/forms/FormInput.jsx'
 import { useToastStore } from '../../store/toastStore.js'
-import { useAuthStore } from '../../store/authStore.js'
-import { httpClient, fileService } from '../../services/api/index.js'
+import { useFirebasePhone } from '../../hooks/useFirebasePhone.js'
+import { fileService } from '../../services/api/index.js'
 
 const schema = z.object({
   firstName: z.string().min(2, 'Ism kiriting'),
@@ -21,95 +22,49 @@ const schema = z.object({
   technicalPassportImage: z.any().refine((files) => files && files.length > 0, 'Tex pasport rasmi majburiy'),
 })
 
+function toE164(raw) {
+  const digits = raw.replace(/\D/g, '')
+  if (digits.startsWith('998')) return `+${digits}`
+  if (digits.startsWith('0')) return `+998${digits.slice(1)}`
+  if (digits.length === 9) return `+998${digits}`
+  return `+${digits}`
+}
+
 export function DriverRegistration() {
   const pushToast = useToastStore((state) => state.pushToast)
-  const setSession = useAuthStore((s) => s.setSession)
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const { sendSms, status, error: smsError } = useFirebasePhone()
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
-  // Rasmni serverga yuklash va URL olish (auth talab qilmaydigan public endpoint)
   const uploadImage = async (fileList) => {
     if (!fileList || fileList.length === 0) return null
     const formData = new FormData()
     formData.append('file', fileList[0])
-    try {
-      const result = await fileService.publicUpload(formData)
-      return result.url || result.file_url || null
-    } catch (err) {
-      console.error('Rasm yuklashda xatolik:', err)
-      return null
-    }
+    try { const r = await fileService.publicUpload(formData); return r.url || r.file_url || null } catch { return null }
   }
 
   const onSubmit = async (data) => {
     setLoading(true)
     try {
-      // Rasmlarni yuklash
       const licenseImageUrl = await uploadImage(data.licenseImage)
       const technicalPassportImageUrl = await uploadImage(data.technicalPassportImage)
 
-      // 1. Ro'yxatdan o'tamiz
-      const regResult = await httpClient.post('/auth/register', {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phone: data.phone,
-        password: data.password,
-      })
-      pushToast({
-        title: "Ro'yxatdan o'tdingiz!",
-        description: "Telefon raqamingizni tasdiqlang, keyin haydovchi so'rovini yuboring.",
-        variant: 'success',
-      })
       localStorage.setItem('pending-driver-registration', JSON.stringify({
-        carBrand: data.carBrand,
-        plateNumber: data.plateNumber,
-        capacity: data.capacity,
-        phone: data.phone,
-        licenseImage: licenseImageUrl,
-        technicalPassportImage: technicalPassportImageUrl,
+        carBrand: data.carBrand, plateNumber: data.plateNumber,
+        capacity: data.capacity, phone: toE164(data.phone),
+        licenseImage: licenseImageUrl, technicalPassportImage: technicalPassportImageUrl,
       }))
-      navigate('/otp-verification', {
-        state: { phone: data.phone, userId: regResult.user_id, redirect: '/driver/dashboard', pendingDriver: true }
+
+      const e164 = toE164(data.phone)
+      const ok = await sendSms(e164)
+      if (!ok) { pushToast({ title: smsError || 'SMS yuborishda xato', variant: 'error' }); return }
+      pushToast({ title: `SMS yuborildi 📱 ${e164}`, variant: 'success' })
+      navigate('/firebase-otp', {
+        state: { formData: { firstName: data.firstName, lastName: data.lastName, phone: data.phone, password: data.password }, phone: e164, pendingDriver: true },
       })
     } catch (err) {
-      if (err.message?.includes('allaqachon')) {
-        try {
-          const loginResult = await httpClient.post('/auth/login', { phone: data.phone, password: data.password })
-          const loginRole = loginResult.user?.role || loginResult.role || 'customer'
-          setSession({ user: loginResult.user, role: loginRole, token: loginResult.token })
-
-          // Rasmlarni yuklash (agar oldin yuklangan bo'lmasa)
-          const licenseImageUrl = await uploadImage(data.licenseImage)
-          const technicalPassportImageUrl = await uploadImage(data.technicalPassportImage)
-
-          await httpClient.post('/drivers', {
-            firstName: data.firstName,
-            lastName: data.lastName,
-            phone: data.phone,
-            carBrand: data.carBrand,
-            plateNumber: data.plateNumber,
-            capacity: data.capacity,
-            licenseImage: licenseImageUrl,
-            technicalPassportImage: technicalPassportImageUrl,
-          })
-          pushToast({
-            title: "Haydovchi so'rovi yuborildi!",
-            description: 'Admin tasdiqlashini kuting. Telegram bot orqali xabar olasiz.',
-            variant: 'success',
-          })
-          navigate('/driver/dashboard')
-        } catch (e2) {
-          if (e2.message?.includes('tasdiqlanmagan')) {
-            pushToast({ title: 'Avval OTP orqali telefon raqamingizni tasdiqlang', variant: 'warning' })
-            navigate('/otp-verification', { state: { phone: data.phone, pendingDriver: true } })
-          } else {
-            pushToast({ title: e2.message, variant: 'error' })
-          }
-        }
-      } else {
-        pushToast({ title: err.message, variant: 'error' })
-      }
+      pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
     } finally {
       setLoading(false)
     }
@@ -117,6 +72,7 @@ export function DriverRegistration() {
 
   return (
     <main className="min-h-screen bg-slate-50 p-4 dark:bg-slate-950 sm:p-6">
+      <div id="recaptcha-container" />
       <section className="mx-auto max-w-5xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
@@ -126,6 +82,12 @@ export function DriverRegistration() {
           </div>
           <Link className="secondary-button" to="/login">Kirishga qaytish</Link>
         </div>
+
+        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
+          <MessageSquare className="h-4 w-4 shrink-0 text-emerald-400" />
+          <p className="text-[12px] font-medium text-emerald-300">Telefon raqamingizga SMS kod yuboriladi (Firebase, bepul)</p>
+        </div>
+
         <form className="glass-card grid gap-5 p-6 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
           <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">👤 Shaxsiy ma'lumotlar</h3></div>
           <FormInput label="Ism" {...register('firstName')} error={formState.errors.firstName?.message} />
@@ -139,8 +101,8 @@ export function DriverRegistration() {
           <div />
           <FileUpload label="Haydovchilik guvohnomasi rasmi (majburiy)" name="licenseImage" register={register} error={formState.errors.licenseImage?.message} />
           <FileUpload label="Tex pasport rasmi (majburiy)" name="technicalPassportImage" register={register} error={formState.errors.technicalPassportImage?.message} />
-          <button className="primary-button md:col-span-2" type="submit" disabled={loading}>
-            {loading ? 'Yuborilmoqda...' : "So'rov yuborish"}
+          <button className="primary-button md:col-span-2" type="submit" disabled={loading || status === 'sending'}>
+            {loading || status === 'sending' ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />SMS yuborilmoqda...</> : "So'rov yuborish"}
           </button>
         </form>
       </section>

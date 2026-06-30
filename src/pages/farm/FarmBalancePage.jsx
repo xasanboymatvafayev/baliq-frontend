@@ -1,25 +1,40 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
+import { useAuthStore } from '../../store/authStore.js'
+import { useFirebasePhone } from '../../hooks/useFirebasePhone.js'
 import { formatCurrency, formatNumber } from '../../utils/formatters.js'
-import { Wallet, ArrowDownCircle, Clock, CheckCircle2, CreditCard, Save } from 'lucide-react'
+import { Wallet, ArrowDownCircle, Clock, CheckCircle2, CreditCard, Save, ShieldCheck, RefreshCw, Loader2, Smartphone } from 'lucide-react'
 import { PageSkeleton } from '../../components/common/LoadingSkeleton.jsx'
 import { EmptyState } from '../../components/common/EmptyState.jsx'
+
+const RESEND_COOLDOWN = 60
 
 export function FarmBalancePage() {
   usePageTitle('Balans')
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
+  const user = useAuthStore((s) => s.user)
+  const { sendSms, confirmCode, status: smsStatus, error: smsError, clearError } = useFirebasePhone()
+
   const [tab, setTab] = useState('balance')
   const [amount, setAmount] = useState('')
   const [cardNum, setCardNum] = useState('')
   const [cardHolder, setCardHolder] = useState('')
   const [saveCard, setSaveCard] = useState(false)
-  const [otp, setOtp] = useState('')
+
+  // Firebase OTP step
   const [otpStep, setOtpStep] = useState(false)
-  const [withdrawReqs, setWithdrawReqs] = useState([])
+  const [code, setCode] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [countdown, setCountdown] = useState(RESEND_COOLDOWN)
+  const [resending, setResending] = useState(false)
+  const timerRef = useRef(null)
+
+  // Withdraw pending data
+  const withdrawPendingRef = useRef(null)
 
   const { data: bal = { available_amount: 0, pending_amount: 0, withdrawn_amount: 0, monitoring: [] }, isLoading } = useQuery({
     queryKey: ['farm-balance'],
@@ -32,7 +47,6 @@ export function FarmBalancePage() {
     queryFn: () => httpClient.get('/finance/farm/saved-card'),
   })
 
-  // React Query v5 da useQuery ichida onSuccess yo'q - useEffect orqali kuzatamiz
   useEffect(() => {
     if (savedCard?.card?.card_number) {
       setCardNum(savedCard.card.card_number)
@@ -40,31 +54,72 @@ export function FarmBalancePage() {
     }
   }, [savedCard])
 
-  const withdrawMutation = useMutation({
-    mutationFn: () => httpClient.post('/finance/farm/withdraw', {
-      amount: parseInt(amount),
-      card_number: cardNum,
-      card_holder: cardHolder,
-      save_card: saveCard,
-    }),
-    onSuccess: () => { pushToast({ title: 'OTP Telegram ga yuborildi 📱', variant: 'success' }); setOtpStep(true) },
-    onError: (e) => pushToast({ title: e?.response?.data?.detail || 'Xato', variant: 'error' }),
-  })
+  const startCountdown = useCallback(() => {
+    setCountdown(RESEND_COOLDOWN)
+    if (timerRef.current) clearInterval(timerRef.current)
+    timerRef.current = setInterval(() => {
+      setCountdown(p => { if (p <= 1) { clearInterval(timerRef.current); return 0 } return p - 1 })
+    }, 1000)
+  }, [])
 
-  const confirmMutation = useMutation({
-    mutationFn: () => httpClient.post('/finance/farm/withdraw/confirm', { otp }),
-    onSuccess: () => {
+  useEffect(() => () => clearInterval(timerRef.current), [])
+
+  const handleWithdraw = async () => {
+    if (!amount || !cardNum || !cardHolder || parseInt(amount) <= 0 || parseInt(amount) > bal.available_amount) return
+    const phone = user?.phone
+    if (!phone) { pushToast({ title: "Telefon raqam topilmadi. Qayta kiring.", variant: 'error' }); return }
+
+    withdrawPendingRef.current = { amount: parseInt(amount), card_number: cardNum, card_holder: cardHolder, save_card: saveCard }
+
+    const ok = await sendSms(phone)
+    if (!ok) { pushToast({ title: smsError || 'SMS yuborishda xato', variant: 'error' }); return }
+    pushToast({ title: `SMS yuborildi 📱 ${phone}`, variant: 'success' })
+    setOtpStep(true)
+    setCode('')
+    startCountdown()
+  }
+
+  const handleResend = async () => {
+    const phone = user?.phone
+    if (!phone) return
+    setResending(true)
+    clearError()
+    const ok = await sendSms(phone)
+    if (ok) { pushToast({ title: 'SMS qayta yuborildi ✅', variant: 'success' }); startCountdown() }
+    else pushToast({ title: smsError || 'SMS yuborishda xato', variant: 'error' })
+    setResending(false)
+  }
+
+  const handleConfirm = async () => {
+    if (code.length !== 6) { pushToast({ title: '6 xonali kod kiriting', variant: 'error' }); return }
+    setSubmitting(true)
+    try {
+      const result = await confirmCode(code)
+      if (!result) { pushToast({ title: smsError || "Kod noto'g'ri", variant: 'error' }); setSubmitting(false); return }
+
+      const wd = withdrawPendingRef.current
+      await httpClient.post('/finance/farm/withdraw-firebase', {
+        firebase_token: result.idToken,
+        phone: user?.phone,
+        amount: wd.amount,
+        card_number: wd.card_number,
+        card_holder: wd.card_holder,
+        save_card: wd.save_card,
+      })
       pushToast({ title: "So'rov yuborildi! Admin tez orada o'tkazadi ✅", variant: 'success' })
-      setOtpStep(false); setOtp(''); setAmount('')
+      setOtpStep(false); setCode(''); setAmount(''); withdrawPendingRef.current = null
       queryClient.invalidateQueries(['farm-balance'])
       setTab('requests')
-    },
-    onError: (e) => pushToast({ title: e?.response?.data?.detail || 'OTP noto\'g\'ri', variant: 'error' }),
-  })
+    } catch (err) {
+      pushToast({ title: err?.response?.data?.detail || err.message || 'Xato', variant: 'error' })
+    } finally {
+      setSubmitting(false)
+    }
+  }
 
   const tabs = [
-    { id: 'balance',   label: 'Balans' },
-    { id: 'withdraw',  label: 'Pul yechish' },
+    { id: 'balance', label: 'Balans' },
+    { id: 'withdraw', label: 'Pul yechish' },
     { id: 'monitoring', label: 'Monitoring' },
   ]
 
@@ -72,6 +127,7 @@ export function FarmBalancePage() {
 
   return (
     <div className="space-y-6">
+      <div id="recaptcha-container" />
       <div className="glass-card p-6 flex items-center gap-4">
         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
           <Wallet className="h-7 w-7 text-white" />
@@ -82,7 +138,6 @@ export function FarmBalancePage() {
         </div>
       </div>
 
-      {/* Balans kartalar */}
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="glass-card p-5 border-l-4 border-l-emerald-500">
           <p className="text-xs font-bold text-slate-500 uppercase">Mavjud</p>
@@ -101,25 +156,21 @@ export function FarmBalancePage() {
         </div>
       </div>
 
-      {/* Tab */}
       <div className="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-2xl">
         {tabs.map(({ id, label }) => (
           <button key={id} onClick={() => setTab(id)}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition
-              ${tab === id ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600' : 'text-slate-500'}`}>
+            className={`flex-1 rounded-xl py-2.5 text-sm font-bold transition ${tab === id ? 'bg-white dark:bg-slate-700 shadow-sm text-emerald-600' : 'text-slate-500'}`}>
             {label}
           </button>
         ))}
       </div>
 
-      {/* Pul yechish */}
       {tab === 'withdraw' && (
         <div className="glass-card p-6 space-y-5">
           <h3 className="font-black flex items-center gap-2"><ArrowDownCircle className="h-5 w-5 text-emerald-600" /> Pul yechish</h3>
 
           {!otpStep ? (
             <div className="space-y-4">
-              {/* Saqlangan karta */}
               {savedCard?.card?.card_number && (
                 <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 p-3 flex items-center gap-3">
                   <CreditCard className="h-5 w-5 text-emerald-600" />
@@ -136,84 +187,81 @@ export function FarmBalancePage() {
 
               <div>
                 <label className="text-sm font-bold">Karta raqami *</label>
-                <input className="soft-input w-full mt-1 font-mono tracking-widest text-lg"
-                  placeholder="8600 0000 0000 0000"
-                  value={cardNum}
-                  onChange={(e) => {
-                    let v = e.target.value.replace(/\D/g,'').slice(0,16)
-                    v = v.replace(/(.{4})/g,'$1 ').trim()
-                    setCardNum(v)
-                  }}
-                  maxLength={19}
-                />
+                <input className="soft-input w-full mt-1 font-mono tracking-widest text-lg" placeholder="8600 0000 0000 0000"
+                  value={cardNum} onChange={(e) => { let v = e.target.value.replace(/\D/g,'').slice(0,16); v = v.replace(/(.{4})/g,'$1 ').trim(); setCardNum(v) }} maxLength={19} />
               </div>
               <div>
-                <label className="text-sm font-bold">Karta egasi (ism familya) *</label>
-                <input className="soft-input w-full mt-1 uppercase"
-                  placeholder="IVAN IVANOV"
-                  value={cardHolder}
-                  onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                />
+                <label className="text-sm font-bold">Karta egasi *</label>
+                <input className="soft-input w-full mt-1 uppercase" placeholder="IVAN IVANOV" value={cardHolder} onChange={(e) => setCardHolder(e.target.value.toUpperCase())} />
               </div>
               <div>
                 <label className="text-sm font-bold">Yechish summasi *</label>
                 <div className="relative mt-1">
-                  <input className="soft-input w-full pr-16"
-                    placeholder="0"
-                    type="number"
-                    min={1000}
-                    max={bal.available_amount}
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
+                  <input className="soft-input w-full pr-16" placeholder="0" type="number" min={1000} max={bal.available_amount} value={amount} onChange={(e) => setAmount(e.target.value)} />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-semibold">so'm</span>
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Mavjud: {formatCurrency(bal.available_amount)}</p>
               </div>
 
               <label className="flex items-center gap-3 cursor-pointer">
-                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition
-                  ${saveCard ? 'bg-emerald-600 border-emerald-600' : 'border-slate-300'}`}
-                  onClick={() => setSaveCard(v => !v)}>
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition ${saveCard ? 'bg-emerald-600 border-emerald-600' : 'border-slate-300'}`} onClick={() => setSaveCard(v => !v)}>
                   {saveCard && <Save className="h-3 w-3 text-white" />}
                 </div>
                 <span className="text-sm font-semibold">Kartani eslab qolish</span>
               </label>
 
-              <div className="rounded-2xl bg-ocean-50 dark:bg-ocean-900/20 border border-ocean-200 p-3 text-sm text-ocean-700 dark:text-ocean-300">
-                📱 So'rovni tasdiqlash uchun Telegram ga OTP kod yuboriladi
+              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                <Smartphone className="h-4 w-4 shrink-0" />
+                So'rovni tasdiqlash uchun telefon raqamingizga SMS kod yuboriladi (Firebase)
               </div>
 
               <button
                 className="primary-button w-full !bg-emerald-600 hover:!bg-emerald-700 text-lg py-4"
-                onClick={() => withdrawMutation.mutate()}
-                disabled={!amount || !cardNum || !cardHolder || parseInt(amount) <= 0 || parseInt(amount) > bal.available_amount || withdrawMutation.isPending}
+                onClick={handleWithdraw}
+                disabled={!amount || !cardNum || !cardHolder || parseInt(amount) <= 0 || parseInt(amount) > bal.available_amount || smsStatus === 'sending'}
               >
-                {withdrawMutation.isPending ? 'Yuborilmoqda...' : 'Pul yechish so\'rovini yuborish'}
+                {smsStatus === 'sending' ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />SMS yuborilmoqda...</> : 'Pul yechish so\'rovini yuborish'}
               </button>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 p-4 text-center">
-                <p className="text-2xl mb-2">📱</p>
-                <p className="font-black text-amber-700 dark:text-amber-300">Telegram ga OTP kod yuborildi</p>
-                <p className="text-sm text-amber-600 mt-1">5 daqiqa ichida kiriting</p>
+              <div id="recaptcha-container-withdraw" />
+              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 p-4 text-center">
+                <ShieldCheck className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+                <p className="font-black text-emerald-700 dark:text-emerald-300">SMS kod yuborildi</p>
+                <p className="text-sm text-emerald-600 mt-1">{user?.phone}</p>
               </div>
+
               <div>
-                <label className="text-sm font-bold">OTP kod</label>
-                <input className="soft-input w-full mt-1 text-center text-3xl font-mono tracking-widest"
+                <label className="text-sm font-bold">SMS kod</label>
+                <input
+                  className="soft-input w-full mt-1 text-center text-3xl font-mono tracking-widest"
                   placeholder="000000" maxLength={6}
-                  value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g,''))}
+                  value={code}
+                  onChange={(e) => { clearError(); setCode(e.target.value.replace(/\D/g,'').slice(0,6)) }}
+                  autoFocus
                 />
+                {smsError && <p className="mt-1 text-xs text-rose-500">{smsError}</p>}
               </div>
+
+              <div className="text-center">
+                {countdown > 0 ? (
+                  <p className="text-sm text-slate-500">Qayta yuborish: <span className="font-bold">{countdown} sek</span></p>
+                ) : (
+                  <button onClick={handleResend} disabled={resending} className="flex items-center gap-2 mx-auto text-sm font-semibold text-sky-500 hover:text-sky-600 disabled:opacity-50">
+                    <RefreshCw className={`h-4 w-4 ${resending ? 'animate-spin' : ''}`} /> SMS qayta yuborish
+                  </button>
+                )}
+              </div>
+
               <div className="flex gap-3">
-                <button className="secondary-button flex-1" onClick={() => setOtpStep(false)}>Bekor</button>
+                <button className="secondary-button flex-1" onClick={() => { setOtpStep(false); clearInterval(timerRef.current) }}>Bekor</button>
                 <button
                   className="primary-button flex-1 !bg-emerald-600"
-                  onClick={() => confirmMutation.mutate()}
-                  disabled={otp.length < 6 || confirmMutation.isPending}
+                  onClick={handleConfirm}
+                  disabled={code.length < 6 || submitting}
                 >
-                  {confirmMutation.isPending ? '...' : '✓ Tasdiqlash'}
+                  {submitting ? <><Loader2 className="h-4 w-4 animate-spin inline mr-1" />...</> : '✓ Tasdiqlash'}
                 </button>
               </div>
             </div>
@@ -221,7 +269,6 @@ export function FarmBalancePage() {
         </div>
       )}
 
-      {/* Monitoring */}
       {tab === 'monitoring' && (
         <div className="glass-card overflow-hidden">
           <div className="p-4 border-b border-slate-200 dark:border-white/10">
@@ -233,11 +280,7 @@ export function FarmBalancePage() {
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200 dark:border-white/10">
                 <tr className="text-left text-xs font-black uppercase text-slate-400">
-                  <th className="p-4">Buyurtma</th>
-                  <th className="p-4">Jami</th>
-                  <th className="p-4">Soliq</th>
-                  <th className="p-4">Sizga</th>
-                  <th className="p-4">Provider</th>
+                  <th className="p-4">Buyurtma</th><th className="p-4">Jami</th><th className="p-4">Soliq</th><th className="p-4">Sizga</th><th className="p-4">Provider</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">
