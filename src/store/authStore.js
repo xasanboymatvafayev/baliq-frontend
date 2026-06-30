@@ -1,11 +1,30 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
+import { persist } from 'zustand/middleware'
 import { ROLES } from '../types/entities.js'
 
-// "Meni eslab qol" — true bo'lsa localStorage (doimiy), false bo'lsa sessionStorage (faqat shu tab/sessiya)
-function getStorage() {
-  const remember = window.localStorage.getItem('baliq-remember-me')
-  return remember === 'false' ? window.sessionStorage : window.localStorage
+// Dinamik storage: har bir operatsiyada rememberMe ni tekshiradi
+const dynamicStorage = {
+  getItem: (name) => {
+    const remember = window.localStorage.getItem('baliq-remember-me')
+    if (remember === 'false') {
+      return window.sessionStorage.getItem(name)
+    }
+    return window.localStorage.getItem(name)
+  },
+  setItem: (name, value) => {
+    const remember = window.localStorage.getItem('baliq-remember-me')
+    if (remember === 'false') {
+      window.sessionStorage.setItem(name, value)
+      window.localStorage.removeItem(name)
+    } else {
+      window.localStorage.setItem(name, value)
+      window.sessionStorage.removeItem(name)
+    }
+  },
+  removeItem: (name) => {
+    window.localStorage.removeItem(name)
+    window.sessionStorage.removeItem(name)
+  },
 }
 
 export const useAuthStore = create(
@@ -22,12 +41,14 @@ export const useAuthStore = create(
       setRole: (role) => set({ role }),
       logout: () => {
         window.localStorage.removeItem('baliq-remember-me')
+        window.localStorage.removeItem('baliq-auth-session')
+        window.sessionStorage.removeItem('baliq-auth-session')
         set({ user: null, token: null, role: ROLES.CUSTOMER })
       },
     }),
     {
       name: 'baliq-auth-session',
-      storage: createJSONStorage(getStorage),
+      storage: dynamicStorage,
     },
   ),
 )
