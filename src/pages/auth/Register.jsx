@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { useState } from 'react'
-import { Eye, EyeOff, User, Phone, Lock, ArrowRight, Loader2, MessageSquare } from 'lucide-react'
+import { Eye, EyeOff, User, Phone, Lock, ArrowRight, Loader2 } from 'lucide-react'
 import { useToastStore } from '../../store/toastStore.js'
 import { useFirebasePhone } from '../../hooks/useFirebasePhone.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
@@ -97,11 +97,6 @@ export function Register({ pendingFarm = false, pendingDriver = false }) {
       footer={<>{t.haveAccount} <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/login">{t.login}</Link></>}
     >
       <div id="recaptcha-container" />
-
-      <div className="flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-        <MessageSquare className="h-4 w-4 shrink-0 text-emerald-400" />
-        <p className="text-[12px] font-medium text-emerald-300">{t.registerSmsBadge}</p>
-      </div>
 
       <form className="space-y-3.5" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="grid grid-cols-2 gap-3">
