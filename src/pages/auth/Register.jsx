@@ -96,7 +96,7 @@ export function Register({ pendingFarm = false, pendingDriver = false }) {
       description={t.registerDesc}
       footer={<>{t.haveAccount} <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/login">{t.login}</Link></>}
     >
-      <div id="recaptcha-container" />
+  
 
       <form className="space-y-3.5" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div className="grid grid-cols-2 gap-3">

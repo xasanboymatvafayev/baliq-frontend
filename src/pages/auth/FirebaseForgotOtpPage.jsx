@@ -82,7 +82,7 @@ export function FirebaseForgotOtpPage() {
       title="SMS tasdiqlash"
       description={`${rawPhone} raqamiga yuborilgan 6 xonali kodni kiriting`}
     >
-      <div id="recaptcha-container" />
+  
 
       <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">

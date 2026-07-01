@@ -1,5 +1,5 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getAuth, initializeRecaptchaConfig } from "firebase/auth";
+import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBiw_A01SqvvuRcEr8YVPWGpF7xk4tRK_M",
@@ -13,10 +13,4 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 export const firebaseAuth = getAuth(app);
-
-initializeRecaptchaConfig(firebaseAuth).catch((err) => {
-  console.warn(
-    "[Firebase] reCAPTCHA Enterprise config yuklanmadi (v2 fallback ishlatiladi):",
-    err?.code || err?.message
-  );
-});
+// reCAPTCHA ishlatilmaydi — backend OTP orqali ishlaydi

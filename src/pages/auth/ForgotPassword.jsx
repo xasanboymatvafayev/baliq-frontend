@@ -56,7 +56,7 @@ export function ForgotPassword() {
         </Link>
       }
     >
-      <div id="recaptcha-container" />
+  
 
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
         <div>

@@ -127,7 +127,7 @@ export function FirebaseOtpPage() {
       title="SMS kod"
       description={`+${rawPhone?.replace(/^\+/, '')} raqamiga yuborilgan 6 xonali kodni kiriting`}
     >
-      <div id="recaptcha-container" />
+
 
       {/* Phone badge */}
       <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">

@@ -127,7 +127,6 @@ export function FarmBalancePage() {
 
   return (
     <div className="space-y-6">
-      <div id="recaptcha-container" />
       <div className="glass-card p-6 flex items-center gap-4">
         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
           <Wallet className="h-7 w-7 text-white" />
@@ -220,7 +219,7 @@ export function FarmBalancePage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div id="recaptcha-container-withdraw" />
+        
               <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 p-4 text-center">
                 <ShieldCheck className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
                 <p className="font-black text-emerald-700 dark:text-emerald-300">SMS kod yuborildi</p>

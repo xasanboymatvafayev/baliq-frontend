@@ -72,7 +72,7 @@ export function DriverRegistration() {
 
   return (
     <main className="min-h-screen bg-slate-50 p-4 dark:bg-slate-950 sm:p-6">
-      <div id="recaptcha-container" />
+  
       <section className="mx-auto max-w-5xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>

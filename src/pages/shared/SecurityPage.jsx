@@ -132,7 +132,7 @@ export function SecurityPage() {
 
   return (
     <div className="space-y-6">
-      <div id="recaptcha-container" />
+  
 
       <div className="glass-card p-6 flex items-center gap-4">
         <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center">

@@ -1,11 +1,10 @@
 import { useState, useCallback, useRef } from "react";
-import { signInWithCustomToken } from "firebase/auth";
-import { firebaseAuth } from "../services/firebase.js";
 import { httpClient } from "../services/api/httpClient.js";
 
+// Firebase/reCAPTCHA ishlatilmaydi - to'g'ridan-to'g'ri backend OTP
 export function useBackendOtp() {
-  const [status, setStatus] = useState("idle");
-  const [error, setError] = useState("");
+  const [status, setStatus]   = useState("idle");
+  const [error, setError]     = useState("");
   const [botLink, setBotLink] = useState(null);
   const phoneRef = useRef(null);
 
@@ -18,23 +17,17 @@ export function useBackendOtp() {
     phoneRef.current = phone;
     try {
       const res = await httpClient.post("/auth/send-otp-backend", { phone });
-      const data = res.data;
-
-      if (data?.sent_via === "none") {
+      if (res?.sent_via === "none") {
         setStatus("error");
         setError("OTP yuborib bo'lmadi. Telegram botni ulang va qayta urinib ko'ring.");
-        setBotLink(data?.bot_link || null);
+        setBotLink(res?.bot_link || null);
         return false;
       }
-
       setStatus("code_sent");
       return true;
     } catch (err) {
       setStatus("error");
-      setError(
-        err?.response?.data?.detail ||
-        "OTP yuborishda xato. Telegram botni ulang va qayta urinib ko'ring."
-      );
+      setError(err?.message || "OTP yuborishda xato.");
       return false;
     }
   }, []);
@@ -48,20 +41,13 @@ export function useBackendOtp() {
     setStatus("confirming");
     try {
       const res = await httpClient.post("/auth/verify-otp-backend", { phone, code });
-      let idToken = null;
-      if (res.data?.custom_token) {
-        try {
-          const cred = await signInWithCustomToken(firebaseAuth, res.data.custom_token);
-          idToken = await cred.user.getIdToken();
-        } catch (fbErr) {
-          console.warn("[BackendOtp] signInWithCustomToken xato:", fbErr?.code);
-        }
-      }
+      // idToken yo'q — backend to'g'ridan-to'g'ri custom_token qaytaradi
+      // FirebaseOtpPage.jsx da signInWithCustomToken chaqiriladi
       setStatus("done");
-      return { idToken, phone };
+      return { custom_token: res?.custom_token, phone };
     } catch (err) {
       setStatus("code_sent");
-      setError(err?.response?.data?.detail || "Noto'g'ri kod. Qayta urinib ko'ring.");
+      setError(err?.message || "Noto'g'ri kod.");
       return null;
     }
   }, []);
