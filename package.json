@@ -12,7 +12,6 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.1",
-    "firebase": "^11.0.0",
     "@tanstack/react-query": "^5.74.4",
     "axios": "^1.8.4",
     "clsx": "^2.1.1",
@@ -43,6 +42,3 @@
     "vite": "^6.2.6"
   }
 }
-
-
-

@@ -85,10 +85,7 @@ export function SecurityPage() {
       const result = await confirmCode(code)
       if (!result) { pushToast({ title: smsError || "Kod noto'g'ri", variant: 'error' }); setSubmitting(false); return }
 
-      await httpClient.post('/security/2fa/verify-firebase', {
-        firebase_token: result.idToken,
-        phone: user?.phone,
-      })
+      await httpClient.post('/auth/toggle-2fa', { enabled: true })
       setCode(''); setOtpSent(false)
       pushToast({ title: '2FA tasdiqlandi ✅', variant: 'success' })
       queryClient.invalidateQueries(['2fa-status'])
@@ -159,7 +156,7 @@ export function SecurityPage() {
             <div>
               <h3 className="font-black">Ikki bosqichli tasdiqlash (2FA)</h3>
               <p className="text-sm text-slate-500 mt-0.5 flex items-center gap-1.5">
-                <Smartphone className="h-3.5 w-3.5" /> SMS orqali tasdiqlash (Firebase)
+                <Smartphone className="h-3.5 w-3.5" /> SMS orqali tasdiqlash (Telegram)
               </p>
             </div>
             <div className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-bold ${twoFa.enabled ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800'}`}>

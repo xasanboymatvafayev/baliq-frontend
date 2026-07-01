@@ -99,7 +99,7 @@ export const translations = {
     // ── Register ──
     registerTitle: "Ro'yxatdan o'tish",
     registerDesc: "SMS orqali telefon raqamingizni tasdiqlaymiz.",
-    registerSmsBadge: "Ro'yxatdan o'tish uchun telefon raqamingizga SMS kod yuboriladi (Firebase, bepul)",
+    registerSmsBadge: "Ro'yxatdan o'tish uchun telefon raqamingizga SMS kod yuboriladi (Telegram)",
     firstName: 'Ism',
     lastName: 'Familiya',
     phone: 'Telefon',
@@ -292,7 +292,7 @@ export const translations = {
     // ── Регистрация ──
     registerTitle: 'Регистрация',
     registerDesc: 'Подтвердим номер телефона через SMS.',
-    registerSmsBadge: 'Для регистрации на ваш телефон будет отправлен SMS-код (Firebase, бесплатно)',
+    registerSmsBadge: 'Для регистрации на ваш телефон будет отправлен SMS-код (Telegram)',
     firstName: 'Имя',
     lastName: 'Фамилия',
     phone: 'Телефон',

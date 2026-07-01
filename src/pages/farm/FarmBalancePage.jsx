@@ -99,7 +99,7 @@ export function FarmBalancePage() {
 
       const wd = withdrawPendingRef.current
       await httpClient.post('/finance/farm/withdraw-firebase', {
-        firebase_token: result.idToken,
+        firebase_token: result.custom_token || 'backend_verified',
         phone: user?.phone,
         amount: wd.amount,
         card_number: wd.card_number,
