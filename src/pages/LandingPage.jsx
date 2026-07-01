@@ -212,10 +212,10 @@ export function LandingPage() {
             <AnimSection key={title} delay={i * 100}>
               <div className={`rounded-3xl border-2 ${color} ${bg} p-6 h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
                 <div className="text-4xl mb-3 animate-float" style={{ animationDelay: `${i * 0.5}s` }}>{emoji}</div>
-                <h3 className="text-xl font-black mb-4">{title}</h3>
+                <h3 className="text-xl font-black mb-4 text-slate-900 dark:text-white">{title}</h3>
                 <ul className="space-y-2.5">
                   {items.map((item) => (
-                    <li key={item} className="flex items-center gap-2 text-sm font-medium">
+                    <li key={item} className="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300">
                       <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
                       {item}
                     </li>

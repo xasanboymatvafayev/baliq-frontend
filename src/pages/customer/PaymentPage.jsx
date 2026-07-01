@@ -43,11 +43,9 @@ export function PaymentPage() {
   const orders = Array.isArray(ordersRaw) ? ordersRaw : (ordersRaw?.data || [])
 
   const payMutation = useMutation({
-    mutationFn: ({ orderId, provider }) =>
-      httpClient.post('/payments/create-link', { order_id: orderId, provider }),
-    onSuccess: (data) => {
-      window.open(data.url, '_blank')
-      pushToast({ title: `${data.provider === 'click' ? 'Click' : 'Payme'} to'lov sahifasi ochildi`, variant: 'success' })
+    mutationFn: async ({ orderId, provider }) => {
+      // To'g'ridan-to'g'ri Telegram invoice yuborish
+      await telegramPayMutation.mutateAsync({ orderId, provider })
     },
     onError: (e) => pushToast({ title: e?.response?.data?.detail || 'Xato', variant: 'error' }),
   })
@@ -159,7 +157,7 @@ export function PaymentPage() {
                     disabled={payMutation.isPending}
                   >
                     <ExternalLink className="h-5 w-5" />
-                    <span className="text-sm">Click (web)</span>
+                    <span className="text-sm">Click Invoice</span>
                   </button>
                   {/* Payme */}
                   <button
@@ -168,7 +166,7 @@ export function PaymentPage() {
                     disabled={payMutation.isPending}
                   >
                     <ExternalLink className="h-5 w-5" />
-                    <span className="text-sm">Payme (web)</span>
+                    <span className="text-sm">Payme Invoice</span>
                   </button>
                 </div>
               </div>
