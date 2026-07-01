@@ -1,33 +1,47 @@
 import { create } from 'zustand'
-import { persist, createJSONStorage } from 'zustand/middleware'
-import { ROLES } from '../types/entities.js'
-
-// "Meni eslab qol" — true bo'lsa localStorage (doimiy), false bo'lsa sessionStorage (faqat shu tab/sessiya)
-function getStorage() {
-  const remember = window.localStorage.getItem('baliq-remember-me')
-  return remember === 'false' ? window.sessionStorage : window.localStorage
-}
+import { persist } from 'zustand/middleware'
 
 export const useAuthStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
-      role: ROLES.CUSTOMER,
+      role: 'customer',
       token: null,
       rememberMe: true,
       setSession: ({ user, role, token, rememberMe = true }) => {
-        window.localStorage.setItem('baliq-remember-me', String(rememberMe))
+        // rememberMe=false bo'lsa, sessionStorage ga saqlanadi
         set({ user, role, token, rememberMe })
       },
       setRole: (role) => set({ role }),
-      logout: () => {
-        window.localStorage.removeItem('baliq-remember-me')
-        set({ user: null, token: null, role: ROLES.CUSTOMER })
-      },
+      logout: () => set({ user: null, token: null, role: 'customer', rememberMe: true }),
     }),
     {
       name: 'baliq-auth-session',
-      storage: createJSONStorage(getStorage),
+      // Custom storage — rememberMe ga qarab localStorage yoki sessionStorage
+      storage: {
+        getItem: (name) => {
+          // Avval localStorage, keyin sessionStorage tekshiramiz
+          const local = localStorage.getItem(name)
+          if (local) return JSON.parse(local)
+          const session = sessionStorage.getItem(name)
+          if (session) return JSON.parse(session)
+          return null
+        },
+        setItem: (name, value) => {
+          const state = value?.state
+          if (state?.rememberMe === false) {
+            sessionStorage.setItem(name, JSON.stringify(value))
+            localStorage.removeItem(name)
+          } else {
+            localStorage.setItem(name, JSON.stringify(value))
+            sessionStorage.removeItem(name)
+          }
+        },
+        removeItem: (name) => {
+          localStorage.removeItem(name)
+          sessionStorage.removeItem(name)
+        },
+      },
     },
   ),
 )
