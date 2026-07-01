@@ -210,11 +210,6 @@ export function FarmBalancePage() {
                 <span className="text-sm font-semibold">Kartani eslab qolish</span>
               </label>
 
-              <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-3 text-sm text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
-                <Smartphone className="h-4 w-4 shrink-0" />
-                So'rovni tasdiqlash uchun telefon raqamingizga SMS kod yuboriladi (Firebase)
-              </div>
-
               <button
                 className="primary-button w-full !bg-emerald-600 hover:!bg-emerald-700 text-lg py-4"
                 onClick={handleWithdraw}

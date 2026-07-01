@@ -37,39 +37,62 @@ const STATUS_MESSAGES = {
 
 let isRedirectingToLogin = false
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const AUTH_PATHS = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/verify-otp', '/auth/reset-password']
+
+function isAuthEndpoint(config) {
+  const url = config?.url || ''
+  return AUTH_PATHS.some((p) => url.includes(p))
+}
+
 httpClient.interceptors.response.use(
   (response) => response.data,
-  (error) => {
+  async (error) => {
     const status = error.response?.status
 
-    // 401 — token tugagan yoki noto'g'ri: avtomatik chiqarib login sahifasiga yo'naltiramiz
-    if (status === 401 && !isRedirectingToLogin) {
-      isRedirectingToLogin = true
-      localStorage.removeItem('baliq-auth-session')
-      if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-        window.location.href = '/login'
-      }
-      return Promise.reject(new Error("Sessiya muddati tugagan. Qayta kiring."))
-    }
-
-    // Backend tomonidan kelgan o'zbek tilidagi xabar (detail field)
+    // Backend tomonidan kelgan o'zbek tilidagi xabar — eng avval tekshiramiz
     const backendDetail = error.response?.data?.detail
     if (backendDetail) {
       return Promise.reject(new Error(backendDetail))
     }
-    // Backend message field
     const backendMessage = error.response?.data?.message
     if (backendMessage) {
       return Promise.reject(new Error(backendMessage))
     }
+
+    // 401 — faqat auth bo'lmagan sahifalar uchun avtomatik logout
+    if (status === 401 && !isRedirectingToLogin && !isAuthEndpoint(error.config)) {
+      isRedirectingToLogin = true
+      localStorage.removeItem('baliq-auth-session')
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+      setTimeout(() => { isRedirectingToLogin = false }, 5000)
+      return Promise.reject(new Error("Sessiya muddati tugagan. Qayta kiring."))
+    }
+
+    // Network xatosi — bir marta avtomatik qayta urinib ko'ramiz (Railway cold start uchun)
+    if (!error.response && error.config && !error.config._retried) {
+      error.config._retried = true
+      await sleep(3000)
+      try {
+        return await httpClient(error.config)
+      } catch {
+        return Promise.reject(new Error("Internet aloqasi yo'q yoki server ishlamayapti."))
+      }
+    }
+
     // Status kodiga qarab xabar
     if (status && STATUS_MESSAGES[status]) {
       return Promise.reject(new Error(STATUS_MESSAGES[status]))
     }
-    // Network xatosi
+
+    // Network xatosi (retry ham muvaffaqiyatsiz bo'lsa)
     if (!error.response) {
       return Promise.reject(new Error("Internet aloqasi yo'q yoki server ishlamayapti."))
     }
+
     return Promise.reject(new Error("Noma'lum xatolik yuz berdi. Qayta urinib ko'ring."))
   },
 )

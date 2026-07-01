@@ -7,9 +7,9 @@ import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { authService, httpClient } from '../../services/api/index.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
+import { useT } from '../../store/i18nStore.js'
 import { ExternalLink, RefreshCw, ShieldAlert, Send, Loader2, KeyRound } from 'lucide-react'
 
-const schema = z.object({ otp: z.string().length(6, '6 xonali kod kiriting') })
 const OTP_DURATION = 60
 
 function OtpInput({ register, error }) {
@@ -39,9 +39,10 @@ function OtpInput({ register, error }) {
 
 export function OtpVerification() {
   const navigate    = useNavigate()
-  const location     = useLocation()
-  const pushToast    = useToastStore(s => s.pushToast)
-  const setSession   = useAuthStore(s => s.setSession)
+  const location    = useLocation()
+  const pushToast   = useToastStore(s => s.pushToast)
+  const setSession  = useAuthStore(s => s.setSession)
+  const t = useT()
   const [loading, setLoading]       = useState(false)
   const [resending, setResending]   = useState(false)
   const [checking, setChecking]     = useState(true)
@@ -50,13 +51,15 @@ export function OtpVerification() {
   const [botUsername, setBotUsername] = useState('BaliqSavdosiVerificationBot')
   const [countdown, setCountdown]   = useState(OTP_DURATION)
   const timerRef = useRef(null)
+
+  const schema = z.object({ otp: z.string().length(6, t.lang === 'ru' ? 'Введите 6-значный код' : '6 xonali kod kiriting') })
   const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
   const phone        = location.state?.phone
   const userId       = location.state?.userId
   const stateLinked  = location.state?.linked
   const stateBotLink = location.state?.botLink
-  const securityCheck = location.state?.securityCheck // shubhali login holati
+  const securityCheck = location.state?.securityCheck
   const rememberMe    = location.state?.rememberMe ?? true
 
   const startCountdown = useCallback(() => {
@@ -104,7 +107,7 @@ export function OtpVerification() {
       setBotLink(data.bot_link || '')
       if (data.linked) {
         try { await httpClient.post('/auth/resend-otp', { phone }) } catch { /* ignore */ }
-        pushToast({ title: 'Telegram ulandi! Kod yuborildi.', variant: 'success' })
+        pushToast({ title: t.lang === 'ru' ? 'Telegram привязан! Код отправлен.' : 'Telegram ulandi! Kod yuborildi.', variant: 'success' })
         startCountdown()
       }
     } catch { /* ignore */ } finally { setChecking(false) }
@@ -115,11 +118,17 @@ export function OtpVerification() {
     setResending(true)
     try {
       await httpClient.post('/auth/resend-otp', { phone })
-      pushToast({ title: 'Yangi kod yuborildi!', variant: 'success' })
+      pushToast({ title: t.lang === 'ru' ? 'Новый код отправлен!' : 'Yangi kod yuborildi!', variant: 'success' })
       startCountdown()
     } catch (err) {
-      pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
+      pushToast({ title: err.message || (t.lang === 'ru' ? 'Ошибка' : 'Xatolik yuz berdi'), variant: 'error' })
     } finally { setResending(false) }
+  }
+
+  const ROLE_ROUTES = {
+    customer: '/customer/dashboard', 'farm-owner': '/farm/dashboard',
+    driver: '/driver/dashboard', admin: '/admin/dashboard',
+    manager: '/manager/dashboard', 'super-admin': '/super-admin/system-statistics',
   }
 
   const onSubmit = async (data) => {
@@ -135,7 +144,7 @@ export function OtpVerification() {
           if (farmData.farmName) {
             try { await httpClient.post('/farms', farmData); localStorage.removeItem('pending-farm-registration') } catch { /* ignore */ }
           }
-          pushToast({ title: "So'rovingiz adminga yuborildi!", description: 'Admin tasdiqlashi bilan Telegram orqali xabar olasiz.', variant: 'success' })
+          pushToast({ title: t.lang === 'ru' ? 'Заявка отправлена!' : "So'rovingiz adminga yuborildi!", variant: 'success' })
           useAuthStore.getState().logout()
           navigate('/login')
           return
@@ -150,32 +159,26 @@ export function OtpVerification() {
               localStorage.removeItem('pending-driver-registration')
             } catch { /* ignore */ }
           }
-          pushToast({ title: "So'rovingiz adminga yuborildi!", description: 'Admin tasdiqlashi bilan Telegram orqali xabar olasiz.', variant: 'success' })
+          pushToast({ title: t.lang === 'ru' ? 'Заявка отправлена!' : "So'rovingiz adminga yuborildi!", variant: 'success' })
           useAuthStore.getState().logout()
           navigate('/login')
           return
         }
 
-        pushToast({ title: securityCheck ? 'Kirish tasdiqlandi ✅' : "Muvaffaqiyatli ro'yxatdan o'tdingiz!", variant: 'success' })
-        const ROLE_ROUTES = {
-          customer: '/customer/dashboard', 'farm-owner': '/farm/dashboard',
-          driver: '/driver/dashboard', admin: '/admin/dashboard',
-          manager: '/manager/dashboard', 'super-admin': '/super-admin/system-statistics',
-        }
+        pushToast({ title: securityCheck ? (t.lang === 'ru' ? 'Вход подтверждён ✅' : 'Kirish tasdiqlandi ✅') : (t.lang === 'ru' ? 'Регистрация успешна!' : "Muvaffaqiyatli ro'yxatdan o'tdingiz!"), variant: 'success' })
         navigate(ROLE_ROUTES[userRole] || '/customer/dashboard')
       } else if (result.reset_token) {
-        pushToast({ title: 'Kod tasdiqlandi', variant: 'success' })
+        pushToast({ title: t.lang === 'ru' ? 'Код подтверждён' : 'Kod tasdiqlandi', variant: 'success' })
         navigate('/reset-password', { state: { reset_token: result.reset_token } })
       }
     } catch (err) {
-      pushToast({ title: err.message || "Kod noto'g'ri yoki muddati o'tgan", variant: 'error' })
+      pushToast({ title: err.message || (t.lang === 'ru' ? 'Неверный код или срок истёк' : "Kod noto'g'ri yoki muddati o'tgan"), variant: 'error' })
     } finally { setLoading(false) }
   }
 
-  /* ── Loading ── */
   if (checking) {
     return (
-      <AuthFormShell title="Tekshirilmoqda" description="Telegram bog'lanishi tekshirilmoqda...">
+      <AuthFormShell title={t.otpChecking} description={t.otpCheckingDesc}>
         <div className="flex justify-center py-10">
           <div className="h-9 w-9 rounded-full border-[3px] border-sky-500 border-t-transparent animate-spin" />
         </div>
@@ -183,19 +186,14 @@ export function OtpVerification() {
     )
   }
 
-  /* ── Telegram ulanmagan ── */
   if (!telegramLinked) {
     return (
-      <AuthFormShell title="Telegram bilan ulaning" description="Tasdiqlash kodini olish uchun Telegram botimizga ulanishingiz kerak.">
+      <AuthFormShell title={t.otpConnectTitle} description={t.otpConnectDesc}>
         <div className="space-y-4">
           <div className="rounded-2xl p-5" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
-            <p className="mb-3 text-[13px] font-bold text-amber-400">📱 Qanday ulash kerak?</p>
+            <p className="mb-3 text-[13px] font-bold text-amber-400">📱 {t.lang === 'ru' ? 'Как привязать?' : 'Qanday ulash kerak?'}</p>
             <ol className="space-y-2">
-              {[
-                'Quyidagi tugmani bosing va Telegram oching',
-                'Botda "START" tugmasini bosing',
-                'Qaytib keling va "Tekshirish" tugmasini bosing',
-              ].map((step, i) => (
+              {[t.otpHowStep1, t.otpHowStep2, t.otpHowStep3].map((step, i) => (
                 <li key={i} className="flex gap-2.5 text-[13px] text-amber-300/80">
                   <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-[11px] font-bold text-amber-400">{i + 1}</span>
                   {step}
@@ -210,7 +208,7 @@ export function OtpVerification() {
             className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl text-[14px] font-semibold text-white transition-all"
             style={{ background: 'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}
           >
-            <ExternalLink className="h-4 w-4" /> Telegram botni ochish
+            <ExternalLink className="h-4 w-4" /> {t.otpOpenBot}
           </a>
 
           <button
@@ -219,7 +217,7 @@ export function OtpVerification() {
             className="flex h-11 w-full items-center justify-center gap-2.5 rounded-xl text-[14px] font-semibold transition-all"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)' }}
           >
-            <RefreshCw className={`h-4 w-4 ${checking ? 'animate-spin' : ''}`} /> Ulanishni tekshirish
+            <RefreshCw className={`h-4 w-4 ${checking ? 'animate-spin' : ''}`} /> {t.otpCheckBtn}
           </button>
 
           <p className="text-center text-[12px] text-white/30">@{botUsername}</p>
@@ -228,46 +226,38 @@ export function OtpVerification() {
     )
   }
 
-  /* ── OTP kiritish ── */
   return (
     <AuthFormShell
-      title={securityCheck ? 'Xavfsizlik tekshiruvi' : 'Tasdiqlash kodi'}
-      description={securityCheck
-        ? 'Yangi qurilmadan kirish aniqlandi. Telegram botga yuborilgan kodni kiriting.'
-        : 'Telegram botga yuborilgan 6 xonali kodni kiriting.'}
+      title={securityCheck ? t.otpSecurity : t.otpTitle}
+      description={securityCheck ? t.otpSecurityDesc : t.otpDesc}
     >
-      {/* Security warning banner */}
       {securityCheck && (
         <div className="mb-4 flex items-start gap-3 rounded-2xl p-4" style={{ background: 'rgba(244,63,94,0.08)', border: '1px solid rgba(244,63,94,0.2)' }}>
           <ShieldAlert className="h-5 w-5 flex-shrink-0 text-rose-400 mt-0.5" />
-          <p className="text-[12.5px] leading-relaxed text-rose-300/90">
-            Hisobingizga yangi qurilma/joydan kirishga urinish qilindi. Agar bu siz bo'lmasangiz, kodni kiritmang va darhol parolingizni almashtiring.
-          </p>
+          <p className="text-[12.5px] leading-relaxed text-rose-300/90">{t.otpSecurityWarning}</p>
         </div>
       )}
 
-      {/* Telegram info */}
       <div className="mb-4 flex items-center gap-3 rounded-2xl p-4" style={{ background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.15)' }}>
         <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl" style={{ background: 'rgba(14,165,233,0.15)' }}>
           <Send className="h-5 w-5 text-sky-400" />
         </div>
         <div>
-          <p className="text-[13px] font-semibold text-sky-300">Kod Telegram botga yuborildi</p>
+          <p className="text-[13px] font-semibold text-sky-300">{t.otpSentToBot}</p>
           <a href={`https://t.me/${botUsername}`} target="_blank" rel="noopener noreferrer" className="text-[12px] text-sky-400/70 hover:text-sky-400 transition-colors underline">
-            @{botUsername} ni oching
+            @{botUsername} {t.otpOpenBotLink}
           </a>
         </div>
       </div>
 
-      {/* Countdown */}
       <div className="mb-4 text-center">
         {countdown > 0 ? (
           <p className="text-[13px] text-white/45">
-            Kod amal qilish muddati: <span className="font-bold text-sky-400">{countdown} soniya</span>
+            {t.otpTimer} <span className="font-bold text-sky-400">{countdown} {t.otpTimerSec}</span>
           </p>
         ) : (
           <div className="space-y-2">
-            <p className="text-[13px] font-semibold text-rose-400">⏱ Kod muddati tugadi</p>
+            <p className="text-[13px] font-semibold text-rose-400">{t.otpExpired}</p>
             <button
               type="button"
               onClick={resendOtp}
@@ -276,7 +266,7 @@ export function OtpVerification() {
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.8)' }}
             >
               <RefreshCw className={`h-3.5 w-3.5 ${resending ? 'animate-spin' : ''}`} />
-              {resending ? 'Yuborilmoqda...' : 'Qayta yuborish'}
+              {resending ? t.otpResending : t.otpResend}
             </button>
           </div>
         )}
@@ -291,8 +281,8 @@ export function OtpVerification() {
           style={{ background: 'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}
         >
           {loading
-            ? <><Loader2 className="h-4 w-4 animate-spin" /> Tekshirilmoqda...</>
-            : <><KeyRound className="h-4 w-4" /> Tasdiqlash</>
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.otpVerifying}</>
+            : <><KeyRound className="h-4 w-4" /> {t.otpVerifyBtn}</>
           }
         </button>
       </form>

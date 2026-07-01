@@ -83,11 +83,6 @@ export function DriverRegistration() {
           <Link className="secondary-button" to="/login">Kirishga qaytish</Link>
         </div>
 
-        <div className="mb-4 flex items-center gap-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-          <MessageSquare className="h-4 w-4 shrink-0 text-emerald-400" />
-          <p className="text-[12px] font-medium text-emerald-300">Telefon raqamingizga SMS kod yuboriladi (Firebase, bepul)</p>
-        </div>
-
         <form className="glass-card grid gap-5 p-6 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
           <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">👤 Shaxsiy ma'lumotlar</h3></div>
           <FormInput label="Ism" {...register('firstName')} error={formState.errors.firstName?.message} />
