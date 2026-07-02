@@ -1,374 +1,498 @@
-import { useState, useCallback } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ShoppingBag, Trash2, MapPin, Navigation, Loader2, CheckCircle2,
-         CreditCard, Plus, Minus, ArrowRight, Package, Send, Clock, RefreshCw } from 'lucide-react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { ShoppingBag, Trash2, MapPin, Navigation, Loader2, CheckCircle2, CreditCard, Tag, X, Minus, Plus, Send, RefreshCw, Clock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { useCartStore } from '../../store/cartStore.js'
 import { useToastStore } from '../../store/toastStore.js'
-import { httpClient } from '../../services/api/index.js'
-import { formatCurrency } from '../../utils/formatters.js'
+import { orderService, httpClient } from '../../services/api/index.js'
+import { formatCurrency, formatNumber } from '../../utils/formatters.js'
+import { ConfirmModal } from '../../components/common/ConfirmModal.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 async function reverseGeocode(lat, lng) {
   try {
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=uz`,
-      { headers: { 'User-Agent': 'BaliqSavdosi/1.0' } }
-    )
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=uz`, { headers: { 'User-Agent': 'BaliqSavdosi/1.0' } })
     const d = await res.json()
     return d.display_name || `${lat.toFixed(5)}, ${lng.toFixed(5)}`
   } catch { return `${lat.toFixed(5)}, ${lng.toFixed(5)}` }
 }
 
-function LocationPicker({ value, onChange }) {
+function LocationPicker({ value, onChange, t }) {
   const [loading, setLoading] = useState(false)
-  const [error, setError]     = useState('')
-  const pushToast = useToastStore(s => s.pushToast)
+  const [error, setError] = useState('')
+  const pushToast = useToastStore((s) => s.pushToast)
 
   const getLocation = useCallback(async () => {
-    if (!navigator.geolocation) { setError("GPS qo'llab-quvvatlanmaydi"); return }
+    if (!navigator.geolocation) { setError(t.lang === 'ru' ? 'GPS не поддерживается' : "GPS qo'llab-quvvatlanmaydi"); return }
     setLoading(true); setError('')
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords
         const address = await reverseGeocode(lat, lng)
-        onChange({ lat, lng, address })
+        onChange({ lat, lng, address, coords: `${lat.toFixed(6)},${lng.toFixed(6)}` })
         setLoading(false)
-        pushToast({ title: 'Lokatsiya aniqlandi ✅', variant: 'success' })
+        pushToast({ title: t.lang === 'ru' ? 'Местоположение определено ✅' : 'Lokatsiya aniqlandi ✅', variant: 'success' })
       },
       (err) => {
         setLoading(false)
-        setError({ 1: "GPS ruxsat berilmadi", 2: "GPS signal topilmadi", 3: "Vaqt tugadi" }[err.code] || 'GPS xato')
+        const msgs = t.lang === 'ru'
+          ? { 1: "GPS: доступ запрещён", 2: "GPS сигнал не найден", 3: "Время ожидания истекло" }
+          : { 1: "GPS ruxsat berilmadi", 2: "GPS signal topilmadi", 3: "Vaqt tugadi" }
+        setError(msgs[err.code] || 'GPS xato')
       },
       { enableHighAccuracy: true, timeout: 15000 }
     )
-  }, [onChange, pushToast])
-
-  if (value) return (
-    <div className="rounded-2xl border border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-500 text-white">
-          <CheckCircle2 className="h-5 w-5" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-bold text-emerald-700 dark:text-emerald-400">Lokatsiya aniqlandi</p>
-          <p className="text-[12px] text-emerald-600/80 mt-0.5 line-clamp-2">{value.address}</p>
-        </div>
-        <button onClick={() => onChange(null)} className="text-[12px] font-semibold text-emerald-600 hover:text-emerald-800 transition-colors flex-shrink-0">
-          O'zgartirish
-        </button>
-      </div>
-    </div>
-  )
+  }, [onChange, pushToast, t])
 
   return (
     <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm font-bold">
+        <MapPin className="h-4 w-4 text-ocean-600" />
+        {t.cartDeliveryAddress} <span className="text-rose-500">*</span>
+      </label>
       <button type="button" onClick={getLocation} disabled={loading}
-        className="w-full flex items-center justify-center gap-2.5 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/[0.1] py-5 text-[14px] font-semibold text-slate-500 dark:text-slate-400 transition-all hover:border-sky-300 dark:hover:border-sky-600/40 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50/50 dark:hover:bg-sky-500/5 disabled:opacity-50">
-        {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> Aniqlanmoqda...</> : <><Navigation className="h-5 w-5" /> Hozirgi joylashuvimni aniqlash</>}
+        className={`w-full flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed py-4 font-bold transition
+          ${value ? 'border-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300'
+            : 'border-ocean-300 bg-ocean-50/50 dark:bg-ocean-900/20 text-ocean-700 dark:text-ocean-300 hover:bg-ocean-100 dark:hover:bg-ocean-900/30'}`}>
+        {loading ? <><Loader2 className="h-5 w-5 animate-spin" /> {t.cartDetecting}</>
+          : value ? <><CheckCircle2 className="h-5 w-5" /> {t.cartLocationDetected}</>
+          : <><Navigation className="h-5 w-5" /> {t.cartGetLocation}</>}
       </button>
-      {error && <p className="text-[12px] font-medium text-rose-500">⚠️ {error}</p>}
+      {value && (
+        <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-700/50 p-3 text-sm">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-semibold text-slate-800 dark:text-slate-200 leading-tight">{value.address}</p>
+              <p className="font-mono text-xs text-slate-400 mt-0.5">{value.coords}</p>
+            </div>
+            <button onClick={() => onChange(null)} className="text-slate-400 hover:text-rose-500 transition shrink-0 mt-0.5">
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+      )}
+      {error && <p className="text-xs text-rose-500 font-semibold flex items-center gap-1">⚠️ {error}</p>}
     </div>
   )
 }
 
-const PAY_OPTIONS = [
-  { id: 'click', label: 'Click', icon: '💳', from: 'from-blue-500', to: 'to-blue-600', ring: 'border-blue-400 dark:border-blue-500/40', soft: 'bg-blue-50 dark:bg-blue-500/10' },
-  { id: 'payme', label: 'Payme', icon: '💳', from: 'from-indigo-500', to: 'to-violet-600', ring: 'border-indigo-400 dark:border-indigo-500/40', soft: 'bg-indigo-50 dark:bg-indigo-500/10' },
-]
+function PromoCodeInput({ onApply, appliedPromo, t }) {
+  const [code, setCode] = useState('')
+  const [loading, setLoading] = useState(false)
+  const pushToast = useToastStore((s) => s.pushToast)
 
-function PaymentWaiting({ pendingId, onSuccess, onCancel }) {
-  const pushToast = useToastStore(s => s.pushToast)
-  const [count, setCount] = useState(0)
+  const handleApply = async () => {
+    if (!code.trim()) return
+    setLoading(true)
+    try {
+      const res = await httpClient.post('/promo/validate', { code: code.trim().toUpperCase() })
+      onApply(res)
+      pushToast({ title: `${t.lang === 'ru' ? 'Промокод применён!' : "Promo-kod qo'llandi!"} ${res.discount_percent}% ${t.lang === 'ru' ? 'скидка ✅' : 'chegirma ✅'}`, variant: 'success' })
+    } catch (err) {
+      pushToast({ title: err?.response?.data?.detail || (t.lang === 'ru' ? 'Промокод неверный' : "Promo-kod noto'g'ri"), variant: 'error' })
+    } finally { setLoading(false) }
+  }
 
-  const { data: status } = useQuery({
-    queryKey: ['payment-status', pendingId],
-    queryFn: () => httpClient.get(`/telegram-payment/status/${pendingId}`),
-    refetchInterval: 3000,
-    enabled: !!pendingId,
-    onSuccess: (data) => {
-      if (data?.paid || data?.status === 'PAID') {
-        pushToast({ title: '✅ To\'lov tasdiqlandi! Buyurtma yaratildi.', variant: 'success' })
-        onSuccess(data.order_id)
-      }
-    },
-  })
-
-  const isPaid = status?.paid || status?.status === 'PAID'
+  if (appliedPromo) {
+    return (
+      <div className="flex items-center justify-between rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700/50 px-4 py-3">
+        <div className="flex items-center gap-2">
+          <Tag className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="text-sm font-bold text-emerald-700 dark:text-emerald-300">
+            {appliedPromo.code} — {appliedPromo.discount_percent}% {t.lang === 'ru' ? 'скидка' : 'chegirma'}
+          </span>
+        </div>
+        <button onClick={() => onApply(null)} className="text-slate-400 hover:text-rose-500 transition">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    )
+  }
 
   return (
-    <div className="glass-card p-6 flex flex-col items-center text-center gap-4">
-      {isPaid ? (
-        <>
-          <div className="h-16 w-16 rounded-full bg-emerald-100 dark:bg-emerald-500/15 flex items-center justify-center">
-            <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-          </div>
-          <p className="text-xl font-black text-emerald-600">To'lov muvaffaqiyatli!</p>
-          <p className="text-slate-400 text-sm">Buyurtma yaratildi, Telegram ga tasdiq yuborildi.</p>
-        </>
-      ) : (
-        <>
-          <div className="h-16 w-16 rounded-full bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center">
-            <Clock className="h-7 w-7 text-sky-500 animate-pulse" />
-          </div>
-          <div>
-            <p className="text-lg font-black text-slate-800 dark:text-white">To'lov kutilmoqda...</p>
-            <p className="text-[14px] text-slate-400 mt-1">Telegram botni oching va to'lovni yakunlang.</p>
-          </div>
-          <div className="flex items-center gap-1.5 text-[12px] text-slate-400">
-            <div className="h-1.5 w-1.5 rounded-full bg-sky-500 animate-pulse" />
-            Har 3 soniyada yangilanmoqda
-          </div>
-          <button onClick={onCancel} className="secondary-button text-sm">
-            Bekor qilish
-          </button>
-        </>
-      )}
+    <div className="space-y-2">
+      <label className="flex items-center gap-2 text-sm font-bold">
+        <Tag className="h-4 w-4 text-ocean-600" />
+        {t.cartPromoCode}
+      </label>
+      <div className="flex gap-2">
+        <input
+          className="soft-input flex-1 font-mono uppercase tracking-widest"
+          placeholder="BALIQ2026"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          maxLength={20}
+          onKeyDown={(e) => e.key === 'Enter' && handleApply()}
+        />
+        <button
+          type="button"
+          onClick={handleApply}
+          disabled={loading || !code.trim()}
+          className="secondary-button shrink-0"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : t.cartPromoApply}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── To'lov kutish ekrani ───────────────────────────────────────────
+function WaitingPaymentScreen({ orderId, provider, onPaid, onCancel, t }) {
+  const [checking, setChecking] = useState(false)
+  const [paid, setPaid] = useState(false)
+  const intervalRef = useRef(null)
+
+  const checkStatus = useCallback(async () => {
+    if (paid) return
+    setChecking(true)
+    try {
+      const data = await httpClient.get(`/telegram-payment/status/${orderId}`)
+      if (data.paid) {
+        setPaid(true)
+        if (intervalRef.current) clearInterval(intervalRef.current)
+        onPaid()
+      }
+    } catch { /* ignore */ } finally {
+      setChecking(false)
+    }
+  }, [orderId, paid, onPaid])
+
+  useEffect(() => {
+    intervalRef.current = setInterval(checkStatus, 5000)
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [checkStatus])
+
+  return (
+    <div className="glass-card p-8 text-center space-y-6">
+      <div className="flex justify-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-ocean-100 dark:bg-ocean-900/30">
+          <Send className="h-10 w-10 text-ocean-500 animate-pulse" />
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-2xl font-black">{t.waitingPaymentTitle}</h3>
+        <p className="mt-2 text-slate-500">{t.waitingPaymentDesc}</p>
+      </div>
+
+      <div className="rounded-2xl bg-ocean-50 dark:bg-ocean-900/20 border border-ocean-200 dark:border-ocean-700/50 p-4 space-y-2">
+        <div className="flex items-center justify-center gap-2 text-ocean-700 dark:text-ocean-300">
+          <Clock className="h-4 w-4 animate-spin" />
+          <span className="text-sm font-semibold">
+            {t.lang === 'ru' ? 'Проверяем оплату каждые 5 сек...' : 'Har 5 soniyada to\'lov tekshirilmoqda...'}
+          </span>
+        </div>
+        <p className="text-xs text-slate-400">
+          {t.lang === 'ru' ? `Провайдер: ${provider === 'click' ? 'Click' : 'Payme'}` : `Provayder: ${provider === 'click' ? 'Click' : 'Payme'}`}
+        </p>
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={checkStatus}
+          disabled={checking}
+          className="flex-1 flex items-center justify-center gap-2 rounded-2xl py-3 font-bold text-sm transition"
+          style={{ background: 'linear-gradient(135deg,#0ea5e9,#0284c7)', color: 'white', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}
+        >
+          <RefreshCw className={`h-4 w-4 ${checking ? 'animate-spin' : ''}`} />
+          {checking ? t.waitingPaymentChecking : t.waitingPaymentCheck}
+        </button>
+        <button
+          onClick={onCancel}
+          className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 dark:border-white/10 px-4 py-3 font-bold text-sm text-slate-600 dark:text-slate-300 transition hover:bg-slate-50 dark:hover:bg-white/5"
+        >
+          {t.waitingPaymentCancel}
+        </button>
+      </div>
     </div>
   )
 }
 
 export function CartPage() {
   usePageTitle('Savatcha')
-  const navigate     = useNavigate()
+  const t = useT()
+  const navigate = useNavigate()
   const { items, removeItem, updateQuantity, clearCart } = useCartStore()
-  const pushToast    = useToastStore(s => s.pushToast)
-  const [location, setLocation]   = useState(null)
+  const pushToast = useToastStore((s) => s.pushToast)
+  const queryClient = useQueryClient()
+  const [location, setLocation] = useState(null)
   const [payMethod, setPayMethod] = useState('')
-  const [locErr, setLocErr]       = useState(false)
-  const [payErr, setPayErr]       = useState(false)
-  const [pendingId, setPendingId] = useState(null)
+  const [locationError, setLocationError] = useState(false)
+  const [payError, setPayError] = useState(false)
+  const [appliedPromo, setAppliedPromo] = useState(null)
+  const [confirmRemove, setConfirmRemove] = useState(null)
+  const [pendingOrderId, setPendingOrderId] = useState(null)
 
-  const total     = items.reduce((s, i) => s + i.price * i.quantity, 0)
-  const itemCount = items.reduce((s, i) => s + i.quantity, 0)
+  const subtotal = items.reduce((s, i) => s + i.price * i.quantity, 0)
+  const discount = appliedPromo ? Math.round(subtotal * appliedPromo.discount_percent / 100) : 0
+  const total = subtotal - discount
 
-  const sendInvoiceMutation = useMutation({
+  const orderMutation = useMutation({
     mutationFn: async () => {
       if (!location) throw new Error('location')
       if (!payMethod) throw new Error('payment')
 
-      // 1. Pending payment yaratish
-      const pending = await httpClient.post('/telegram-payment/create-pending', {
-        items: items.map(i => ({
-          fish_id: i.fish_id || i.id,
-          fish_name: i.name,
-          quantity: i.quantity,
-          unit_price: i.price,
-          unit: i.unit || 'kg',
-        })),
+      const order = await orderService.create({
+        items: items.map((i) => ({ fish_id: i.fish_id || i.id, quantity: i.quantity, unit_price: i.price })),
         delivery_address: location.address,
         delivery_lat: location.lat,
         delivery_lng: location.lng,
-        provider: payMethod,
+        delivery_coords: location.coords,
+        payment_method: 'card',
+        card_provider: payMethod,
+        promo_code: appliedPromo?.code || undefined,
       })
 
-      // 2. Telegram invoice yuborish
+      // Telegram invoice yuborish
       await httpClient.post('/telegram-payment/send-invoice', {
-        pending_payment_id: pending.pending_payment_id,
+        order_id: order.id,
         provider: payMethod,
       })
 
-      return pending.pending_payment_id
+      return order
     },
-    onSuccess: (id) => {
-      setPendingId(id)
-      pushToast({ title: 'Invoice Telegram ga yuborildi! 📱', variant: 'success' })
+    onSuccess: (order) => {
+      clearCart()
+      queryClient.invalidateQueries(['orders'])
+      setPendingOrderId(order.id)
+      pushToast({
+        title: t.lang === 'ru'
+          ? `✅ Invoice отправлен в Telegram! Оплатите через ${payMethod === 'click' ? 'Click' : 'Payme'}`
+          : `✅ Invoice Telegram ga yuborildi! ${payMethod === 'click' ? 'Click' : 'Payme'} orqali to'lang`,
+        variant: 'success',
+      })
     },
     onError: (err) => {
-      if (err.message === 'location') { setLocErr(true); pushToast({ title: 'Lokatsiyani aniqlang!', variant: 'error' }) }
-      else if (err.message === 'payment') { setPayErr(true); pushToast({ title: "To'lov usulini tanlang!", variant: 'error' }) }
+      if (err.message === 'location') { setLocationError(true); pushToast({ title: t.lang === 'ru' ? 'Укажите адрес доставки!' : 'Lokatsiyani aniqlang!', variant: 'error' }) }
+      else if (err.message === 'payment') { setPayError(true); pushToast({ title: t.lang === 'ru' ? 'Выберите способ оплаты!' : "To'lov usulini tanlang!", variant: 'error' }) }
       else pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' })
     },
   })
 
-  const handlePaymentSuccess = (orderId) => {
-    clearCart()
-    setTimeout(() => navigate('/customer/orders'), 1500)
+  const handlePaid = () => {
+    pushToast({ title: t.waitingPaymentSuccess, variant: 'success' })
+    queryClient.invalidateQueries(['orders'])
+    navigate('/customer/orders')
   }
 
-  // ── To'lov kutilmoqda holati ──
-  if (pendingId) {
+  const handleCancelWaiting = () => {
+    setPendingOrderId(null)
+    navigate('/customer/orders')
+  }
+
+  // Waiting for payment screen
+  if (pendingOrderId) {
     return (
-      <div className="space-y-4 animate-fade-in max-w-md mx-auto">
-        <div className="glass-card p-5 flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25">
-            <Send className="h-6 w-6" />
-          </div>
+      <div className="space-y-5">
+        <section className="glass-card p-5 flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-black text-slate-900 dark:text-white">To'lov</h2>
-            <p className="text-[14px] text-slate-400">Telegram botda to'lovni yakunlang</p>
+            <h2 className="text-2xl font-black">{t.waitingPaymentTitle}</h2>
+            <p className="text-sm text-slate-500 mt-0.5">#{pendingOrderId.slice(-6)}</p>
           </div>
-        </div>
-        <PaymentWaiting
-          pendingId={pendingId}
-          onSuccess={handlePaymentSuccess}
-          onCancel={() => setPendingId(null)}
+        </section>
+        <WaitingPaymentScreen
+          orderId={pendingOrderId}
+          provider={payMethod}
+          onPaid={handlePaid}
+          onCancel={handleCancelWaiting}
+          t={t}
         />
       </div>
     )
   }
 
-  // ── Bo'sh savatcha ──
-  if (items.length === 0) return (
-    <div className="space-y-5 animate-fade-in">
-      <div className="glass-card p-5 flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25">
-          <ShoppingBag className="h-6 w-6" />
-        </div>
-        <div>
-          <h2 className="text-2xl font-black text-slate-900 dark:text-white">Savatcha</h2>
-          <p className="text-[14px] text-slate-400">Hozircha bo'sh</p>
-        </div>
-      </div>
-      <div className="glass-card flex flex-col items-center justify-center py-20 text-center">
-        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-slate-100 dark:bg-white/[0.05]">
-          <ShoppingBag className="h-9 w-9 text-slate-300 dark:text-slate-600" />
-        </div>
-        <p className="text-[17px] font-bold text-slate-600 dark:text-slate-400">Savatcha bo'sh</p>
-        <p className="mt-1.5 text-[14px] text-slate-400 max-w-xs">Katalogdan baliq tanlang va savatchaga qo'shing</p>
-        <button className="primary-button mt-6" onClick={() => navigate('/customer/fish-catalog')}>
-          Katalogga o'tish <ArrowRight className="h-4 w-4" />
-        </button>
-      </div>
-    </div>
-  )
-
   return (
-    <div className="space-y-4 animate-fade-in">
-      {/* Header */}
-      <div className="glass-card p-5 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-lg shadow-sky-500/25">
-            <ShoppingBag className="h-6 w-6" />
-          </div>
-          <div>
-            <h2 className="text-2xl font-black text-slate-900 dark:text-white">Savatcha</h2>
-            <p className="text-[14px] text-slate-400">{items.length} xil · {itemCount} kg</p>
-          </div>
+    <div className="space-y-5">
+      <ConfirmModal
+        open={!!confirmRemove}
+        onClose={() => setConfirmRemove(null)}
+        onConfirm={() => { removeItem(confirmRemove); setConfirmRemove(null) }}
+        title={t.cartRemoveTitle}
+        description={t.cartRemoveDesc}
+        confirmText={t.cartConfirm}
+        cancelText={t.cartCancel}
+      />
+
+      <section className="glass-card p-5 flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-black">{t.cartTitle}</h2>
+          <p className="text-sm text-slate-500 mt-0.5">{items.length} {t.cartItems}</p>
         </div>
-        <button onClick={clearCart} className="text-[13px] font-semibold text-rose-400 hover:text-rose-500 transition-colors flex items-center gap-1.5">
-          <Trash2 className="h-4 w-4" /> Tozalash
-        </button>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
-        {/* Mahsulotlar */}
-        <div className="glass-card overflow-hidden">
-          <div className="px-5 py-4 border-b border-black/[0.04] dark:border-white/[0.04]">
-            <p className="text-[14px] font-bold text-slate-700 dark:text-slate-300">Mahsulotlar</p>
-          </div>
-          <div className="divide-y divide-black/[0.03] dark:divide-white/[0.03]">
-            {items.map(item => (
-              <div key={item.id} className="flex items-center gap-3 p-4 hover:bg-slate-50/70 dark:hover:bg-white/[0.02] transition-colors">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-50 to-emerald-50 dark:from-sky-900/20 dark:to-emerald-900/10 text-2xl">
-                  {item.image_url ? <img src={item.image_url} alt={item.name} className="h-full w-full rounded-xl object-cover" /> : '🐟'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[14px] font-bold text-slate-900 dark:text-white truncate">{item.name}</p>
-                  <p className="text-[13px] text-sky-600 dark:text-sky-400">{formatCurrency(item.price)}/{item.unit || 'kg'}</p>
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  <button onClick={() => updateQuantity(item.id, Math.max(1, (parseFloat(item.quantity)||1) - 1))}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] hover:border-sky-300 hover:text-sky-600 dark:hover:border-sky-600/40 dark:hover:text-sky-400 transition-all text-slate-600 dark:text-slate-400">
-                    <Minus className="h-3.5 w-3.5" />
-                  </button>
-                  <input type="number" inputMode="decimal" min={1} value={item.quantity}
-                    onChange={e => { const v = e.target.value; const n = parseFloat(v); if (!isNaN(n)) updateQuantity(item.id, n) }}
-                    onBlur={e => { const n = parseFloat(e.target.value); if (isNaN(n) || n < 1) updateQuantity(item.id, 1) }}
-                    className="w-14 rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] py-1.5 text-center text-[13px] font-bold text-slate-900 dark:text-white outline-none focus:border-sky-400 transition-colors"
-                    style={{ fontFamily: 'inherit' }}
-                  />
-                  <button onClick={() => updateQuantity(item.id, (parseFloat(item.quantity)||0) + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] hover:border-sky-300 hover:text-sky-600 dark:hover:border-sky-600/40 dark:hover:text-sky-400 transition-all text-slate-600 dark:text-slate-400">
-                    <Plus className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-                <p className="w-24 text-right text-[14px] font-bold text-slate-800 dark:text-white hidden sm:block flex-shrink-0">
-                  {formatCurrency(item.price * item.quantity)}
-                </p>
-                <button onClick={() => removeItem(item.id)}
-                  className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl text-slate-300 dark:text-slate-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-500 transition-all">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
-          </div>
+        <div className="h-12 w-12 rounded-2xl bg-ocean-100 dark:bg-ocean-900/30 flex items-center justify-center">
+          <ShoppingBag className="h-6 w-6 text-ocean-600 dark:text-ocean-400" />
         </div>
+      </section>
 
-        {/* Summary panel */}
-        <div className="space-y-4">
-          {/* Lokatsiya */}
-          <div className={`glass-card p-5 space-y-3 transition-all ${locErr && !location ? 'ring-2 ring-rose-400/50' : ''}`}>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-500/15">
-                <MapPin className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-              </div>
-              <p className="text-[14px] font-bold text-slate-800 dark:text-white">Yetkazish manzili <span className="text-rose-400">*</span></p>
+      {items.length === 0 ? (
+        <div className="glass-card p-14 text-center space-y-4">
+          <div className="text-5xl">🛒</div>
+          <p className="text-slate-500 font-medium">{t.cartEmpty}</p>
+          <button className="primary-button" onClick={() => navigate('/customer/fish-catalog')}>{t.cartGoToCatalog}</button>
+        </div>
+      ) : (
+        <>
+          {/* Items list */}
+          <div className="glass-card overflow-hidden">
+            <div className="p-4 border-b border-slate-100 dark:border-white/5">
+              <h3 className="font-bold text-sm text-slate-500 uppercase tracking-wide">{t.cartProducts}</h3>
             </div>
-            <LocationPicker value={location} onChange={v => { setLocation(v); setLocErr(false) }} />
-          </div>
-
-          {/* To'lov usuli */}
-          <div className={`glass-card p-5 space-y-3 transition-all ${payErr && !payMethod ? 'ring-2 ring-rose-400/50' : ''}`}>
-            <div className="flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-100 dark:bg-purple-500/15">
-                <CreditCard className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-              </div>
-              <p className="text-[14px] font-bold text-slate-800 dark:text-white">To'lov usuli <span className="text-rose-400">*</span></p>
-            </div>
-            <div className="grid grid-cols-2 gap-2.5">
-              {PAY_OPTIONS.map(opt => (
-                <button key={opt.id} type="button" onClick={() => { setPayMethod(opt.id); setPayErr(false) }}
-                  className={`relative flex flex-col items-center gap-2 rounded-2xl border-2 py-4 text-[13px] font-semibold transition-all ${payMethod === opt.id ? `${opt.ring} ${opt.soft} scale-[1.02]` : 'border-slate-200 dark:border-white/[0.08] hover:border-slate-300'}`}>
-                  <span className="text-2xl">{opt.icon}</span>
-                  <span className="text-slate-800 dark:text-white">{opt.label}</span>
-                  <span className="text-[10px] text-slate-400">Telegram invoice</span>
-                  {payMethod === opt.id && (
-                    <div className="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-white" />
-                    </div>
+            <div className="divide-y divide-slate-100 dark:divide-white/5">
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center gap-4 p-4 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition">
+                  <div className="h-14 w-14 rounded-2xl shrink-0 overflow-hidden shadow-sm">
+                    {item.image_url
+                      ? <img src={item.image_url} alt={item.name} className="h-full w-full object-cover" />
+                      : <div className="h-full w-full bg-gradient-to-br from-ocean-100 to-cyan-100 dark:from-ocean-900/30 dark:to-cyan-900/30 flex items-center justify-center text-2xl">🐟</div>
+                    }
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold truncate">{item.name}</p>
+                    <p className="text-sm text-ocean-600 dark:text-ocean-400 font-semibold">{formatNumber(item.price)} {t.somPrice}/{item.unit || 'kg'}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0 bg-slate-100 dark:bg-white/5 rounded-2xl p-1">
+                    <button
+                      className="h-8 w-8 rounded-xl hover:bg-white dark:hover:bg-white/10 flex items-center justify-center transition text-slate-600 dark:text-slate-300 font-bold"
+                      onClick={() => updateQuantity(item.id, Math.max(1, (parseFloat(item.quantity) || 1) - 1))}
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      min={1}
+                      max={item.stock ?? undefined}
+                      className="w-14 text-center font-bold text-sm bg-transparent outline-none text-slate-800 dark:text-white"
+                      value={item.quantity}
+                      onChange={(e) => {
+                        const v = e.target.value
+                        if (v === '') { updateQuantity(item.id, ''); return }
+                        const num = parseFloat(v)
+                        const maxQty = item.stock ?? Infinity
+                        if (!isNaN(num)) updateQuantity(item.id, Math.min(num, maxQty))
+                      }}
+                      onBlur={(e) => {
+                        const num = parseFloat(e.target.value)
+                        const maxQty = item.stock ?? Infinity
+                        if (isNaN(num) || num < 1) updateQuantity(item.id, 1)
+                        else if (num > maxQty) updateQuantity(item.id, maxQty)
+                      }}
+                    />
+                    <button
+                      className={`h-8 w-8 rounded-xl flex items-center justify-center transition font-bold ${
+                        item.stock != null && (parseFloat(item.quantity) || 0) >= item.stock
+                          ? 'text-slate-300 dark:text-slate-600 cursor-not-allowed'
+                          : 'hover:bg-white dark:hover:bg-white/10 text-slate-600 dark:text-slate-300'
+                      }`}
+                      onClick={() => {
+                        const maxQty = item.stock ?? Infinity
+                        const cur = parseFloat(item.quantity) || 0
+                        if (cur < maxQty) updateQuantity(item.id, cur + 1)
+                      }}
+                      disabled={item.stock != null && (parseFloat(item.quantity) || 0) >= item.stock}
+                      title={item.stock != null ? `Omborda: ${item.stock} ${item.unit || 'kg'}` : undefined}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  {item.stock != null && (
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 text-right w-full">
+                      Ombor: {item.stock} {item.unit || 'kg'}
+                    </p>
                   )}
-                </button>
+                  <p className="w-28 text-right font-black shrink-0 hidden sm:block text-sm">{formatCurrency(item.price * item.quantity)}</p>
+                  <button
+                    className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition shrink-0"
+                    onClick={() => setConfirmRemove(item.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
               ))}
-            </div>
-            <div className="flex items-start gap-2.5 rounded-xl border border-sky-200 dark:border-sky-500/20 bg-sky-50 dark:bg-sky-500/10 p-3">
-              <Send className="h-4 w-4 text-sky-500 mt-0.5 flex-shrink-0" />
-              <p className="text-[12px] text-sky-700 dark:text-sky-400 leading-relaxed">
-                To'lov Telegram invoice orqali amalga oshiriladi. <b>To'lov tasdiqlangandan keyingina buyurtma yaratiladi.</b>
-              </p>
             </div>
           </div>
 
-          {/* Jami */}
-          <div className="glass-card p-5 space-y-4">
-            <div className="space-y-2">
-              {items.map(item => (
-                <div key={item.id} className="flex items-center justify-between text-[13px]">
-                  <span className="text-slate-500 truncate max-w-[170px]">{item.name} × {item.quantity}</span>
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 flex-shrink-0">{formatCurrency(item.price * item.quantity)}</span>
+          {/* Checkout form */}
+          <div className="glass-card p-6 space-y-6">
+            <div className={locationError && !location ? 'ring-2 ring-rose-400 rounded-2xl p-3 -m-3' : ''}>
+              <LocationPicker value={location} onChange={(v) => { setLocation(v); setLocationError(false) }} t={t} />
+            </div>
+
+            <PromoCodeInput onApply={setAppliedPromo} appliedPromo={appliedPromo} t={t} />
+
+            {/* To'lov usuli */}
+            <div className={`space-y-3 ${payError && !payMethod ? 'ring-2 ring-rose-400 rounded-2xl p-3 -m-3' : ''}`}>
+              <label className="flex items-center gap-2 text-sm font-bold">
+                <CreditCard className="h-4 w-4 text-ocean-600" />
+                {t.cartPayMethod} <span className="text-rose-500">*</span>
+              </label>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="relative flex flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 dark:border-white/10 py-4 font-bold text-sm opacity-40 cursor-not-allowed select-none">
+                  <span className="text-2xl">💵</span>
+                  <span className="text-slate-400 text-xs">{t.cartCash}</span>
+                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-2 py-0.5 text-[9px] font-black text-amber-900 whitespace-nowrap">{t.cartComingSoon}</span>
                 </div>
-              ))}
-              <div className="flex items-center justify-between pt-3 border-t border-black/[0.05] dark:border-white/[0.05]">
-                <span className="text-[15px] font-bold text-slate-800 dark:text-white">Jami</span>
-                <span className="text-[22px] font-extrabold text-sky-600 dark:text-sky-400">{formatCurrency(total)}</span>
+                {[
+                  { id: 'click', icon: '💳', label: 'Click', sub: t.cartTelegramInvoice },
+                  { id: 'payme', icon: '💳', label: 'Payme', sub: t.cartTelegramInvoice },
+                ].map((opt) => (
+                  <button key={opt.id} type="button"
+                    onClick={() => { setPayMethod(opt.id); setPayError(false) }}
+                    className={`flex flex-col items-center gap-1.5 rounded-2xl border-2 py-4 font-bold text-sm transition-all
+                      ${payMethod === opt.id
+                        ? 'border-ocean-500 bg-ocean-50 dark:bg-ocean-900/30 text-ocean-700 dark:text-ocean-300 shadow-md shadow-ocean-500/10'
+                        : 'border-slate-200 dark:border-white/10 hover:border-ocean-300 dark:hover:border-ocean-700'}`}
+                  >
+                    <span className="text-2xl">{opt.icon}</span>
+                    {opt.label}
+                    <span className="text-[10px] text-slate-400 font-normal">{opt.sub}</span>
+                  </button>
+                ))}
+              </div>
+
+              {payMethod && (
+                <div className="rounded-2xl bg-ocean-50 dark:bg-ocean-900/20 border border-ocean-200 dark:border-ocean-800 p-3 text-sm text-ocean-700 dark:text-ocean-300 flex items-start gap-2">
+                  <Send className="h-4 w-4 shrink-0 mt-0.5" />
+                  <span>
+                    {t.lang === 'ru'
+                      ? `📱 После оформления заказа в Telegram придёт invoice от ${payMethod === 'click' ? 'Click' : 'Payme'}. Заказ будет создан только после успешной оплаты.`
+                      : `📱 Buyurtma berilgach Telegram ga ${payMethod === 'click' ? 'Click' : 'Payme'} invoice yuboriladi. Buyurtma faqat to'lov muvaffaqiyatli bo'lganda yaratiladi.`}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-4 space-y-2.5">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-500">{t.cartSubtotal} ({items.length} {t.lang === 'ru' ? 'шт.' : 'ta'})</span>
+                <span className="font-semibold">{formatCurrency(subtotal)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-emerald-600 font-semibold">{t.cartDiscount} ({appliedPromo?.discount_percent}%)</span>
+                  <span className="font-bold text-emerald-600">−{formatCurrency(discount)}</span>
+                </div>
+              )}
+              <div className="pt-2.5 border-t border-slate-200 dark:border-white/10 flex justify-between items-center">
+                <span className="font-bold">{t.cartTotal}</span>
+                <span className="text-2xl font-black text-ocean-600">{formatCurrency(total)}</span>
               </div>
             </div>
+
             <button
-              className="flex h-12 w-full items-center justify-center gap-2.5 rounded-xl text-[15px] font-bold text-white transition-all disabled:opacity-50"
-              style={{ background: 'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow: '0 4px 20px rgba(14,165,233,0.3)' }}
-              onClick={() => sendInvoiceMutation.mutate()}
-              disabled={sendInvoiceMutation.isPending}
-              onMouseEnter={e => { if (!sendInvoiceMutation.isPending) e.currentTarget.style.background = 'linear-gradient(135deg,#38bdf8,#0ea5e9)' }}
-              onMouseLeave={e => { if (!sendInvoiceMutation.isPending) e.currentTarget.style.background = 'linear-gradient(135deg,#0ea5e9,#0284c7)' }}
+              className="primary-button w-full text-base py-3.5 shadow-xl shadow-ocean-500/25"
+              onClick={() => orderMutation.mutate()}
+              disabled={orderMutation.isPending}
             >
-              {sendInvoiceMutation.isPending
-                ? <><Loader2 className="h-5 w-5 animate-spin" /> Yuborilmoqda...</>
-                : <><Send className="h-5 w-5" /> Telegram invoice yuborish</>
-              }
+              {orderMutation.isPending
+                ? <><span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" /> {t.cartPlacing}</>
+                : `🎉 ${t.cartPlaceOrder}`}
             </button>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   )
 }
