@@ -174,6 +174,7 @@ export function CatalogPage() {
       price: fish.price,
       unit: fish.unit,
       quantity: 1,
+      stock: fish.stock ?? null,
       image_url: fish.image_url || null,
     })
     pushToast({ title: `${fish.name} savatchaga qo'shildi ✅`, variant: 'success' })
