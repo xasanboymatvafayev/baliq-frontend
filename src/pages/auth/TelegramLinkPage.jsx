@@ -34,13 +34,22 @@ export function TelegramLinkPage() {
     try {
       const tg = await authService.checkTelegram(phone)
       if (!tg.linked) { setNotLinked(true); return }
+      let userId
       if (flow === 'register') {
-        await authService.register({ firstName, lastName, phone, password })
+        const result = await authService.register({ firstName, lastName, phone, password })
+        userId = result?.user_id
       } else {
-        await authService.forgotPassword({ phone })
+        const result = await authService.forgotPassword({ phone })
+        userId = result?.user_id
       }
       pushToast({ title: 'OTP Telegram botga yuborildi!', variant: 'success' })
-      navigate('/otp-verification')
+      navigate('/otp-verification', {
+        state: {
+          userId,
+          phone,
+          linked: true,   // Telegram allaqachon ulangan
+        },
+      })
     } catch (err) {
       pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
     } finally {
