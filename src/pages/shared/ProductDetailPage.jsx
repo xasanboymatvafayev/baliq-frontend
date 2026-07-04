@@ -208,9 +208,23 @@ export function ProductDetailPage() {
             {/* Ferma rasmlari */}
             <div className="flex gap-2 flex-wrap">
               {(() => {
-                // farmImage (tekshirish tartibi): images -> image_urls -> farmImage (yakka rasm)
-                const farmImgs = farm?.images || farm?.image_urls ||
-                  (farm?.farmImage ? [farm.farmImage] : [])
+                // Bo'sh array truthy bo'lgani uchun Array.isArray + length tekshiruvi ishlatiladi
+                const hasImages = Array.isArray(farm?.images) && farm.images.length > 0
+                const hasImageUrls = Array.isArray(farm?.image_urls) && farm.image_urls.length > 0
+                const farmImgs = hasImages
+                  ? farm.images
+                  : hasImageUrls
+                  ? farm.image_urls
+                  : farm?.farmImage
+                  ? [farm.farmImage]
+                  : []
+                if (farmImgs.length === 0) {
+                  return (
+                    <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/30 dark:to-emerald-900/20 flex items-center justify-center text-4xl">
+                      🏡
+                    </div>
+                  )
+                }
                 return farmImgs.slice(0, 3).map((img, i) => (
                   <img
                     key={i}
@@ -220,11 +234,6 @@ export function ProductDetailPage() {
                   />
                 ))
               })()}
-              {!((farm?.images || farm?.image_urls || (farm?.farmImage ? [farm.farmImage] : [])).length) && (
-                <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/30 dark:to-emerald-900/20 flex items-center justify-center text-4xl">
-                  🏡
-                </div>
-              )}
             </div>
 
             {/* Ferma ma'lumotlari */}
