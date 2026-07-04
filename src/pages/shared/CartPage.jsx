@@ -142,7 +142,9 @@ function PromoCodeInput({ onApply, appliedPromo, t }) {
 function WaitingPaymentScreen({ orderId, provider, onPaid, onCancel, t }) {
   const [checking, setChecking] = useState(false)
   const [paid, setPaid] = useState(false)
+  const [timeLeft, setTimeLeft] = useState(10 * 60) // 10 daqiqa = 600 sekund
   const intervalRef = useRef(null)
+  const timerRef = useRef(null)
 
   const checkStatus = useCallback(async () => {
     if (paid) return
@@ -152,6 +154,7 @@ function WaitingPaymentScreen({ orderId, provider, onPaid, onCancel, t }) {
       if (data.paid) {
         setPaid(true)
         if (intervalRef.current) clearInterval(intervalRef.current)
+        if (timerRef.current) clearInterval(timerRef.current)
         onPaid()
       }
     } catch { /* ignore */ } finally {
@@ -161,8 +164,30 @@ function WaitingPaymentScreen({ orderId, provider, onPaid, onCancel, t }) {
 
   useEffect(() => {
     intervalRef.current = setInterval(checkStatus, 5000)
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [checkStatus])
+    // 10 daqiqalik taymer
+    timerRef.current = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current)
+          clearInterval(intervalRef.current)
+          // Muddati tugagan — avtomatik bekor qilish
+          setTimeout(() => onCancel(), 500)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [checkStatus, onCancel])
+
+  const formatTime = (secs) => {
+    const m = Math.floor(secs / 60)
+    const s = secs % 60
+    return `${m}:${s.toString().padStart(2, '0')}`
+  }
 
   return (
     <div className="glass-card p-8 text-center space-y-6">
@@ -187,6 +212,14 @@ function WaitingPaymentScreen({ orderId, provider, onPaid, onCancel, t }) {
         <p className="text-xs text-slate-400">
           {t.lang === 'ru' ? `Провайдер: ${provider === 'click' ? 'Click' : 'Payme'}` : `Provayder: ${provider === 'click' ? 'Click' : 'Payme'}`}
         </p>
+        <div className={`flex items-center justify-center gap-2 font-bold text-sm ${timeLeft < 60 ? 'text-rose-500 animate-pulse' : timeLeft < 180 ? 'text-amber-500' : 'text-slate-600 dark:text-slate-300'}`}>
+          ⏱ {t.lang === 'ru' ? `Осталось: ${formatTime(timeLeft)}` : `Qolgan vaqt: ${formatTime(timeLeft)}`}
+        </div>
+        {timeLeft < 120 && timeLeft > 0 && (
+          <p className="text-xs text-rose-400 font-semibold text-center">
+            {t.lang === 'ru' ? '⚠️ Заказ скоро будет отменён!' : '⚠️ Buyurtma yaqinda bekor qilinadi!'}
+          </p>
+        )}
       </div>
 
       <div className="flex gap-3">
@@ -234,29 +267,33 @@ export function CartPage() {
       if (!location) throw new Error('location')
       if (!payMethod) throw new Error('payment')
 
-      const order = await orderService.create({
-        items: items.map((i) => ({ fish_id: i.fish_id || i.id, quantity: i.quantity, unit_price: i.price })),
+      // 1-qadam: Kutuvchi to'lov yaratish (buyurtma hali yaratilmaydi)
+      const pending = await httpClient.post('/telegram-payment/create-pending', {
+        items: items.map((i) => ({
+          fish_id: i.fish_id || i.id,
+          fish_name: i.name || 'Baliq',
+          quantity: i.quantity,
+          unit_price: i.price,
+          unit: i.unit || 'kg',
+        })),
         delivery_address: location.address,
         delivery_lat: location.lat,
         delivery_lng: location.lng,
-        delivery_coords: location.coords,
-        payment_method: 'card',
-        card_provider: payMethod,
-        promo_code: appliedPromo?.code || undefined,
-      })
-
-      // Telegram invoice yuborish
-      await httpClient.post('/telegram-payment/send-invoice', {
-        order_id: order.id,
         provider: payMethod,
       })
 
-      return order
+      // 2-qadam: Telegram invoice yuborish (to'g'ri field nomi: pending_payment_id)
+      await httpClient.post('/telegram-payment/send-invoice', {
+        pending_payment_id: pending.pending_payment_id,
+        provider: payMethod,
+      })
+
+      return pending
     },
-    onSuccess: (order) => {
+    onSuccess: (pending) => {
       clearCart()
       queryClient.invalidateQueries(['orders'])
-      setPendingOrderId(order.id)
+      setPendingOrderId(pending.pending_payment_id)
       pushToast({
         title: t.lang === 'ru'
           ? `✅ Invoice отправлен в Telegram! Оплатите через ${payMethod === 'click' ? 'Click' : 'Payme'}`

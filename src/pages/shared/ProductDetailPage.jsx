@@ -207,15 +207,20 @@ export function ProductDetailPage() {
           <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
             {/* Ferma rasmlari */}
             <div className="flex gap-2 flex-wrap">
-              {(farm?.images || farm?.image_urls || []).slice(0, 3).map((img, i) => (
-                <img
-                  key={i}
-                  src={img}
-                  alt="Ferma"
-                  className="h-24 w-24 rounded-2xl object-cover"
-                />
-              ))}
-              {!(farm?.images || farm?.image_urls)?.length && (
+              {(() => {
+                // farmImage (tekshirish tartibi): images -> image_urls -> farmImage (yakka rasm)
+                const farmImgs = farm?.images || farm?.image_urls ||
+                  (farm?.farmImage ? [farm.farmImage] : [])
+                return farmImgs.slice(0, 3).map((img, i) => (
+                  <img
+                    key={i}
+                    src={img}
+                    alt="Ferma"
+                    className="h-24 w-24 rounded-2xl object-cover"
+                  />
+                ))
+              })()}
+              {!((farm?.images || farm?.image_urls || (farm?.farmImage ? [farm.farmImage] : [])).length) && (
                 <div className="h-24 w-24 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-200 dark:from-green-900/30 dark:to-emerald-900/20 flex items-center justify-center text-4xl">
                   🏡
                 </div>

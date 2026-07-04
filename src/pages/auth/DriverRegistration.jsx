@@ -76,7 +76,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
           },
         })
       } catch (err) {
-        pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
+        const msg = err.message || 'Xatolik yuz berdi'
+        // Telefon raqam allaqachon mavjud bo'lsa (409)
+        if (msg.includes('allaqachon') || msg.includes('mavjud') || msg.includes('409')) {
+          pushToast({ title: "Bu telefon raqam allaqachon ro'yxatdan o'tgan. Kirish sahifasiga boring.", variant: 'error' })
+        } else {
+          pushToast({ title: msg, variant: 'error' })
+        }
       } finally {
         setLoading(false)
       }

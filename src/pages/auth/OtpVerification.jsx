@@ -134,6 +134,11 @@ export function OtpVerification() {
   const onSubmit = async (data) => {
     setLoading(true)
     try {
+      if (!userId) {
+        pushToast({ title: "Sessiya xatosi. Qayta ro'yxatdan o'ting.", variant: 'error' })
+        navigate('/register')
+        return
+      }
       const result = await authService.verifyOtp({ user_id: userId, code: data.otp, security_check: securityCheck })
       if (result.token) {
         const userRole = result.user?.role || result.role || 'customer'
@@ -181,6 +186,28 @@ export function OtpVerification() {
       <AuthFormShell title={t.otpChecking} description={t.otpCheckingDesc}>
         <div className="flex justify-center py-10">
           <div className="h-9 w-9 rounded-full border-[3px] border-sky-500 border-t-transparent animate-spin" />
+        </div>
+      </AuthFormShell>
+    )
+  }
+
+  // userId yo'q bo'lsa — xato holat
+  if (!checking && !userId) {
+    return (
+      <AuthFormShell title="Sessiya xatosi" description="OTP sahifasiga noto'g'ri yo'l bilan kelindi.">
+        <div className="space-y-4 text-center">
+          <div className="rounded-2xl p-4" style={{ background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)' }}>
+            <p className="text-[13px] text-rose-400">
+              Iltimos, qaytadan ro'yxatdan o'ting yoki kirish sahifasiga qayting.
+            </p>
+          </div>
+          <button
+            className="flex h-11 w-full items-center justify-center rounded-xl text-[14px] font-semibold text-white transition-all"
+            style={{ background: 'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow: '0 4px 20px rgba(14,165,233,0.35)' }}
+            onClick={() => navigate('/login')}
+          >
+            Kirish sahifasiga qaytish
+          </button>
         </div>
       </AuthFormShell>
     )
