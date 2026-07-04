@@ -13,20 +13,28 @@ export function FirebaseForgotOtpPage() {
   const [loading, setLoading] = useState(false)
   const [resending, setResending] = useState(false)
 
-  const rawPhone = location.state?.phone || ''
+  const rawPhone  = location.state?.phone      || ''
+  const userId    = location.state?.userId     || ''
+  const resetToken = location.state?.resetToken || ''
 
   const handleVerify = async (e) => {
     e.preventDefault()
     if (code.length < 4) { pushToast({ title: 'Kodni kiriting', variant: 'error' }); return }
+    if (!userId) {
+      pushToast({ title: "Sessiya xatosi. Qaytadan harakat qiling.", variant: 'error' })
+      navigate('/forgot-password')
+      return
+    }
     setLoading(true)
     try {
-      const res = await httpClient.post('/auth/verify-otp', {
-        phone: rawPhone,
+      // user_id bilan verify-otp chaqiramiz (avval phone yuborilardi → 422 edi)
+      await httpClient.post('/auth/verify-otp', {
+        user_id: userId,
         code,
-        type: 'forgot_password',
       })
       pushToast({ title: 'Telefon tasdiqlandi!', variant: 'success' })
-      navigate('/reset-password', { state: { reset_token: res.reset_token } })
+      // reset_token forgot-password dan kelgan (verify-otp dan emas)
+      navigate('/reset-password', { state: { reset_token: resetToken } })
     } catch (err) {
       pushToast({ title: err?.message || "Kod noto'g'ri yoki muddati tugagan", variant: 'error' })
     }
@@ -36,7 +44,14 @@ export function FirebaseForgotOtpPage() {
   const handleResend = async () => {
     setResending(true)
     try {
-      await httpClient.post('/auth/forgot-password', { phone: rawPhone })
+      const res = await httpClient.post('/auth/forgot-password', { phone: rawPhone })
+      // yangi reset_token ni ham saqlaymiz
+      if (res?.reset_token) {
+        navigate('.', {
+          replace: true,
+          state: { phone: rawPhone, userId: res.user_id || userId, resetToken: res.reset_token },
+        })
+      }
       pushToast({ title: 'Yangi kod yuborildi!', variant: 'success' })
     } catch (err) {
       pushToast({ title: err.message, variant: 'error' })

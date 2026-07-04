@@ -31,9 +31,15 @@ export function ForgotPassword() {
     setLoading(true)
     try {
       const phone = toE164(data.phone)
-      await httpClient.post('/auth/forgot-password', { phone })
+      const result = await httpClient.post('/auth/forgot-password', { phone })
       pushToast({ title: `Tasdiqlash kodi Telegram ga yuborildi 📱`, variant: 'success' })
-      navigate('/firebase-forgot-otp', { state: { phone } })
+      navigate('/firebase-forgot-otp', {
+        state: {
+          phone,
+          userId: result.user_id,
+          resetToken: result.reset_token,
+        },
+      })
     } catch (err) {
       pushToast({ title: err.message || 'Xatolik yuz berdi', variant: 'error' })
     } finally {
