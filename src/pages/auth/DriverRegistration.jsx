@@ -95,18 +95,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-ocean-600">Driver onboarding</p>
               <h1 className="mt-2 text-4xl font-black">Haydovchi registratsiyasi</h1>
-              <p className="mt-1 text-sm text-slate-500">So\u2019rovingiz yuborilgandan so\u2019ng admin tasdiqini kuting. Telegram orqali xabar olasiz.</p>
+              <p className="mt-1 text-sm text-slate-500">So'rovingiz yuborilgandan so'ng admin tasdiqini kuting. Telegram orqali xabar olasiz.</p>
             </div>
             <Link className="secondary-button" to="/login">Kirishga qaytish</Link>
           </div>
 
           <form className="glass-card grid gap-5 p-6 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
-            <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">\u{1F464} Shaxsiy ma\u2019lumotlar</h3></div>
+            <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">👤 Shaxsiy ma'lumotlar</h3></div>
             <FormInput label="Ism" {...register('firstName')} error={formState.errors.firstName?.message} />
             <FormInput label="Familiya" {...register('lastName')} error={formState.errors.lastName?.message} />
             <FormInput label="Telefon" placeholder="+998901234567" {...register('phone')} error={formState.errors.phone?.message} />
             <FormInput label="Parol" type="password" placeholder="\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022" {...register('password')} error={formState.errors.password?.message} />
-            <div className="md:col-span-2 border-t border-slate-200 dark:border-white/10 pt-4"><h3 className="font-bold text-ocean-600 mb-3">\u{1F69A} Transport ma\u2019lumotlari</h3></div>
+            <div className="md:col-span-2 border-t border-slate-200 dark:border-white/10 pt-4"><h3 className="font-bold text-ocean-600 mb-3">🚛 Transport ma'lumotlari</h3></div>
             <FormInput label="Mashina markasi" placeholder="Nexia, Cobalt..." {...register('carBrand')} error={formState.errors.carBrand?.message} />
             <FormInput label="Mashina raqami" placeholder="01A 123 BC" {...register('plateNumber')} error={formState.errors.plateNumber?.message} />
             <FormInput label="Yuk sig'imi (kg)" placeholder="1000" {...register('capacity')} error={formState.errors.capacity?.message} />
@@ -114,7 +114,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
             <FileUpload label="Haydovchilik guvohnomasi rasmi (majburiy)" name="licenseImage" register={register} error={formState.errors.licenseImage?.message} />
             <FileUpload label="Tex pasport rasmi (majburiy)" name="technicalPassportImage" register={register} error={formState.errors.technicalPassportImage?.message} />
             <button className="primary-button md:col-span-2" type="submit" disabled={loading}>
-              {loading ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Yuborilmoqda...</> : "So\u2019rov yuborish"}
+              {loading ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Yuborilmoqda...</> : "So'rov yuborish"}
             </button>
           </form>
         </section>

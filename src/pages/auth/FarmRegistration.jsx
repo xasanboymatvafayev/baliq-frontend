@@ -155,18 +155,18 @@ import { zodResolver } from '@hookform/resolvers/zod'
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-ocean-600">PENDING \u00b7 APPROVED \u00b7 REJECTED</p>
               <h1 className="mt-2 text-4xl font-black">Ferma registratsiyasi</h1>
-              <p className="mt-1 text-slate-500 text-sm">Ro\u2019yxatdan o\u2019ting va ferma so\u2019rovini yuboring. Admin tasdiqlashini kuting.</p>
+              <p className="mt-1 text-slate-500 text-sm">Ro'yxatdan o'ting va ferma so'rovini yuboring. Admin tasdiqlashini kuting.</p>
             </div>
             <Link className="secondary-button" to="/login">Kirishga qaytish</Link>
           </div>
 
           <form className="glass-card grid gap-5 p-6 md:grid-cols-2" onSubmit={handleSubmit(onSubmit)}>
-            <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">\u{1F464} Shaxsiy ma\u2019lumotlar</h3></div>
+            <div className="md:col-span-2"><h3 className="font-bold text-ocean-600 mb-3">👤 Shaxsiy ma'lumotlar</h3></div>
             <FormInput label="Ism" {...register('firstName')} error={formState.errors.firstName?.message} />
             <FormInput label="Familiya" {...register('lastName')} error={formState.errors.lastName?.message} />
             <FormInput label="Telefon" placeholder="+998901234567" {...register('phone')} error={formState.errors.phone?.message} />
             <FormInput label="Parol" type="password" {...register('password')} error={formState.errors.password?.message} />
-            <div className="md:col-span-2 border-t border-slate-200 dark:border-white/10 pt-4"><h3 className="font-bold text-ocean-600 mb-3">\u{1F3E1} Ferma ma\u2019lumotlari</h3></div>
+            <div className="md:col-span-2 border-t border-slate-200 dark:border-white/10 pt-4"><h3 className="font-bold text-ocean-600 mb-3">🏡 Ferma ma'lumotlari</h3></div>
             <FormInput label="Ferma nomi" {...register('farmName')} error={formState.errors.farmName?.message} />
             <FormInput label="STIR (INN)" placeholder="123456789" {...register('stir')} error={formState.errors.stir?.message} />
             <FormInput label="Viloyat" placeholder="Toshkent" {...register('region')} error={formState.errors.region?.message} />
@@ -175,7 +175,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
             <FileUpload label="Ferma rasmi (majburiy)" name="farmImage" register={register} error={formState.errors.farmImage?.message} />
             <div className="flex items-end">
               <button className="primary-button w-full" type="submit" disabled={loading}>
-                {loading ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Yuborilmoqda...</> : "So\u2019rov yuborish"}
+                {loading ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Yuborilmoqda...</> : "So'rov yuborish"}
               </button>
             </div>
           </form>
