@@ -33,6 +33,12 @@ export function FirebaseForgotOtpPage() {
         code,
       })
       pushToast({ title: 'Telefon tasdiqlandi!', variant: 'success' })
+      if (!resetToken) {
+        // reset_token yo'q bo'lsa — qaytadan forgot-password dan o'tkazamiz
+        pushToast({ title: "Sessiya muddati tugagan. Qaytadan harakat qiling.", variant: 'error' })
+        navigate('/forgot-password')
+        return
+      }
       // reset_token forgot-password dan kelgan (verify-otp dan emas)
       navigate('/reset-password', { state: { reset_token: resetToken } })
     } catch (err) {
