@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
-import { useFirebasePhone } from '../../hooks/useFirebasePhone.js'
-import { formatCurrency, formatNumber } from '../../utils/formatters.js'
-import { Wallet, ArrowDownCircle, Clock, CheckCircle2, CreditCard, Save, ShieldCheck, RefreshCw, Loader2, Smartphone } from 'lucide-react'
+import { formatCurrency } from '../../utils/formatters.js'
+import { Wallet, ArrowDownCircle, CreditCard, Save, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react'
 import { PageSkeleton } from '../../components/common/LoadingSkeleton.jsx'
 import { EmptyState } from '../../components/common/EmptyState.jsx'
 
@@ -17,7 +16,6 @@ export function FarmBalancePage() {
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const user = useAuthStore((s) => s.user)
-  const { sendSms, confirmCode, status: smsStatus, error: smsError, clearError } = useFirebasePhone()
 
   const [tab, setTab] = useState('balance')
   const [amount, setAmount] = useState('')
@@ -25,7 +23,7 @@ export function FarmBalancePage() {
   const [cardHolder, setCardHolder] = useState('')
   const [saveCard, setSaveCard] = useState(false)
 
-  // Firebase OTP step
+  // Telegram OTP step
   const [otpStep, setOtpStep] = useState(false)
   const [code, setCode] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -33,7 +31,7 @@ export function FarmBalancePage() {
   const [resending, setResending] = useState(false)
   const timerRef = useRef(null)
 
-  // Withdraw pending data
+  // Withdraw pending data (resend uchun)
   const withdrawPendingRef = useRef(null)
 
   const { data: bal = { available_amount: 0, pending_amount: 0, withdrawn_amount: 0, monitoring: [] }, isLoading } = useQuery({
@@ -65,53 +63,48 @@ export function FarmBalancePage() {
   useEffect(() => () => clearInterval(timerRef.current), [])
 
   const handleWithdraw = async () => {
-    if (!amount || !cardNum || !cardHolder || parseInt(amount) <= 0 || parseInt(amount) > bal.available_amount) return
-    const phone = user?.phone
-    if (!phone) { pushToast({ title: "Telefon raqam topilmadi. Qayta kiring.", variant: 'error' }); return }
+    const amt = parseInt(amount)
+    if (!amt || !cardNum || !cardHolder || amt <= 0 || amt > bal.available_amount) return
 
-    withdrawPendingRef.current = { amount: parseInt(amount), card_number: cardNum, card_holder: cardHolder, save_card: saveCard }
+    const wd = { amount: amt, card_number: cardNum, card_holder: cardHolder, save_card: saveCard }
+    withdrawPendingRef.current = wd
 
-    const ok = await sendSms(phone)
-    if (!ok) { pushToast({ title: smsError || 'SMS yuborishda xato', variant: 'error' }); return }
-    pushToast({ title: `SMS yuborildi 📱 ${phone}`, variant: 'success' })
-    setOtpStep(true)
-    setCode('')
-    startCountdown()
+    try {
+      await httpClient.post('/finance/farm/withdraw', wd)
+      pushToast({ title: 'Tasdiqlash kodi Telegram botga yuborildi 📱', variant: 'success' })
+      setOtpStep(true)
+      setCode('')
+      startCountdown()
+    } catch (err) {
+      pushToast({ title: err?.message || 'Pul yechish so\'rovida xato', variant: 'error' })
+    }
   }
 
   const handleResend = async () => {
-    const phone = user?.phone
-    if (!phone) return
+    const wd = withdrawPendingRef.current
+    if (!wd) return
     setResending(true)
-    clearError()
-    const ok = await sendSms(phone)
-    if (ok) { pushToast({ title: 'SMS qayta yuborildi ✅', variant: 'success' }); startCountdown() }
-    else pushToast({ title: smsError || 'SMS yuborishda xato', variant: 'error' })
+    try {
+      await httpClient.post('/finance/farm/withdraw', wd)
+      pushToast({ title: 'Yangi kod Telegram botga yuborildi ✅', variant: 'success' })
+      startCountdown()
+    } catch (err) {
+      pushToast({ title: err?.message || 'Qayta yuborishda xato', variant: 'error' })
+    }
     setResending(false)
   }
 
   const handleConfirm = async () => {
-    if (code.length !== 6) { pushToast({ title: '6 xonali kod kiriting', variant: 'error' }); return }
+    if (code.length < 4) { pushToast({ title: 'Kodni kiriting', variant: 'error' }); return }
     setSubmitting(true)
     try {
-      const result = await confirmCode(code)
-      if (!result) { pushToast({ title: smsError || "Kod noto'g'ri", variant: 'error' }); setSubmitting(false); return }
-
-      const wd = withdrawPendingRef.current
-      await httpClient.post('/finance/farm/withdraw-firebase', {
-        firebase_token: result.custom_token || 'backend_verified',
-        phone: user?.phone,
-        amount: wd.amount,
-        card_number: wd.card_number,
-        card_holder: wd.card_holder,
-        save_card: wd.save_card,
-      })
+      await httpClient.post('/finance/farm/withdraw/confirm', { otp: code })
       pushToast({ title: "So'rov yuborildi! Admin tez orada o'tkazadi ✅", variant: 'success' })
       setOtpStep(false); setCode(''); setAmount(''); withdrawPendingRef.current = null
       queryClient.invalidateQueries(['farm-balance'])
-      setTab('requests')
+      setTab('balance')
     } catch (err) {
-      pushToast({ title: err?.response?.data?.detail || err.message || 'Xato', variant: 'error' })
+      pushToast({ title: err?.message || "Kod noto'g'ri yoki muddati tugagan", variant: 'error' })
     } finally {
       setSubmitting(false)
     }
@@ -212,9 +205,9 @@ export function FarmBalancePage() {
               <button
                 className="primary-button w-full !bg-emerald-600 hover:!bg-emerald-700 text-lg py-4"
                 onClick={handleWithdraw}
-                disabled={!amount || !cardNum || !cardHolder || parseInt(amount) <= 0 || parseInt(amount) > bal.available_amount || smsStatus === 'sending'}
+                disabled={!amount || !cardNum || !cardHolder || parseInt(amount) <= 0 || parseInt(amount) > bal.available_amount || submitting}
               >
-                {smsStatus === 'sending' ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />SMS yuborilmoqda...</> : 'Pul yechish so\'rovini yuborish'}
+                {submitting ? <><Loader2 className="h-4 w-4 animate-spin inline mr-2" />Yuborilmoqda...</> : 'Pul yechish so\'rovini yuborish'}
               </button>
             </div>
           ) : (
@@ -222,8 +215,8 @@ export function FarmBalancePage() {
         
               <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 p-4 text-center">
                 <ShieldCheck className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
-                <p className="font-black text-emerald-700 dark:text-emerald-300">SMS kod yuborildi</p>
-                <p className="text-sm text-emerald-600 mt-1">{user?.phone}</p>
+                <p className="font-black text-emerald-700 dark:text-emerald-300">Tasdiqlash kodi yuborildi</p>
+                <p className="text-sm text-emerald-600 mt-1">Telegram botni tekshiring 📱</p>
               </div>
 
               <div>
@@ -232,10 +225,9 @@ export function FarmBalancePage() {
                   className="soft-input w-full mt-1 text-center text-3xl font-mono tracking-widest"
                   placeholder="000000" maxLength={6}
                   value={code}
-                  onChange={(e) => { clearError(); setCode(e.target.value.replace(/\D/g,'').slice(0,6)) }}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g,'').slice(0,6))}
                   autoFocus
                 />
-                {smsError && <p className="mt-1 text-xs text-rose-500">{smsError}</p>}
               </div>
 
               <div className="text-center">
