@@ -12,6 +12,7 @@ import { EmptyState } from '../../components/common/EmptyState.jsx'
 const RESEND_COOLDOWN = 60
 
 export function FarmBalancePage() {
+  const t = useT()
   usePageTitle('Balans')
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -144,7 +145,7 @@ export function FarmBalancePage() {
         <div className="glass-card p-5 border-l-4 border-l-slate-400">
           <p className="text-xs font-bold text-slate-500 uppercase">Yechib olingan</p>
           <p className="text-2xl font-black text-slate-600 mt-1">{formatCurrency(bal.withdrawn_amount)}</p>
-          <p className="text-xs text-slate-400">Jami</p>
+          <p className="text-xs text-slate-400">{t.total}</p>
         </div>
       </div>
 
@@ -241,7 +242,7 @@ export function FarmBalancePage() {
               </div>
 
               <div className="flex gap-3">
-                <button className="secondary-button flex-1" onClick={() => { setOtpStep(false); clearInterval(timerRef.current) }}>Bekor</button>
+                <button className="secondary-button flex-1" onClick={() => { setOtpStep(false); clearInterval(timerRef.current) }}>{t.cancel}</button>
                 <button
                   className="primary-button flex-1 !bg-emerald-600"
                   onClick={handleConfirm}
@@ -266,7 +267,7 @@ export function FarmBalancePage() {
             <table className="w-full text-sm">
               <thead className="border-b border-slate-200 dark:border-white/10">
                 <tr className="text-left text-xs font-black uppercase text-slate-400">
-                  <th className="p-4">Buyurtma</th><th className="p-4">Jami</th><th className="p-4">Soliq</th><th className="p-4">Sizga</th><th className="p-4">Provider</th>
+                  <th className="p-4">Buyurtma</th><th className="p-4">{t.total}</th><th className="p-4">Soliq</th><th className="p-4">Sizga</th><th className="p-4">Provider</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">

@@ -1,3 +1,4 @@
+import { useT } from '../../store/i18nStore.js'
 import { useQuery } from '@tanstack/react-query'
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
@@ -57,6 +58,7 @@ function makeDestIcon(Leaflet) {
 
 // ─── Asosiy komponent ────────────────────────────────────────────
 export function GpsMonitoringPage() {
+  const t = useT()
   usePageTitle('GPS Monitoring')
   const mapRef = useRef(null)
   const mapInstanceRef = useRef(null)
@@ -323,7 +325,7 @@ export function GpsMonitoringPage() {
               {/* Buyurtmalar ro'yxati */}
               {selectedDriver.orders?.length > 0 && (
                 <div className="space-y-1">
-                  <p className="text-xs font-bold text-slate-500 uppercase">Buyurtmalar</p>
+                  <p className="text-xs font-bold text-slate-500 uppercase">{t.orders}</p>
                   {selectedDriver.orders.map((o, i) => (
                     <div key={i} className="rounded-xl bg-slate-50 dark:bg-white/5 px-3 py-2 text-xs">
                       <span className="font-mono">#{o.id?.slice(-6)}</span>

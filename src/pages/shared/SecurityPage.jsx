@@ -11,6 +11,7 @@ import { EmptyState } from '../../components/common/EmptyState.jsx'
 const RESEND_COOLDOWN = 60
 
 export function SecurityPage() {
+  const t = useT()
   usePageTitle('Xavfsizlik')
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()

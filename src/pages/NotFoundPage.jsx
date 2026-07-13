@@ -1,7 +1,9 @@
+import { useT } from '../store/i18nStore.js'
 import { Link, useNavigate } from 'react-router-dom'
 import { Fish, Home, ArrowLeft } from 'lucide-react'
 
 export function NotFoundPage() {
+  const t = useT()
   const navigate = useNavigate()
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#050a14] flex items-center justify-center p-6">

@@ -15,6 +15,7 @@ const ROLE_ROUTES = {
 export function FirebaseOtpPage() {
   const location  = useLocation()
   const navigate  = useNavigate()
+  const t = useT()
   const setSession = useAuthStore(s => s.setSession)
   const pushToast  = useToastStore(s => s.pushToast)
 
@@ -116,7 +117,7 @@ export function FirebaseOtpPage() {
   // Telegram ulanmagan holat
   if (!isLinked) {
     return (
-      <AuthFormShell title="Telegram bilan ulang" description="Tasdiqlash kodini olish uchun Telegram botni ulashingiz kerak.">
+      <AuthFormShell title={t.telegramTitle} description={t.telegramDesc}>
         <div className="space-y-4">
           <div className="rounded-2xl p-5" style={{ background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.2)' }}>
             <p className="mb-3 text-[13px] font-bold text-amber-400">📱 Qanday ulash kerak?</p>
@@ -148,7 +149,7 @@ export function FirebaseOtpPage() {
           </button>
 
           <Link to="/login" className="block text-center text-[13px] text-white/30 hover:text-white/60 transition-colors">
-            ← Kirishga qaytish
+            {t.backToLogin}
           </Link>
         </div>
       </AuthFormShell>
@@ -157,7 +158,7 @@ export function FirebaseOtpPage() {
 
   // OTP kiritish holati
   return (
-    <AuthFormShell title="Tasdiqlash kodi" description={`${rawPhone} ga yuborilgan 6 xonali kodni kiriting`}>
+    <AuthFormShell title={t.otpTitle} description={`${rawPhone} ga yuborilgan 6 xonali kodni kiriting`}>
       <div className="space-y-4">
         <div className="flex items-center gap-3 rounded-2xl p-4" style={{ background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.15)' }}>
           <Send className="h-5 w-5 text-sky-400 flex-shrink-0" />
@@ -176,7 +177,7 @@ export function FirebaseOtpPage() {
           <button type="submit" disabled={loading||code.length<4}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-semibold text-white disabled:opacity-50"
             style={{ background:'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow:'0 4px 20px rgba(14,165,233,0.35)' }}>
-            {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Tekshirilmoqda...</> : <><KeyRound className="h-4 w-4" />Tasdiqlash</>}
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Tekshirilmoqda...</> : <><KeyRound className="h-4 w-4" />{t.confirm}</>}
           </button>
         </form>
 

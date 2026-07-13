@@ -1,7 +1,9 @@
+import { useT } from '../../store/i18nStore.js'
 import { ThemeToggle } from '../../components/common/ThemeToggle.jsx'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 
 export function SettingsPage({ title = 'Sozlamalar' }) {
+  const t = useT()
   usePageTitle(title)
   return (
     <section className="glass-card max-w-3xl p-6">

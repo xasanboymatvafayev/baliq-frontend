@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
-import { Menu, Search, X, Fish, Store, ExternalLink } from 'lucide-react'
+import { Menu, Search, X, Fish, Store, ExternalLink, LogOut } from 'lucide-react'
 import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { ThemeToggle } from '../common/ThemeToggle.jsx'
 import { NotificationBell } from '../common/NotificationBell.jsx'
 import { LanguageSwitcher } from '../common/LanguageSwitcher.jsx'
 import { useAuthStore } from '../../store/authStore.js'
+import { useToastStore } from '../../store/toastStore.js'
 import { httpClient } from '../../services/api/index.js'
 import { useT } from '../../store/i18nStore.js'
 
@@ -96,6 +97,8 @@ export function Topbar({ onMenuClick, title }) {
   const location = useLocation()
   const user = useAuthStore(s => s.user)
   const role = useAuthStore(s => s.role)
+  const logout = useAuthStore(s => s.logout)
+  const pushToast = useToastStore(s => s.pushToast)
   const t = useT()
   const [q, setQ] = useState('')
   const [focused, setFocused] = useState(false)
@@ -158,6 +161,12 @@ export function Topbar({ onMenuClick, title }) {
           className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${ROLE_COLORS[role] || 'from-sky-500 to-blue-600'} text-[12px] font-bold text-white shadow-md hover:scale-105 transition-transform`}>
           {initials}
         </Link>
+        <button
+          onClick={() => { logout(); pushToast({ title: t.logout, variant: 'success' }); navigate('/login') }}
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 dark:border-white/[0.08] bg-white dark:bg-white/[0.04] text-slate-500 dark:text-slate-400 hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50 dark:hover:border-rose-500/40 dark:hover:text-rose-400 dark:hover:bg-rose-500/10 transition-all"
+          title={t.logout}>
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
     </header>
   )

@@ -1,3 +1,4 @@
+import { useT } from '../store/i18nStore.js'
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Fish, Truck, ShieldCheck, ArrowRight, Star, CheckCircle2, Zap, BarChart3, MessageSquare, MapPin } from 'lucide-react'
@@ -26,11 +27,15 @@ const HOW = [
   { step: '04', title: 'Eshigingizga yetkaziladi', desc: "GPS bilan kuzating, vaqtida oling." },
 ]
 
-const ROLES = [
+function useRoles() {
+  const t = useT()
+  return [
   { emoji: '🧑‍💼', title: 'Mijoz', color: 'border-ocean-400', bg: 'bg-ocean-50 dark:bg-ocean-950/40', items: ['Baliq katalogi', 'Onlayn buyurtma', 'GPS kuzatuv', 'Chat & support'] },
   { emoji: '🏡', title: 'Fermer', color: 'border-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40', items: ['Mahsulot boshqaruv', 'Buyurtmalar paneli', "Balans & to'lovlar", 'Hisobotlar'] },
   { emoji: '🚚', title: 'Haydovchi', color: 'border-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/40', items: ["Buyurtmalar ro'yxati", 'GPS navigatsiya', 'Status yangilash', 'Daromad hisobi'] },
 ]
+}
+
 
 function useInView(threshold = 0.15) {
   const ref = useRef(null)
@@ -64,6 +69,7 @@ function AnimSection({ children, className = '', delay = 0 }) {
 }
 
 export function LandingPage() {
+  const t = useT()
   const [scrolled, setScrolled] = useState(false)
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -85,7 +91,7 @@ export function LandingPage() {
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link to="/login" className="secondary-button hidden sm:inline-flex">Kirish</Link>
+            <Link to="/login" className="secondary-button hidden sm:inline-flex">{t.login}</Link>
             <Link to="/login" className="primary-button">
               Boshlash <ArrowRight className="h-4 w-4" />
             </Link>
@@ -208,7 +214,7 @@ export function LandingPage() {
           <p className="mt-3 text-slate-500">Har bir foydalanuvchi uchun alohida panel</p>
         </AnimSection>
         <div className="grid gap-6 sm:grid-cols-3">
-          {ROLES.map(({ emoji, title, color, bg, items }, i) => (
+          {useRoles().map(({ emoji, title, color, bg, items }, i) => (
             <AnimSection key={title} delay={i * 100}>
               <div className={`rounded-3xl border-2 ${color} ${bg} p-6 h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
                 <div className="text-4xl mb-3 animate-float" style={{ animationDelay: `${i * 0.5}s` }}>{emoji}</div>

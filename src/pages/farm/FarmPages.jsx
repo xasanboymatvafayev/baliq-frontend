@@ -1,3 +1,9 @@
+import { formatCurrency, formatNumber, calcFarmRevenue } from '../../utils/formatters.js'
+import {
+  AreaChart, Area, BarChart, Bar, CartesianGrid, XAxis, YAxis,
+  Tooltip, ResponsiveContainer, Cell,
+} from 'recharts'
+import { TrendingUp, DollarSign, Receipt, PiggyBank, ArrowUpRight } from 'lucide-react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useForm } from 'react-hook-form'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
@@ -13,6 +19,7 @@ import { Pencil, Trash2, X, ImageUp } from 'lucide-react'
 
 // ===== FARM FISH LIST (with Edit/Delete) =====
 export function FarmFish() {
+  const t = useT()
   usePageTitle('Baliqlar')
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -73,7 +80,7 @@ export function FarmFish() {
       )}
 
       <section className="glass-card p-6 flex justify-between items-center">
-        <div><h2 className="text-3xl font-black">Baliqlar</h2><p className="mt-2 text-slate-500">Ferma mahsulotlari</p></div>
+        <div><h2 className="text-3xl font-black">{t.fish}</h2><p className="mt-2 text-slate-500">Ferma mahsulotlari</p></div>
         <a href="/farm/add-fish" className="primary-button">+ Qo'shish</a>
       </section>
       {isLoading ? (
@@ -126,7 +133,7 @@ export function FarmFish() {
                     <td className="p-4 text-slate-500 hidden sm:table-cell">{fish.category}</td>
                     <td className="p-4">
                       <div className="flex gap-2">
-                        <button className="p-2 rounded-xl text-ocean-600 hover:bg-ocean-50 dark:hover:bg-ocean-900/20 transition" onClick={() => setEditingFish(fish)} title="Tahrirlash">
+                        <button className="p-2 rounded-xl text-ocean-600 hover:bg-ocean-50 dark:hover:bg-ocean-900/20 transition" onClick={() => setEditingFish(fish)} title={t.editProfile}>
                           <Pencil className="h-4 w-4" />
                         </button>
                         <button className="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition" onClick={() => setDeleteTarget(fish)} title="O'chirish">
@@ -186,6 +193,7 @@ function EditFishModal({ fish, onClose, onSave, saving }) {
 
 // ===== ADD FISH (with image upload) =====
 export function FarmAddFish() {
+  const t = useT()
   usePageTitle("Baliq qo'shish")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -281,6 +289,7 @@ export function FarmAddFish() {
 
 // ===== INVENTORY =====
 export function FarmInventory() {
+  const t = useT()
   usePageTitle('Ombor')
   const { data = [] } = useQuery({ queryKey: ['farm-fish'], queryFn: () => fishService.list() })
   const totalStock = data.reduce((s, f) => s + (f.stock || 0), 0)
@@ -288,7 +297,7 @@ export function FarmInventory() {
   return (
     <div className="space-y-6">
       <section className="glass-card p-6 flex gap-6">
-        <div><h2 className="text-3xl font-black">Ombor</h2></div>
+        <div><h2 className="text-3xl font-black">{t.inventory}</h2></div>
         <div className="ml-auto text-right"><p className="text-sm text-slate-500">Umumiy zaxira</p><p className="text-2xl font-black text-ocean-600">{totalStock} kg</p></div>
       </section>
       <div className="glass-card overflow-hidden">
@@ -328,6 +337,7 @@ export function FarmInventory() {
 
 // ===== FARM CUSTOMERS =====
 export function FarmCustomers() {
+  const t = useT()
   usePageTitle('Mijozlar')
   const { data: ordersRaw } = useQuery({ queryKey: ['orders'], queryFn: () => httpClient.get('/orders') })
   const data = ordersRaw?.data || ordersRaw || []
@@ -335,11 +345,11 @@ export function FarmCustomers() {
 
   return (
     <div className="space-y-6">
-      <section className="glass-card p-6"><h2 className="text-3xl font-black">Mijozlar</h2><p className="mt-2 text-slate-500">Jami: {customers.length} ta</p></section>
+      <section className="glass-card p-6"><h2 className="text-3xl font-black">{t.customers}</h2><p className="mt-2 text-slate-500">Jami: {customers.length} ta</p></section>
       <div className="glass-card overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b border-slate-200 dark:border-white/10">
-            <tr className="text-left text-xs font-bold uppercase text-slate-500"><th className="p-4">Mijoz</th><th className="p-4">Buyurtmalar</th></tr>
+            <tr className="text-left text-xs font-bold uppercase text-slate-500"><th className="p-4">Mijoz</th><th className="p-4">{t.orders}</th></tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-white/5">
             {customers.map((c, i) => (
@@ -352,18 +362,20 @@ export function FarmCustomers() {
   )
 }
 
-export function FarmDashboard() { return <DashboardPage title="Ferma Dashboard" subtitle="Baliq zaxirasi, ombor, buyurtmalar va mijozlar bo'yicha operatsion panel." /> }
-export function FarmOrders() { return <OrdersPage title="Ferma buyurtmalari" /> }
-export function FarmChat() { return <ChatPage title="Ferma chat" /> }
-export function FarmProfile() { return <ProfilePage /> }
+export function FarmDashboard() {
+  const t = useT()
+  return <DashboardPage title="Ferma Dashboard" subtitle="Baliq zaxirasi, ombor, buyurtmalar va mijozlar bo'yicha operatsion panel." /> }
+export function FarmOrders() {
+  const t = useT()
+  return <OrdersPage title="Ferma buyurtmalari" /> }
+export function FarmChat() {
+  const t = useT()
+  return <ChatPage title="Ferma chat" /> }
+export function FarmProfile() {
+  const t = useT()
+  return <ProfilePage /> }
 
 // ===== FARM REPORTS — PRO darajada hisobotlar =====
-import { formatCurrency, formatNumber, calcFarmRevenue } from '../../utils/formatters.js'
-import {
-  AreaChart, Area, BarChart, Bar, CartesianGrid, XAxis, YAxis,
-  Tooltip, ResponsiveContainer, Cell,
-} from 'recharts'
-import { TrendingUp, DollarSign, Receipt, PiggyBank, ArrowUpRight } from 'lucide-react'
 
 const fmtM = v => v >= 1_000_000 ? `${(v/1_000_000).toFixed(1)}M` : v >= 1000 ? `${(v/1000).toFixed(0)}K` : v
 
@@ -384,6 +396,7 @@ function ReportTooltip({ active, payload, label }) {
 }
 
 export function FarmReports() {
+  const t = useT()
   usePageTitle('Hisobotlar')
   const { data: ordersRaw, isLoading } = useQuery({
     queryKey: ['farm-orders-report'],
@@ -484,7 +497,7 @@ export function FarmReports() {
                   <YAxis tickFormatter={fmtM} tick={{ fontSize: 11, fill: '#94a3b8' }} axisLine={false} tickLine={false} />
                   <Tooltip content={<ReportTooltip />} />
                   <Area type="monotone" dataKey="gross" name="Umumiy sotuv" stroke="#0ea5e9" strokeWidth={2} fill="url(#gGross)" dot={false} activeDot={{ r: 4 }} />
-                  <Area type="monotone" dataKey="net"   name="Sof daromad"  stroke="#10b981" strokeWidth={2} fill="url(#gNet)"   dot={false} activeDot={{ r: 4 }} />
+                  <Area type="monotone" dataKey="net"   name={t.netProfit}  stroke="#10b981" strokeWidth={2} fill="url(#gNet)"   dot={false} activeDot={{ r: 4 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>

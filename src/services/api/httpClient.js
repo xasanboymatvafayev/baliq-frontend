@@ -8,13 +8,14 @@ export const httpClient = axios.create({
 
 httpClient.interceptors.request.use((config) => {
   try {
-    // localStorage yoki sessionStorage dan token olish
-    const local   = localStorage.getItem('baliq-auth-session')
-    const session2 = sessionStorage.getItem('baliq-auth-session')
-    const raw     = local || session2
+    const local = localStorage.getItem('baliq-auth-session')
+    const sess  = sessionStorage.getItem('baliq-auth-session')
+    const raw   = local || sess
     if (raw) {
       const parsed = JSON.parse(raw)
-      const token  = parsed?.state?.token
+      // Yangi authStore: { user, role, token, rememberMe }
+      // Eski persist format: { state: { token } }
+      const token = parsed?.token || parsed?.state?.token
       if (token) config.headers.Authorization = `Bearer ${token}`
     }
   } catch { /* ignore */ }

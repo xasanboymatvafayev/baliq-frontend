@@ -15,12 +15,21 @@ import { useSocketEmit } from '../../hooks/useSocket.js'
 import { MapboxNavigator } from '../../components/common/MapboxNavigator.jsx'
 
 export function DriverDashboard() {
+  const t = useT()
   return <DashboardPage title="Haydovchi Dashboard" subtitle="Biriktirilgan buyurtmalar, jonli tracking va mijoz/ferma chatlari." />
 }
-export function DriverLiveTracking() { return <GpsMonitoringPage /> }
-export function DriverChat() { return <ChatPage title="Haydovchi chat" /> }
-export function DriverProfile() { return <ProfilePage /> }
-export function DriverSettings() { return <SettingsPage /> }
+export function DriverLiveTracking() {
+  const t = useT()
+  return <GpsMonitoringPage /> }
+export function DriverChat() {
+  const t = useT()
+  return <ChatPage title="Haydovchi chat" /> }
+export function DriverProfile() {
+  const t = useT()
+  return <ProfilePage /> }
+export function DriverSettings() {
+  const t = useT()
+  return <SettingsPage /> }
 
 // ─── Haversine masofasi (km) ─────────────────────────────────────
 function distanceKm(lat1, lng1, lat2, lng2) {
@@ -44,11 +53,14 @@ function parseCoords(coords) {
 }
 
 // ─── Status badge ────────────────────────────────────────────────
-const STATUS_LABELS = {
-  PENDING: 'Kutilmoqda', CONFIRMED: 'Tasdiqlandi',
-  DRIVER_ASSIGNED: 'Haydovchi biriktirildi',
-  LOADING: 'Yuklanmoqda', IN_TRANSIT: "Yo'lda",
-  DELIVERED: 'Yetkazildi', CANCELLED: 'Bekor qilindi',
+function useStatusLabels() {
+  const t = useT()
+  return {
+    PENDING: t.statusPending, CONFIRMED: t.statusConfirmed,
+    AWAITING_PAYMENT: t.paymentBonus, DRIVER_ASSIGNED: t.liveTracking,
+    LOADING: t.loading, IN_TRANSIT: t.statusInTransit,
+    DELIVERED: t.statusDelivered, CANCELLED: t.statusCancelled,
+  }
 }
 const STATUS_COLORS = {
   PENDING:         'bg-amber-100  text-amber-700  dark:bg-amber-500/20  dark:text-amber-300',
@@ -75,7 +87,7 @@ function OrderCard({ order, onClick, isGroup }) {
             </span>
           )}
           <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLORS[order.status]}`}>
-            {STATUS_LABELS[order.status]}
+            {useStatusLabels()[order.status]}
           </span>
         </div>
         <p className="font-black mt-1">#{order.id?.slice(-6)}</p>
@@ -193,6 +205,7 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
 
 // ─── Asosiy Driver Orders sahifasi ──────────────────────────────
 export function DriverOrders() {
+  const t = useT()
   usePageTitle("Haydovchi buyurtmalari")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -237,7 +250,7 @@ export function DriverOrders() {
     },
     onSuccess: (_, { status }) => {
       const labels = {
-        LOADING: '📦 Fermaga yetdingiz! Yuklanmoqda...',
+        LOADING: '📦 Fermaga yetdingiz! {t.loading}',
         IN_TRANSIT: "🚚 Yo'lga chiqdingiz!",
         DELIVERED: '✅ Yetkazildi!',
       }
@@ -305,7 +318,7 @@ export function DriverOrders() {
               <ArrowLeft className="h-4 w-4" /> Orqaga
             </button>
             <span className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLORS[selected.status]}`}>
-              {STATUS_LABELS[selected.status]}
+              {useStatusLabels()[selected.status]}
             </span>
           </div>
 

@@ -10,15 +10,18 @@ import { formatCurrency } from '../../utils/formatters.js'
 import { useState } from 'react'
 import { Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp, Star } from 'lucide-react'
 
-const STATUS_LABELS = {
-  AWAITING_PAYMENT: "To'lov kutilmoqda",
-  PENDING: 'Kutilmoqda',
-  CONFIRMED: 'Tasdiqlandi',
-  DRIVER_ASSIGNED: 'Haydovchi biriktirildi',
-  LOADING: 'Yuklanmoqda',
-  IN_TRANSIT: "Yo'lda",
-  DELIVERED: 'Yetkazildi',
-  CANCELLED: 'Bekor qilindi',
+function useStatusLabels() {
+  const t = useT()
+  return {
+    PENDING: t.statusPending,
+    CONFIRMED: t.statusConfirmed,
+    AWAITING_PAYMENT: t.paymentBonus,
+    DRIVER_ASSIGNED: t.liveTracking,
+    LOADING: t.loading,
+    IN_TRANSIT: t.statusInTransit,
+    DELIVERED: t.statusDelivered,
+    CANCELLED: t.statusCancelled,
+  }
 }
 
 const STATUS_COLORS = {
@@ -47,14 +50,15 @@ function StatusBadge({ status }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${STATUS_COLORS[status] || STATUS_COLORS.PENDING}`}>
       <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${STATUS_DOTS[status] || 'bg-slate-400'}`} />
-      {STATUS_LABELS[status] || status}
+      {useStatusLabels()[status] || status}
     </span>
   )
 }
 
 const PAGE_SIZE = 10
 
-export function OrdersPage({ title = 'Buyurtmalar' }) {
+export function OrdersPage({ title = t.ordersTitle }) {
+  const t = useT()
   usePageTitle(title)
   const pushToast = useToastStore((state) => state.pushToast)
   const queryClient = useQueryClient()
@@ -378,7 +382,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
         <div className="glass-card p-12 text-center">
           <div className="text-5xl mb-3">📋</div>
           <p className="text-slate-500 font-medium">
-            {statusFilter ? `"${STATUS_LABELS[statusFilter]}" statusida buyurtma yo'q` : "Buyurtmalar hali yo'q"}
+            {statusFilter ? `"${useStatusLabels()[statusFilter]}" statusida buyurtma yo'q` : "Buyurtmalar hali yo'q"}
           </p>
         </div>
       ) : (
@@ -390,7 +394,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
                   <tr className="text-left text-xs font-bold uppercase text-slate-500 dark:text-slate-400 tracking-wide">
                     {showBatchPanel && isAdmin && <th className="p-4 w-10"></th>}
                     <th className="p-4">ID</th>
-                    <th className="p-4">Jami</th>
+                    <th className="p-4">{t.total}</th>
                     <th className="p-4">Status</th>
                     <th className="p-4 hidden sm:table-cell">Sana</th>
                     <th className="p-4"></th>

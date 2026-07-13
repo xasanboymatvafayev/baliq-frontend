@@ -150,6 +150,7 @@ function FinanceSettings({ settings }) {
 
 // ── Admin Finance Page ────────────────────────────────────────────────
 export function AdminFinancePage() {
+  const t = useT()
   usePageTitle('Sof foyda balans')
   const [tab, setTab] = useState('balance')
 
@@ -209,7 +210,7 @@ export function AdminFinancePage() {
       </div>
 
       <div className="flex gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/60 rounded-2xl">
-        <Tab active={tab === 'balance'} onClick={() => setTab('balance')}>Balans</Tab>
+        <Tab active={tab === 'balance'} onClick={() => setTab('balance')}>{t.balance}</Tab>
         <Tab active={tab === 'history'} onClick={() => setTab('history')}>Tarix</Tab>
         <Tab active={tab === 'settings'} onClick={() => setTab('settings')}>Sozlamalar</Tab>
       </div>
@@ -244,7 +245,7 @@ export function AdminFinancePage() {
                 <tr className="text-left text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                   <th className="p-4">Ferma</th>
                   <th className="p-4">Buyurtma</th>
-                  <th className="p-4">Jami</th>
+                  <th className="p-4">{t.total}</th>
                   <th className="p-4">Soliq %</th>
                   <th className="p-4">Soliq</th>
                   <th className="p-4">Provider</th>
@@ -282,6 +283,7 @@ export function AdminFinancePage() {
 
 // ── Withdraw Page ─────────────────────────────────────────────────────
 export function AdminWithdrawPage() {
+  const t = useT()
   usePageTitle("Pul chiqarish so'rovlari")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()

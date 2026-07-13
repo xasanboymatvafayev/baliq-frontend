@@ -23,6 +23,7 @@ function EmptyPayment({ icon: Icon, title, desc }) {
 }
 
 export function PaymentPage() {
+  const t = useT()
   usePageTitle("To'lov va bonuslar")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -141,7 +142,7 @@ export function PaymentPage() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">Jami</p>
+                  <p className="text-xs text-slate-500 uppercase font-bold tracking-wider">{t.total}</p>
                   <p className="text-2xl font-black text-ocean-600">{formatCurrency(order.total)}</p>
                 </div>
               </div>

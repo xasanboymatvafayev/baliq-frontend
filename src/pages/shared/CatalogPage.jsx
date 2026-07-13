@@ -190,7 +190,7 @@ export function CatalogPage() {
           <div>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white">{t.catalog}</h2>
             <p className="text-[14px] text-slate-400 mt-0.5">
-              {isLoading ? 'Yuklanmoqda...' : `${fishList.length} ta baliq topildi`}
+              {isLoading ? '{t.loading}' : `${fishList.length} ta baliq topildi`}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-1 justify-end min-w-0 max-w-sm">

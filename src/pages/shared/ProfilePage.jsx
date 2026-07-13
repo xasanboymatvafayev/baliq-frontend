@@ -90,7 +90,7 @@ function AvatarUpload({ profile, onUpload }) {
           className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-ocean-600 hover:text-ocean-500 transition-colors disabled:opacity-50"
         >
           <Upload className="h-3.5 w-3.5" />
-          {uploading ? 'Yuklanmoqda...' : "Rasmni o'zgartirish"}
+          {uploading ? '{t.loading}' : "Rasmni o'zgartirish"}
         </button>
         <p className="text-xs text-slate-400 mt-0.5">JPG, PNG, max 5MB</p>
       </div>
@@ -279,6 +279,7 @@ function ChangePasswordSection() {
 }
 
 export function ProfilePage() {
+  const t = useT()
   usePageTitle('Profil')
   const pushToast = useToastStore((state) => state.pushToast)
   const queryClient = useQueryClient()
@@ -318,7 +319,7 @@ export function ProfilePage() {
               <User className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-xl font-black">Profil</h2>
+              <h2 className="text-xl font-black">{t.profileTitle}</h2>
               <p className="text-sm text-slate-500">Shaxsiy ma'lumotlaringizni tahrirlang</p>
             </div>
           </div>

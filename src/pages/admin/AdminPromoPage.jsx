@@ -225,6 +225,7 @@ function PromoFormModal({ onClose, onSuccess }) {
 }
 
 export function AdminPromoPage() {
+  const t = useT()
   usePageTitle('Promo kodlar')
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -285,7 +286,7 @@ export function AdminPromoPage() {
               <span className="font-mono font-bold text-slate-800 dark:text-white">{deleteTarget.code}</span> promo kodi butunlay o'chiriladi.
             </p>
             <div className="flex gap-3">
-              <button onClick={() => setDeleteTarget(null)} className="secondary-button flex-1">Bekor</button>
+              <button onClick={() => setDeleteTarget(null)} className="secondary-button flex-1">{t.cancel}</button>
               <button
                 onClick={() => deleteMutation.mutate(deleteTarget.id)}
                 disabled={deleteMutation.isPending}

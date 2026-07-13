@@ -30,6 +30,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
   }
 
   export function DriverRegistration() {
+  const t = useT()
     const pushToast = useToastStore((state) => state.pushToast)
     const navigate = useNavigate()
     const [loading, setLoading] = useState(false)

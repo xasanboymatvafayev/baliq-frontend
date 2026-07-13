@@ -35,6 +35,7 @@ function ConfirmModal({ open, title, description, danger, onConfirm, onCancel })
 }
 
 export function SystemStatistics() {
+  const t = useT()
   usePageTitle('Tizim statistikasi')
   const { data } = useQuery({ queryKey: ['system-stats'], queryFn: () => httpClient.get('/analytics/system') })
 
@@ -65,6 +66,7 @@ export function SystemStatistics() {
 }
 
 export function AdminManagement() {
+  const t = useT()
   usePageTitle('Hodimlar boshqaruvi')
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -208,6 +210,7 @@ export function AdminManagement() {
 }
 
 export function RolesPage() {
+  const t = useT()
   usePageTitle('Rollar')
   const roles = [
     { name: 'super-admin', label: 'Super Admin', desc: "To'liq tizim nazorati" },
@@ -235,6 +238,7 @@ export function RolesPage() {
 }
 
 export function PermissionsPage() {
+  const t = useT()
   usePageTitle('Ruxsatlar')
   return (
     <div className="space-y-6">
@@ -271,6 +275,7 @@ export function PermissionsPage() {
 }
 
 export function SuperAdminAuditLog() {
+  const t = useT()
   const { data = [] } = useQuery({ queryKey: ['audit-logs'], queryFn: () => httpClient.get('/audit/logs?limit=100') })
   return (
     <div className="space-y-6">
@@ -292,6 +297,7 @@ export function SuperAdminAuditLog() {
 }
 
 export function SystemSettings() {
+  const t = useT()
   usePageTitle('Tizim sozlamalari')
   const pushToast = useToastStore((s) => s.pushToast)
   const [showClearConfirm, setShowClearConfirm] = useState(false)

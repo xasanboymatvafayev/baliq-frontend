@@ -93,6 +93,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
   }
 
   export function FarmRegistration() {
+  const t = useT()
     const pushToast = useToastStore((state) => state.pushToast)
     const navigate = useNavigate()
     const [gpsLocation, setGpsLocation] = useState('41.2995, 69.2401')

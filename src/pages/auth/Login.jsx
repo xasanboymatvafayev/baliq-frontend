@@ -68,7 +68,7 @@ export function Login() {
   return (
     <AuthFormShell
       title={`${t.welcomeBack} 👋`}
-      description="Platformaga kirish uchun ma'lumotlaringizni kiriting."
+      description={t.enterCredentials}
       footer={<>{t.noAccount} <Link className="font-semibold text-sky-400 hover:text-sky-300 transition-colors" to="/register">{t.registerNow}</Link></>}
     >
       <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -80,7 +80,7 @@ export function Login() {
             <Phone className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
             <input
               {...register('phone')}
-              placeholder="+998 90 000 00 00"
+              placeholder={t.enterPhone}
               className="h-11 w-full rounded-xl pl-10 pr-4 text-[14px] outline-none transition-all"
               style={{
                 background: 'rgba(255,255,255,0.07)',

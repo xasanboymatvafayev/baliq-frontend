@@ -8,6 +8,7 @@ import { Loader2, KeyRound, RefreshCw, Send } from 'lucide-react'
 export function FirebaseForgotOtpPage() {
   const location  = useLocation()
   const navigate  = useNavigate()
+  const t = useT()
   const pushToast = useToastStore(s => s.pushToast)
   const [code, setCode]       = useState('')
   const [loading, setLoading] = useState(false)
@@ -66,7 +67,7 @@ export function FirebaseForgotOtpPage() {
   }
 
   return (
-    <AuthFormShell title="Parolni tiklash" description={`${rawPhone} ga yuborilgan kodni kiriting`}>
+    <AuthFormShell title={t.forgotTitle} description={`${rawPhone} ga yuborilgan kodni kiriting`}>
       <div className="space-y-4">
         <div className="flex items-center gap-3 rounded-2xl p-4" style={{ background:'rgba(14,165,233,0.08)', border:'1px solid rgba(14,165,233,0.15)' }}>
           <Send className="h-5 w-5 text-sky-400 flex-shrink-0" />
@@ -84,7 +85,7 @@ export function FirebaseForgotOtpPage() {
           <button type="submit" disabled={loading||code.length<4}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-xl text-[14px] font-semibold text-white disabled:opacity-50"
             style={{ background:'linear-gradient(135deg,#0ea5e9,#0284c7)', boxShadow:'0 4px 20px rgba(14,165,233,0.35)' }}>
-            {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Tekshirilmoqda...</> : <><KeyRound className="h-4 w-4" />Tasdiqlash</>}
+            {loading ? <><Loader2 className="h-4 w-4 animate-spin" />Tekshirilmoqda...</> : <><KeyRound className="h-4 w-4" />{t.confirm}</>}
           </button>
         </form>
         <button onClick={handleResend} disabled={resending}

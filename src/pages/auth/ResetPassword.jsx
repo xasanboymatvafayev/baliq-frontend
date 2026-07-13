@@ -17,6 +17,7 @@ const schema = z.object({
 })
 
 export function ResetPassword() {
+  const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const pushToast = useToastStore((state) => state.pushToast)

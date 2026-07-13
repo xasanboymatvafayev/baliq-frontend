@@ -1,3 +1,4 @@
+import { useT } from '../../store/i18nStore.js'
 import { useState, useEffect, useCallback } from "react";
 
 // ─── Har bir kolleksiya uchun forma sxemasi ───────────────────────

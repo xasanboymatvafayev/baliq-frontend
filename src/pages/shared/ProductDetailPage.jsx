@@ -56,6 +56,7 @@ function StarDisplay({ rating = 0, size = 16 }) {
 
 // ─── Asosiy sahifa ───────────────────────────────────────────────
 export function ProductDetailPage() {
+  const t = useT()
   usePageTitle('Mahsulot tafsiloti')
   const { id } = useParams()
   const navigate = useNavigate()
@@ -126,7 +127,7 @@ export function ProductDetailPage() {
   if (error || !fish) return (
     <div className="glass-card p-12 text-center">
       <p className="text-slate-500">Mahsulot topilmadi.</p>
-      <button className="primary-button mt-4" onClick={() => navigate(-1)}>Orqaga</button>
+      <button className="primary-button mt-4" onClick={() => navigate(-1)}>{t.back}</button>
     </div>
   )
 

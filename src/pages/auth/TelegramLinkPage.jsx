@@ -11,6 +11,7 @@ const ROLE_ROUTES = {
 }
 
 export function TelegramLinkPage() {
+  const t = useT()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const pushToast = useToastStore((s) => s.pushToast)

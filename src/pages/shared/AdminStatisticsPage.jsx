@@ -1,3 +1,4 @@
+import { useT } from '../../store/i18nStore.js'
 import { useQuery } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { httpClient } from '../../services/api/index.js'
@@ -44,6 +45,7 @@ function ChartCard({ title, children, className = '' }) {
 }
 
 export function AdminStatisticsPage() {
+  const t = useT()
   usePageTitle('Statistika')
 
   const { data: kpi = {}, isLoading } = useQuery({
