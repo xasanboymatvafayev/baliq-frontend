@@ -48,17 +48,18 @@ const STATUS_DOTS = {
 }
 
 function StatusBadge({ status }) {
+  const labels = useStatusLabels()
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-bold ${STATUS_COLORS[status] || STATUS_COLORS.PENDING}`}>
       <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${STATUS_DOTS[status] || 'bg-slate-400'}`} />
-      {useStatusLabels()[status] || status}
+      {labels[status] || status}
     </span>
   )
 }
 
 const PAGE_SIZE = 10
 
-export function OrdersPage({ title = t.ordersTitle }) {
+export function OrdersPage({ title = 'Buyurtmalar' }) {
   const t = useT()
   usePageTitle(title)
   const pushToast = useToastStore((state) => state.pushToast)
@@ -74,6 +75,8 @@ export function OrdersPage({ title = t.ordersTitle }) {
   const [reviewOrder, setReviewOrder] = useState(null)
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'manager'
+
+  const STATUS_LABELS = useStatusLabels()
 
   const { data: ordersRaw, isLoading } = useQuery({
     queryKey: ['orders', statusFilter, page],
@@ -383,7 +386,7 @@ export function OrdersPage({ title = t.ordersTitle }) {
         <div className="glass-card p-12 text-center">
           <div className="text-5xl mb-3">📋</div>
           <p className="text-slate-500 font-medium">
-            {statusFilter ? `"${useStatusLabels()[statusFilter]}" statusida buyurtma yo'q` : "Buyurtmalar hali yo'q"}
+            {statusFilter ? `"${STATUS_LABELS[statusFilter]}" statusida buyurtma yo'q` : "Buyurtmalar hali yo'q"}
           </p>
         </div>
       ) : (
