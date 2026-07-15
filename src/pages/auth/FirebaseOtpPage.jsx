@@ -5,6 +5,7 @@ import { useToastStore } from '../../store/toastStore.js'
 import { httpClient } from '../../services/api/httpClient.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
 import { Loader2, KeyRound, RefreshCw, Send, ExternalLink, CheckCircle2 } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 const ROLE_ROUTES = {
   customer: '/customer/dashboard', 'farm-owner': '/farm/dashboard',

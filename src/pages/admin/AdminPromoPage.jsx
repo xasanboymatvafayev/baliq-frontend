@@ -8,6 +8,7 @@ import {
   Tag, Plus, Trash2, ToggleLeft, ToggleRight, Copy, CheckCircle2,
   Calendar, Percent, Coins, Users, X, RefreshCw, AlertTriangle,
 } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 function StatCard({ icon: Icon, label, value, color = 'ocean' }) {
   const colors = {

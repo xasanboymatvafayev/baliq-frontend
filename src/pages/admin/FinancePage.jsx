@@ -6,6 +6,7 @@ import { useToastStore } from '../../store/toastStore.js'
 import { formatCurrency } from '../../utils/formatters.js'
 import { DollarSign, TrendingUp, CheckCircle2, Clock, Star, ChevronRight, CreditCard } from 'lucide-react'
 import { EmptyState } from '../../components/common/EmptyState.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 // ── Skeleton ──────────────────────────────────────────────────────────
 function FinanceSkeleton() {

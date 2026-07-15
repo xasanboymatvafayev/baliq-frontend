@@ -7,6 +7,7 @@ import { Phone, ArrowRight, Loader2 } from 'lucide-react'
 import { useToastStore } from '../../store/toastStore.js'
 import { httpClient } from '../../services/api/httpClient.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 const schema = z.object({
   phone: z.string().min(9, 'Telefon raqam kiriting'),

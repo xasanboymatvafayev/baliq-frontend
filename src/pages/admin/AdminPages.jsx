@@ -9,6 +9,7 @@ import { SettingsPage } from '../shared/SettingsPage.jsx'
 import { httpClient } from '../../services/api/index.js'
 import { useState } from 'react'
 import { Trash2, AlertTriangle, X, MapPin, Phone, Building2, Truck, FileText, Eye } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 // ── Dark-mode-safe badge classes ──────────────────────────────────────
 const ROLE_COLORS = {

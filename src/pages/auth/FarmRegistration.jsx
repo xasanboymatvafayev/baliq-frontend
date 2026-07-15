@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
   import { FormInput } from '../../components/forms/FormInput.jsx'
   import { useToastStore } from '../../store/toastStore.js'
   import { authService, fileService } from '../../services/api/index.js'
+  import { useT } from '../../store/i18nStore.js'
 
   const schema = z.object({
     firstName: z.string().min(2, 'Ism kiriting'),

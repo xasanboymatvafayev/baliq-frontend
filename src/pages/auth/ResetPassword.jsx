@@ -7,6 +7,7 @@ import { FormInput } from '../../components/forms/FormInput.jsx'
 import { useToastStore } from '../../store/toastStore.js'
 import { authService } from '../../services/api/index.js'
 import { AuthFormShell } from './AuthFormShell.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 const schema = z.object({
   password: z.string().min(6, 'Parol kamida 6 ta belgi'),

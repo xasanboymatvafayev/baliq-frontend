@@ -9,6 +9,7 @@ import {
   Send, TrendingUp, Wallet, Sparkles, ChevronRight, Info,
   ArrowUpRight, ArrowDownLeft, Clock,
 } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 function EmptyPayment({ icon: Icon, title, desc }) {
   return (

@@ -8,6 +8,7 @@ import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { httpClient } from '../../services/api/index.js'
 import { Trash2, AlertTriangle, Send, Lock, Eye, EyeOff, CheckCircle2, Camera, User, Upload } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 // === Avatar Upload ===
 function AvatarUpload({ profile, onUpload }) {

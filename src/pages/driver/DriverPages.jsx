@@ -13,6 +13,7 @@ import { formatCurrency } from '../../utils/formatters.js'
 import { Navigation, MapPin, Package, CheckCircle2, Loader2, ChevronRight, ArrowLeft, Truck, Users } from 'lucide-react'
 import { useSocketEmit } from '../../hooks/useSocket.js'
 import { MapboxNavigator } from '../../components/common/MapboxNavigator.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 export function DriverDashboard() {
   const t = useT()

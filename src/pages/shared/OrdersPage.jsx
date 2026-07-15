@@ -9,6 +9,7 @@ import { ReviewModal } from '../../components/common/ReviewModal.jsx'
 import { formatCurrency } from '../../utils/formatters.js'
 import { useState } from 'react'
 import { Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp, Star } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 function useStatusLabels() {
   const t = useT()

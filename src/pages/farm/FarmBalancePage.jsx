@@ -8,6 +8,7 @@ import { formatCurrency } from '../../utils/formatters.js'
 import { Wallet, ArrowDownCircle, CreditCard, Save, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react'
 import { PageSkeleton } from '../../components/common/LoadingSkeleton.jsx'
 import { EmptyState } from '../../components/common/EmptyState.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 const RESEND_COOLDOWN = 60
 

@@ -6,6 +6,7 @@ import { httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { useState } from 'react'
 import { Trash2, UserPlus, AlertTriangle } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 // Tasdiqlash modali
 function ConfirmModal({ open, title, description, danger, onConfirm, onCancel }) {

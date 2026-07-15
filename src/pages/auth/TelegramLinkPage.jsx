@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { authService } from '../../services/api/index.js'
+import { useT } from '../../store/i18nStore.js'
 
 const ROLE_ROUTES = {
   'customer': '/customer/dashboard', 'farm-owner': '/farm/dashboard',

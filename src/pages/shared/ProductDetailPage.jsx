@@ -8,6 +8,7 @@ import { useCartStore } from '../../store/cartStore.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { formatCurrency } from '../../utils/formatters.js'
+import { useT } from '../../store/i18nStore.js'
 
 // ─── Yulduz reyting input ────────────────────────────────────────
 function StarInput({ value, onChange }) {

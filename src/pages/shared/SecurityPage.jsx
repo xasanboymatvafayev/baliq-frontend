@@ -7,6 +7,7 @@ import { useAuthStore } from '../../store/authStore.js'
 import { useFirebasePhone } from '../../hooks/useFirebasePhone.js'
 import { Shield, Smartphone, Monitor, Trash2, Lock, Eye, RefreshCw, Loader2, ShieldCheck } from 'lucide-react'
 import { EmptyState } from '../../components/common/EmptyState.jsx'
+import { useT } from '../../store/i18nStore.js'
 
 const RESEND_COOLDOWN = 60
 
