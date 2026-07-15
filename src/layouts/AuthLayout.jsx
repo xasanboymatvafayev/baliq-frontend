@@ -1,15 +1,16 @@
 import { Link, Outlet } from 'react-router-dom'
 import { Fish, Zap, Shield, TrendingUp, Waves, Star } from 'lucide-react'
 import { LanguageSwitcher } from '../components/common/LanguageSwitcher.jsx'
-
-const FEATURES = [
-  { icon: Zap,        title: 'Real-vaqt',  desc: "Buyurtmalarni jonli kuzating" },
-  { icon: Shield,     title: 'Xavfsiz',    desc: "To'lovlar 256-bit himoyalangan" },
-  { icon: TrendingUp, title: 'Analitika',  desc: 'Kuchli hisobot paneli' },
-  { icon: Waves,      title: 'GPS',        desc: 'Navigatsiya va yetkazib berish' },
-]
+import { useT } from '../store/i18nStore.js'
 
 export function AuthLayout() {
+  const t = useT()
+  const FEATURES = [
+    { icon: Zap,        title: t.feat1Title, desc: t.feat1Desc },
+    { icon: Shield,     title: t.feat2Title, desc: t.feat2Desc },
+    { icon: TrendingUp, title: t.feat3Title, desc: t.feat3Desc },
+    { icon: Waves,      title: t.feat4Title, desc: t.feat4Desc },
+  ]
   return (
     <div className="min-h-screen relative overflow-hidden" style={{ background: 'linear-gradient(145deg,#040810 0%,#071220 60%,#050c18 100%)' }}>
 
@@ -39,21 +40,21 @@ export function AuthLayout() {
           <div className="max-w-[520px]">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-500/20 bg-sky-500/10 px-4 py-1.5 text-[12px] font-semibold text-sky-400">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse-soft" />
-              O'zbekistonning №1 baliq savdo platformasi
+              {t.platformSlogan}
             </div>
 
             <h1 className="text-[52px] font-black leading-[1.04] tracking-tight text-white">
-              Ferma, logistika{' '}
-              <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">va savdoni</span>
-              {' '}bitta panelda.
+              {t.headlinePart1}{' '}
+              <span className="bg-gradient-to-r from-sky-400 to-emerald-400 bg-clip-text text-transparent">{t.headlineAccent}</span>
+              {' '}{t.headlinePart2}
             </h1>
 
             <p className="mt-5 text-[15px] leading-[1.7] text-white/38">
-              Mijoz, Fermer, Haydovchi va Admin rollari uchun professional boshqaruv. Real-vaqt kuzatuv, GPS logistika, kuchli analitika.
+              {t.platformDesc}
             </p>
 
             <div className="mt-8 flex items-center gap-8">
-              {[{v:'500+',l:'Fermalar'},{v:'12K+',l:'Mijozlar'},{v:'98%',l:'Mamnunlik'}].map(s => (
+              {[{v:'500+',l:t.statFarms},{v:'12K+',l:t.statCustomers},{v:'98%',l:t.statSatisfaction}].map(s => (
                 <div key={s.l}>
                   <p className="text-2xl font-black text-white">{s.v}</p>
                   <p className="text-[11px] font-medium text-white/28 mt-0.5">{s.l}</p>
@@ -110,7 +111,7 @@ export function AuthLayout() {
               <Outlet />
             </div>
             <p className="mt-5 text-center text-[12px] text-white/20">
-              Kirib, foydalanish shartlariga rozilik bildirasiz
+              {t.agreeTerms}
             </p>
           </div>
         </section>

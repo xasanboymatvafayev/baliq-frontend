@@ -94,6 +94,24 @@ export const translations = {
     adminDashboard: 'Admin paneli', approveRequest: 'Tasdiqlash', rejectRequest: 'Rad etish',
     createPromo: 'Promo kod yaratish', promoCode: 'Promo kod', discount: 'Chegirma',
     maxUses: 'Max foydalanish', expiry: 'Muddati',
+
+    // Search
+    searching: 'Qidirilmoqda...', noSearchResult: "bo'yicha natija topilmadi",
+    viewAllCatalog: "Barcha katalogni ko'rish →",
+
+    // Misc
+    loggedOut: 'Tizimdan chiqildi',
+    agreeTerms: "Kirib, foydalanish shartlariga rozilik bildirasiz",
+    platformSlogan: "O'zbekistonning №1 baliq savdo platformasi",
+    platformDesc: "Mijoz, Fermer, Haydovchi va Admin rollari uchun professional boshqaruv. Real-vaqt kuzatuv, GPS logistika, kuchli analitika.",
+    statFarms: 'Fermalar', statCustomers: 'Mijozlar', statSatisfaction: 'Mamnunlik',
+    feat1Title: 'Real-vaqt', feat1Desc: "Buyurtmalarni jonli kuzating",
+    feat2Title: 'Xavfsiz', feat2Desc: "To'lovlar 256-bit himoyalangan",
+    feat3Title: 'Analitika', feat3Desc: 'Kuchli hisobot paneli',
+    feat4Title: 'GPS', feat4Desc: 'Navigatsiya va yetkazib berish',
+    headlinePart1: "Ferma, logistika", headlineAccent: "va savdoni", headlinePart2: "bitta panelda.",
+    roleCustomer: 'Mijoz', roleFarmOwner: 'Ferma egasi', roleDriver: 'Haydovchi',
+    roleAdmin: 'Administrator', roleManager: 'Menejer', roleSuperAdmin: 'Super Admin',
   },
 
   ru: {
@@ -188,6 +206,24 @@ export const translations = {
     adminDashboard: 'Панель администратора', approveRequest: 'Одобрить', rejectRequest: 'Отклонить',
     createPromo: 'Создать промокод', promoCode: 'Промокод', discount: 'Скидка',
     maxUses: 'Макс. использований', expiry: 'Срок действия',
+
+    // Search
+    searching: 'Поиск...', noSearchResult: 'по запросу результатов нет',
+    viewAllCatalog: 'Весь каталог →',
+
+    // Misc
+    loggedOut: 'Выход выполнен',
+    agreeTerms: 'Войдя, вы соглашаетесь с условиями использования',
+    platformSlogan: '№1 платформа продажи рыбы в Узбекистане',
+    platformDesc: 'Профессиональное управление для покупателей, фермеров, водителей и администраторов. Отслеживание в реальном времени, GPS-логистика, мощная аналитика.',
+    statFarms: 'Фермы', statCustomers: 'Клиенты', statSatisfaction: 'Довольных',
+    feat1Title: 'Реальное время', feat1Desc: 'Отслеживайте заказы онлайн',
+    feat2Title: 'Безопасно', feat2Desc: 'Платежи защищены 256-bit',
+    feat3Title: 'Аналитика', feat3Desc: 'Мощная панель отчётов',
+    feat4Title: 'GPS', feat4Desc: 'Навигация и доставка',
+    headlinePart1: "Ферма, логистика", headlineAccent: "и торговлю", headlinePart2: "в одной панели.",
+    roleCustomer: 'Покупатель', roleFarmOwner: 'Владелец фермы', roleDriver: 'Водитель',
+    roleAdmin: 'Администратор', roleManager: 'Менеджер', roleSuperAdmin: 'Супер Админ',
   },
 }
 

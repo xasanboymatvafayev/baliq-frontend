@@ -16,6 +16,7 @@ import { ChatPage } from '../shared/ChatPage.jsx'
 import { httpClient, fishService, fileService } from '../../services/api/index.js'
 import { useState, useRef, useMemo } from 'react'
 import { Pencil, Trash2, X, ImageUp } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 // ===== FARM FISH LIST (with Edit/Delete) =====
 export function FarmFish() {

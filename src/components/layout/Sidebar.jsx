@@ -23,10 +23,14 @@ export function Sidebar({ navigation, open, onClose }) {
   const cfg = ROLE_CFG[role] || ROLE_CFG.customer
   const t = useT()
   const initials = user ? `${user.firstName?.[0]||''}${user.lastName?.[0]||''}`.toUpperCase() : 'BS'
+  const roleLabels = {
+    customer: t.roleCustomer, 'farm-owner': t.roleFarmOwner, driver: t.roleDriver,
+    admin: t.roleAdmin, manager: t.roleManager, 'super-admin': t.roleSuperAdmin,
+  }
 
   const handleLogout = () => {
     logout()
-    pushToast({ title: "Tizimdan chiqildi", variant: 'success' })
+    pushToast({ title: t.loggedOut, variant: 'success' })
     navigate('/login')
     onClose?.()
   }
@@ -104,7 +108,7 @@ export function Sidebar({ navigation, open, onClose }) {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-semibold" style={{ color: '#f0f6ff' }}>{user.firstName} {user.lastName}</p>
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{cfg.label}</p>
+                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.3)' }}>{roleLabels[role] || cfg.label}</p>
               </div>
             </div>
           )}

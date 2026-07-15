@@ -17,6 +17,7 @@ function useDebounce(value, delay = 350) {
 
 function SearchDropdown({ query, onClose, role }) {
   const navigate = useNavigate()
+  const t = useT()
   const [res, setRes] = useState({ fish: [], farms: [] })
   const [loading, setLoading] = useState(false)
   const q = useDebounce(query)
@@ -44,15 +45,15 @@ function SearchDropdown({ query, onClose, role }) {
       {loading && (
         <div className="flex items-center gap-3 p-4">
           <div className="h-4 w-4 rounded-full border-2 border-ocean-500 border-t-transparent animate-spin" />
-          <span className="text-sm text-slate-400">Qidirilmoqda...</span>
+          <span className="text-sm text-slate-400">{t.searching}</span>
         </div>
       )}
       {!loading && q.length >= 2 && total === 0 && (
-        <p className="p-6 text-center text-sm text-slate-400">"{q}" bo'yicha natija topilmadi</p>
+        <p className="p-6 text-center text-sm text-slate-400">"{q}" {t.noSearchResult}</p>
       )}
       {!loading && res.fish.length > 0 && (
         <>
-          <p className="px-4 pt-3 pb-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">Baliqlar</p>
+          <p className="px-4 pt-3 pb-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600">{t.fish}</p>
           {res.fish.map(fish => (
             <button key={fish.id} onClick={() => go(isCustomer ? `/customer/product/${fish.id}` : '/farm/fish')}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04]">
@@ -61,7 +62,7 @@ function SearchDropdown({ query, onClose, role }) {
                 : <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-sky-100 dark:bg-sky-900/20"><Fish className="h-4 w-4 text-sky-500" /></div>}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-200">{fish.name}</p>
-                <p className="text-xs text-slate-400">{fish.price?.toLocaleString()} so'm/kg</p>
+                <p className="text-xs text-slate-400">{fish.price?.toLocaleString()} {t.somPrice}{t.perKg}</p>
               </div>
               <ExternalLink className="h-3.5 w-3.5 flex-shrink-0 text-slate-300" />
             </button>
@@ -70,7 +71,7 @@ function SearchDropdown({ query, onClose, role }) {
       )}
       {!loading && res.farms.length > 0 && (
         <>
-          <p className={`px-4 pb-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 ${res.fish.length ? 'pt-3 border-t border-slate-100 dark:border-white/[0.04]' : 'pt-3'}`}>Fermalar</p>
+          <p className={`px-4 pb-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-600 ${res.fish.length ? 'pt-3 border-t border-slate-100 dark:border-white/[0.04]' : 'pt-3'}`}>{t.totalFarms}</p>
           {res.farms.map(farm => (
             <button key={farm.id} onClick={() => go('/customer/farms')}
               className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.04]">
@@ -86,7 +87,7 @@ function SearchDropdown({ query, onClose, role }) {
       {!loading && total > 0 && isCustomer && (
         <button onClick={() => go('/customer/fish-catalog')}
           className="w-full border-t border-slate-100 dark:border-white/[0.04] px-4 py-3 text-center text-sm font-semibold text-ocean-600 dark:text-ocean-400 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03]">
-          Barcha katalogni ko'rish →
+          {t.viewAllCatalog}
         </button>
       )}
     </div>
@@ -100,6 +101,7 @@ export function Topbar({ onMenuClick, title }) {
   const logout = useAuthStore(s => s.logout)
   const pushToast = useToastStore(s => s.pushToast)
   const t = useT()
+  const navigate = useNavigate()
   const [q, setQ] = useState('')
   const [focused, setFocused] = useState(false)
   const ref = useRef(null)

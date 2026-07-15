@@ -75,7 +75,7 @@ export function Login() {
 
         {/* Phone */}
         <div>
-          <label className="mb-1.5 block text-[13px] font-semibold text-white/60">Telefon raqam</label>
+          <label className="mb-1.5 block text-[13px] font-semibold text-white/60">{t.phone}</label>
           <div className="relative">
             <Phone className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
             <input
@@ -97,7 +97,7 @@ export function Login() {
 
         {/* Password */}
         <div>
-          <label className="mb-1.5 block text-[13px] font-semibold text-white/60">Parol</label>
+          <label className="mb-1.5 block text-[13px] font-semibold text-white/60">{t.password}</label>
           <div className="relative">
             <Lock className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/25" />
             <input
@@ -161,7 +161,7 @@ export function Login() {
           onMouseLeave={e => { if (!loading) e.currentTarget.style.background = 'linear-gradient(135deg,#0ea5e9,#0284c7)' }}
         >
           {loading
-            ? <><Loader2 className="h-4 w-4 animate-spin" /> Kirilmoqda...</>
+            ? <><Loader2 className="h-4 w-4 animate-spin" /> {t.loggingIn}</>
             : <>{t.login} <ArrowRight className="h-4 w-4" /></>
           }
         </button>
