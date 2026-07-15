@@ -57,7 +57,7 @@ export const farmNavigation = [
 
 export const driverNavigation = [
   { label: 'Dashboard', key: 'dashboard', to: '/driver/dashboard', icon: Home },
-  { label: 'Mening buyurtmalarim', key: 'myOrdersDriver', to: '/driver/orders', icon: ClipboardCheck },
+  { label: 'Mening yetkazishlarim', key: 'myDeliveries', to: '/driver/orders', icon: ClipboardCheck },
   { label: 'Jonli tracking', key: 'liveTracking', to: '/driver/live-tracking', icon: MapPinned },
   { label: 'Chat', key: 'chat', to: '/driver/chat', icon: MessageSquare },
   { label: 'Profil', key: 'profile', to: '/driver/profile', icon: UserCog },
