@@ -10,7 +10,7 @@ import { orderService, httpClient } from '../../services/api/index.js'
 import { useToastStore } from '../../store/toastStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
 import { formatCurrency } from '../../utils/formatters.js'
-import { Navigation, MapPin, Package, CheckCircle2, Loader2, ChevronRight, ArrowLeft, Truck, Users } from 'lucide-react'
+import { Navigation, Loader2, ChevronRight, ArrowLeft, Truck, Users } from 'lucide-react'
 import { useSocketEmit } from '../../hooks/useSocket.js'
 import { MapboxNavigator } from '../../components/common/MapboxNavigator.jsx'
 import { useT } from '../../store/i18nStore.js'
@@ -110,12 +110,15 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
   const isGroup = allOrders.length > 1
 
   // Ferma koordinatalari — barcha mumkin bo'lgan maydonlardan olish
-  const farmCoords = 
-    parseCoords(order.farm_gps) ||
+  const farmCoords =
     parseCoords(order.farm?.gpsLocation) ||
+    parseCoords(order.farm?.gps_location) ||
     parseCoords(order.farm?.coordinates) ||
-    (order.farm_lat && order.farm_lng ? { lat: order.farm_lat, lng: order.farm_lng } : null) ||
-    (order.farm?.lat && order.farm?.lng ? { lat: order.farm.lat, lng: order.farm.lng } : null)
+    parseCoords(order.farm_gps) ||
+    parseCoords(order.farm_gps_location) ||
+    parseCoords(order.farm_coordinates) ||
+    (order.farm?.lat && order.farm?.lng ? { lat: Number(order.farm.lat), lng: Number(order.farm.lng) } : null) ||
+    (order.farm_lat && order.farm_lng ? { lat: Number(order.farm_lat), lng: Number(order.farm_lng) } : null)
 
   // Mijoz koordinatasi
   const deliveryCoords =
@@ -131,15 +134,15 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
     return (
       <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/10">
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-          Fermaga boring va yukni oling.
+          Fermaga boring va yukni oling. 100m yaqinlashganda "Fermaga keldim" tugmasi chiqadi.
         </p>
-        {farmCoords && onOpenNav ? (
+        {farmCoords ? (
           <button
             className="primary-button w-full flex items-center justify-center gap-2"
             onClick={() => onOpenNav(farmCoords.lat, farmCoords.lng, farmName, true)}
           >
             <Navigation className="h-4 w-4" />
-            🚜 Fermaga navigatsiya (ilova ichida)
+            🚜 Fermaga navigatsiya
           </button>
         ) : (
           <a
@@ -152,14 +155,6 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
             🚜 Fermaga yo'l ko'rsatish
           </a>
         )}
-        <button
-          className="secondary-button w-full flex items-center justify-center gap-2"
-          onClick={() => onStatusChange(allOrders.map((o) => o.id), 'LOADING')}
-          disabled={loading}
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
-          📦 Fermaga keldim — yukni olaman
-        </button>
       </div>
     )
   }
@@ -263,6 +258,18 @@ export function DriverOrders() {
     refetchInterval: 15000,
   })
 
+  // Tanlangan order uchun to'liq detail (farm GPS koordinatasi bilan)
+  const { data: selectedDetail } = useQuery({
+    queryKey: ['order-detail', selected?.id],
+    queryFn: () => orderService.detail(selected.id),
+    enabled: !!selected?.id,
+  })
+
+  // Ro'yxat ma'lumotlari bilan detail ma'lumotlarni birlashtirish
+  const enrichedSelected = selected
+    ? { ...selected, ...(selectedDetail?.data || selectedDetail || {}) }
+    : null
+
   const orders = (ordersRaw?.data || ordersRaw || []).filter(
     (o) => ['DRIVER_ASSIGNED', 'LOADING', 'IN_TRANSIT'].includes(o.status)
   )
@@ -348,11 +355,11 @@ export function DriverOrders() {
           <div className="space-y-2">
             <h3 className="text-xl font-black">Buyurtma #{selected.id?.slice(-6)}</h3>
             <div className="grid gap-2 sm:grid-cols-2 text-sm">
-              <div><span className="text-slate-500">Jami:</span> <b>{formatCurrency(selected.total)}</b></div>
-              <div><span className="text-slate-500">Mijoz:</span> <b>{selected.customer_name || '—'}</b></div>
+              <div><span className="text-slate-500">Jami:</span> <b>{formatCurrency(enrichedSelected?.total ?? selected.total)}</b></div>
+              <div><span className="text-slate-500">Mijoz:</span> <b>{enrichedSelected?.customer_name || selected.customer_name || '—'}</b></div>
             </div>
-            {selected.delivery_address && (
-              <div className="text-sm"><span className="text-slate-500">Manzil:</span> <b>{selected.delivery_address}</b></div>
+            {(enrichedSelected?.delivery_address || selected.delivery_address) && (
+              <div className="text-sm"><span className="text-slate-500">Manzil:</span> <b>{enrichedSelected?.delivery_address || selected.delivery_address}</b></div>
             )}
           </div>
 
@@ -371,10 +378,10 @@ export function DriverOrders() {
           )}
 
           {/* Mahsulotlar */}
-          {!selected._isGroup && selected.items?.length > 0 && (
+          {!selected._isGroup && (enrichedSelected?.items || selected.items)?.length > 0 && (
             <div className="space-y-2">
               <h4 className="font-bold text-sm">Mahsulotlar:</h4>
-              {selected.items.map((item, i) => (
+              {(enrichedSelected?.items || selected.items).map((item, i) => (
                 <div key={i} className="flex justify-between rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-2 text-sm">
                   <span>{item.fish_name}</span>
                   <span>{item.quantity} {item.unit || 'kg'} × {formatCurrency(item.unit_price)}</span>
@@ -386,8 +393,8 @@ export function DriverOrders() {
           <OrderTimeline currentStatus={selected.status} />
 
           <DriverActions
-            order={selected}
-            orders={selected._isGroup ? selected.items : [selected]}
+            order={enrichedSelected || selected}
+            orders={selected._isGroup ? selected.items : [enrichedSelected || selected]}
             onStatusChange={handleStatusChange}
             loading={statusMutation.isPending}
             myPosition={myPosition}
