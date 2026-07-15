@@ -125,22 +125,25 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
       : null)
 
   if (status === 'DRIVER_ASSIGNED') {
+    const farmName = order.farm?.farmName || order.farm_name || 'Ferma'
+    const farmAddress = order.farm?.farmAddress || order.farm?.location || order.farm_address || farmName
+
     return (
       <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/10">
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
-          Fermaga boring va yukni oling. Navigatsiyani oching — 100m yaqinlashganda "Fermaga keldim" tugmasi chiqadi.
+          Fermaga boring va yukni oling.
         </p>
         {farmCoords && onOpenNav ? (
           <button
             className="primary-button w-full flex items-center justify-center gap-2"
-            onClick={() => onOpenNav(farmCoords.lat, farmCoords.lng, order.farm?.farmName || 'Ferma', true)}
+            onClick={() => onOpenNav(farmCoords.lat, farmCoords.lng, farmName, true)}
           >
             <Navigation className="h-4 w-4" />
             🚜 Fermaga navigatsiya (ilova ichida)
           </button>
-        ) : (order.farm?.farmAddress || order.farm?.location) ? (
+        ) : (
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.farm?.farmAddress || order.farm?.location)}`}
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farmAddress)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="primary-button w-full flex items-center justify-center gap-2"
@@ -148,7 +151,15 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
             <Navigation className="h-4 w-4" />
             🚜 Fermaga yo'l ko'rsatish
           </a>
-        ) : null}
+        )}
+        <button
+          className="secondary-button w-full flex items-center justify-center gap-2"
+          onClick={() => onStatusChange(allOrders.map((o) => o.id), 'LOADING')}
+          disabled={loading}
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Package className="h-4 w-4" />}
+          📦 Fermaga keldim — yukni olaman
+        </button>
       </div>
     )
   }
@@ -182,15 +193,25 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
             <b>Ko'p buyurtmali yetkazish:</b> Quyidagi mijoz manziliga boring. Har bir buyurtmani yetkazgach keyingisiga o'tiladi.
           </div>
         )}
-        {targetCoords && onOpenNav && (
+        {targetCoords && onOpenNav ? (
           <button
             className="primary-button w-full flex items-center justify-center gap-2"
             onClick={() => onOpenNav(targetCoords.lat, targetCoords.lng, order.delivery_address)}
           >
             <Navigation className="h-4 w-4" />
-            📍 Mijozga navigatsiya
+            📍 Mijozga navigatsiya (ilova ichida)
           </button>
-        )}
+        ) : order.delivery_address ? (
+          <a
+            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.delivery_address)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="primary-button w-full flex items-center justify-center gap-2"
+          >
+            <Navigation className="h-4 w-4" />
+            📍 Mijozga yo'l ko'rsatish
+          </a>
+        ) : null}
         <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3 text-sm">
           <p className="font-semibold">Yetkazish manzili:</p>
           <p className="text-slate-600 dark:text-slate-400">{order.delivery_address || '—'}</p>
