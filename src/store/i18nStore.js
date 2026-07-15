@@ -4,7 +4,7 @@ import { persist } from 'zustand/middleware'
 export const translations = {
   uz: {
     // Nav
-    dashboard: 'Dashboard', fishCatalog: 'Baliqlar katalogi', farmList: "Ferma ro'yxati",
+    dashboard: 'Dashboard', fishCatalog: 'Baliqlar katalogi', farmList: "Ferma ro'yxati", driverList: "Haydovchi ro'yxati",
     productDetail: 'Mahsulot tafsiloti', cart: 'Savatcha', myOrders: 'Buyurtmalarim',
     chat: 'Chat', profile: 'Profil', paymentBonus: "To'lov & Bonus", security: 'Xavfsizlik',
     settings: 'Sozlamalar', fish: 'Baliqlar', addFish: "Baliq qo'shish", inventory: 'Ombor',
@@ -116,7 +116,7 @@ export const translations = {
 
   ru: {
     // Nav
-    dashboard: 'Панель', fishCatalog: 'Каталог рыбы', farmList: 'Список ферм',
+    dashboard: 'Панель', fishCatalog: 'Каталог рыбы', farmList: 'Список ферм', driverList: 'Регистрация водителя',
     productDetail: 'Детали товара', cart: 'Корзина', myOrders: 'Мои заказы',
     chat: 'Чат', profile: 'Профиль', paymentBonus: 'Оплата и бонусы', security: 'Безопасность',
     settings: 'Настройки', fish: 'Рыба', addFish: 'Добавить рыбу', inventory: 'Склад',
