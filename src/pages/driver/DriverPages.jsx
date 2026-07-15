@@ -74,7 +74,7 @@ const STATUS_COLORS = {
 }
 
 // ─── Bir buyurtma kartasi (ro'yxatda) ───────────────────────────
-function OrderCard({ order, onClick, isGroup }) {
+function OrderCard({ order, onClick, isGroup, labels }) {
   return (
     <div
       className="glass-card p-4 cursor-pointer hover:ring-2 hover:ring-ocean-300 transition flex items-center justify-between gap-3"
@@ -88,7 +88,7 @@ function OrderCard({ order, onClick, isGroup }) {
             </span>
           )}
           <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${STATUS_COLORS[order.status]}`}>
-            {useStatusLabels()[order.status]}
+            {labels?.[order.status] || order.status}
           </span>
         </div>
         <p className="font-black mt-1">#{order.id?.slice(-6)}</p>
@@ -207,6 +207,7 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
 // ─── Asosiy Driver Orders sahifasi ──────────────────────────────
 export function DriverOrders() {
   const t = useT()
+  const statusLabels = useStatusLabels()
   usePageTitle("Haydovchi buyurtmalari")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -319,7 +320,7 @@ export function DriverOrders() {
               <ArrowLeft className="h-4 w-4" /> Orqaga
             </button>
             <span className={`rounded-full px-3 py-1 text-xs font-bold ${STATUS_COLORS[selected.status]}`}>
-              {useStatusLabels()[selected.status]}
+              {statusLabels[selected.status] || selected.status}
             </span>
           </div>
 
@@ -402,6 +403,7 @@ export function DriverOrders() {
               order={order}
               onClick={setSelected}
               isGroup={order._isGroup}
+              labels={statusLabels}
             />
           ))}
         </div>
