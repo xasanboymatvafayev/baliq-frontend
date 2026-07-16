@@ -105,7 +105,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
       if (!fileList || fileList.length === 0) return null
       const formData = new FormData()
       formData.append('file', fileList[0])
-      try { const r = await fileService.publicUpload(formData); return r.url || r.file_url || null } catch { return null }
+      try {
+        const r = await fileService.publicUpload(formData)
+        return r.url || r.file_url || null
+      } catch {
+        pushToast({ title: "Ferma rasmi yuklanmadi. Qayta urinib ko'ring.", variant: 'error' })
+        return null
+      }
     }
 
     const onSubmit = async (data) => {

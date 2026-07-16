@@ -37,18 +37,24 @@ import { zodResolver } from '@hookform/resolvers/zod'
     const [loading, setLoading] = useState(false)
     const { register, handleSubmit, formState } = useForm({ resolver: zodResolver(schema) })
 
-    const uploadImage = async (fileList) => {
+    const uploadImage = async (fileList, label = 'Rasm') => {
       if (!fileList || fileList.length === 0) return null
       const formData = new FormData()
       formData.append('file', fileList[0])
-      try { const r = await fileService.publicUpload(formData); return r.url || r.file_url || null } catch { return null }
+      try {
+        const r = await fileService.publicUpload(formData)
+        return r.url || r.file_url || null
+      } catch {
+        pushToast({ title: `${label} yuklanmadi. Qayta urinib ko'ring.`, variant: 'error' })
+        return null
+      }
     }
 
     const onSubmit = async (data) => {
       setLoading(true)
       try {
-        const licenseImageUrl = await uploadImage(data.licenseImage)
-        const technicalPassportImageUrl = await uploadImage(data.technicalPassportImage)
+        const licenseImageUrl = await uploadImage(data.licenseImage, "Haydovlik guvohnomasi")
+        const technicalPassportImageUrl = await uploadImage(data.technicalPassportImage, "Texnik pasport")
 
         localStorage.setItem('pending-driver-registration', JSON.stringify({
           carBrand: data.carBrand, plateNumber: data.plateNumber,

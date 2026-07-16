@@ -16,21 +16,12 @@ import { MapboxNavigator } from '../../components/common/MapboxNavigator.jsx'
 import { useT } from '../../store/i18nStore.js'
 
 export function DriverDashboard() {
-  const t = useT()
   return <DashboardPage title="Haydovchi Dashboard" subtitle="Biriktirilgan buyurtmalar, jonli tracking va mijoz/ferma chatlari." />
 }
-export function DriverLiveTracking() {
-  const t = useT()
-  return <GpsMonitoringPage /> }
-export function DriverChat() {
-  const t = useT()
-  return <ChatPage title="Haydovchi chat" /> }
-export function DriverProfile() {
-  const t = useT()
-  return <ProfilePage /> }
-export function DriverSettings() {
-  const t = useT()
-  return <SettingsPage /> }
+export function DriverLiveTracking() { return <GpsMonitoringPage /> }
+export function DriverChat() { return <ChatPage title="Haydovchi chat" /> }
+export function DriverProfile() { return <ProfilePage /> }
+export function DriverSettings() { return <SettingsPage /> }
 
 // ─── Haversine masofasi (km) ─────────────────────────────────────
 function distanceKm(lat1, lng1, lat2, lng2) {

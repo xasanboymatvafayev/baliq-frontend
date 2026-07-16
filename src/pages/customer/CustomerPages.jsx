@@ -1,4 +1,3 @@
-import { useT } from '../../store/i18nStore.js'
 import { useQuery } from '@tanstack/react-query'
 import { CatalogPage } from '../shared/CatalogPage.jsx'
 import { CartPage } from '../shared/CartPage.jsx'
@@ -14,32 +13,16 @@ import { useState } from 'react'
 import { X, MapPin } from 'lucide-react'
 
 export function CustomerDashboard() {
-  const t = useT()
   return <DashboardPage title="Mijoz Dashboard" subtitle="Katalog, savatcha, buyurtmalar va chat holatini bitta oynada kuzating." /> }
-export function CustomerFishCatalog() {
-  const t = useT()
-  return <CatalogPage /> }
-export function CustomerProductDetail() {
-  const t = useT()
-  return <ProductDetailPage /> }
-export function CustomerCart() {
-  const t = useT()
-  return <CartPage /> }
-export function CustomerOrders() {
-  const t = useT()
-  return <OrdersPage title="Buyurtmalarim" /> }
-export function CustomerChat() {
-  const t = useT()
-  return <ChatPage title="Mijoz chat" /> }
-export function CustomerProfile() {
-  const t = useT()
-  return <ProfilePage /> }
-export function CustomerSettings() {
-  const t = useT()
-  return <SettingsPage /> }
+export function CustomerFishCatalog() { return <CatalogPage /> }
+export function CustomerProductDetail() { return <ProductDetailPage /> }
+export function CustomerCart() { return <CartPage /> }
+export function CustomerOrders() { return <OrdersPage title="Buyurtmalarim" /> }
+export function CustomerChat() { return <ChatPage title="Mijoz chat" /> }
+export function CustomerProfile() { return <ProfilePage /> }
+export function CustomerSettings() { return <SettingsPage /> }
 
 export function CustomerFarms() {
-  const t = useT()
   usePageTitle("Fermalar ro'yxati")
   const [selectedFarm, setSelectedFarm] = useState(null)
   const { data: farmsRaw, isLoading } = useQuery({

@@ -102,7 +102,7 @@ export const translations = {
     // Misc
     language: 'Til', offline: 'Internet yo\'q', offlineDesc: 'Ulanishni tekshiring',
     pdfExport: 'PDF yuklash', farmRating: 'Ferma reytingi', driverRating: 'Haydovchi reytingi',
-    somPrice: 'so\'m', perKg: '/kg', copy: 'Nusxa olish', copied: 'Nusxalandi!',
+    somPrice: 'so\'m', perKg: '/kg', per: '/', copy: 'Nusxa olish', copied: 'Nusxalandi!',
     delete: 'O\'chirish', edit: 'Tahrirlash', add: 'Qo\'shish', close: 'Yopish',
     confirm: 'Tasdiqlash', back: 'Orqaga', next: 'Keyingi', yes: 'Ha', no: 'Yo\'q',
     success: 'Muvaffaqiyatli', error: 'Xatolik', warning: 'Ogohlantirish',
@@ -252,7 +252,7 @@ export const translations = {
     // Misc
     language: 'Язык', offline: 'Нет интернета', offlineDesc: 'Проверьте соединение',
     pdfExport: 'Скачать PDF', farmRating: 'Рейтинг фермы', driverRating: 'Рейтинг водителя',
-    somPrice: 'сум', perKg: '/кг', copy: 'Копировать', copied: 'Скопировано!',
+    somPrice: 'сум', perKg: '/кг', per: '/', copy: 'Копировать', copied: 'Скопировано!',
     delete: 'Удалить', edit: 'Редактировать', add: 'Добавить', close: 'Закрыть',
     confirm: 'Подтвердить', back: 'Назад', next: 'Далее', yes: 'Да', no: 'Нет',
     success: 'Успешно', error: 'Ошибка', warning: 'Предупреждение',

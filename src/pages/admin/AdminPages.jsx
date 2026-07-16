@@ -9,8 +9,6 @@ import { SettingsPage } from '../shared/SettingsPage.jsx'
 import { httpClient } from '../../services/api/index.js'
 import { useState } from 'react'
 import { Trash2, AlertTriangle, X, MapPin, Phone, Building2, Truck, FileText, Eye } from 'lucide-react'
-import { useT } from '../../store/i18nStore.js'
-
 // ── Dark-mode-safe badge classes ──────────────────────────────────────
 const ROLE_COLORS = {
   'super-admin': 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
@@ -229,7 +227,6 @@ function DriverDetailModal({ driver, open, onClose, onApprove, onReject, approvi
 
 // ── Farm Requests ─────────────────────────────────────────────────────
 export function AdminFarmRequests() {
-  const t = useT()
   usePageTitle("Ferma so'rovlari")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -304,7 +301,6 @@ export function AdminFarmRequests() {
 
 // ── Driver Requests ───────────────────────────────────────────────────
 export function AdminDriverRequests() {
-  const t = useT()
   usePageTitle("Haydovchi so'rovlari")
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -376,7 +372,6 @@ export function AdminDriverRequests() {
 
 // ── Users ─────────────────────────────────────────────────────────────
 export function AdminUsers() {
-  const t = useT()
   usePageTitle('Foydalanuvchilar')
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
@@ -469,7 +464,6 @@ export function AdminUsers() {
 
 // ── Audit Log ─────────────────────────────────────────────────────────
 export function AdminAuditLog() {
-  const t = useT()
   usePageTitle('Audit log')
   const { data = [], isLoading } = useQuery({
     queryKey: ['audit-logs'],
@@ -519,18 +513,9 @@ export function AdminAuditLog() {
 }
 
 export function AdminDashboard() {
-  const t = useT()
   return <DashboardPage title="Admin Dashboard" subtitle="Ferma va haydovchi so'rovlari, foydalanuvchilar va audit monitoring." />
 }
-export function AdminOrders() {
-  const t = useT()
-  return <OrdersPage title="Admin buyurtmalar" /> }
-export function AdminChatMonitoring() {
-  const t = useT()
-  return <ChatPage title="Chat monitoring" /> }
-export function AdminSettings() {
-  const t = useT()
-  return <SettingsPage /> }
-export function AdminGpsMonitoring() {
-  const t = useT()
-  return <GpsMonitoringPage /> }
+export function AdminOrders() { return <OrdersPage title="Admin buyurtmalar" /> }
+export function AdminChatMonitoring() { return <ChatPage title="Chat monitoring" /> }
+export function AdminSettings() { return <SettingsPage /> }
+export function AdminGpsMonitoring() { return <GpsMonitoringPage /> }

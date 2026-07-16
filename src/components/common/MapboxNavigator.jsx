@@ -226,12 +226,11 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
             if (firstStep && soundRef.current) speak(firstStep)
           }
           } catch (e) {
-            console.error('Map load error:', e)
+            setError("Xarita yuklashda xato yuz berdi.")
           }
         })
 
-        map.on('error', (e) => {
-          console.error('Mapbox error:', e)
+        map.on('error', () => {
           if (!loadedRef.current) {
             clearTimeout(loadTimeout)
             if (!destroyed) {
