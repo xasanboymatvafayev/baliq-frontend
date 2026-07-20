@@ -162,8 +162,13 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
             🚜 Fermaga navigatsiya ({farmAddress.slice(0, 30)}{farmAddress.length > 30 ? '...' : ''})
           </button>
         ) : (
-          <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-700 dark:text-amber-300">
-            Ferma manzili kiritilmagan. Iltimos, ferma egasiga murojaat qiling.
+          <div className="space-y-2">
+            <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-700 dark:text-amber-300">
+              Ferma manzili kiritilmagan. Iltimos, ferma egasiga murojaat qiling.
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Ferma ID: <code className="font-mono">{order.farm_id || order.items?.[0]?.farm_id || '—'}</code>
+            </p>
           </div>
         )}
       </div>
@@ -282,34 +287,43 @@ export function DriverOrders() {
     || selected?.items?.[0]?.farm_id
     || selectedDetail?.farm_id
     || selectedDetail?.items?.[0]?.farm_id
+    || selectedDetail?.data?.farm_id
+    || selectedDetail?.data?.items?.[0]?.farm_id
   const rawEnriched = selected
     ? { ...selected, ...(selectedDetail?.data || selectedDetail || {}) }
     : null
   const hasFarmGps = !!(
     parseCoords(rawEnriched?.farm?.gpsLocation) ||
     parseCoords(rawEnriched?.farm_gps) ||
+    parseCoords(rawEnriched?.farm_lat && rawEnriched?.farm_lng ? `${rawEnriched.farm_lat},${rawEnriched.farm_lng}` : null) ||
     rawEnriched?.farm?.region
   )
+  // Farm detail'ni doim yuklaymiz — farm_id bo'lsa va farm ma'lumoti to'liq bo'lmasa
   const { data: farmDetail } = useQuery({
     queryKey: ['farm-detail', farmId],
     queryFn: () => httpClient.get(`/farms/${farmId}`),
-    enabled: !!farmId && !hasFarmGps && !!selected,
+    enabled: !!farmId && !!selected,
+    staleTime: 5 * 60 * 1000,
   })
 
   // Ro'yxat ma'lumotlari bilan detail ma'lumotlarni birlashtirish
-  const enrichedSelected = rawEnriched && farmDetail
+  // rawEnriched.farm allaqachon to'liq bo'lsa ham, farmDetail dan qo'shimcha maydonlarni merge qilamiz
+  const enrichedSelected = rawEnriched
     ? {
         ...rawEnriched,
         farm: {
           ...(rawEnriched.farm || {}),
-          farmName: rawEnriched.farm?.farmName || farmDetail?.farmName || farmDetail?.data?.farmName || '',
-          gpsLocation: rawEnriched.farm?.gpsLocation || farmDetail?.gpsLocation || farmDetail?.data?.gpsLocation || '',
+          farmName: rawEnriched.farm?.farmName || rawEnriched.farm_name || farmDetail?.farmName || farmDetail?.data?.farmName || '',
+          gpsLocation: rawEnriched.farm?.gpsLocation || rawEnriched.farm_gps || farmDetail?.gpsLocation || farmDetail?.data?.gpsLocation || '',
           region: rawEnriched.farm?.region || farmDetail?.region || farmDetail?.data?.region || '',
           district: rawEnriched.farm?.district || farmDetail?.district || farmDetail?.data?.district || '',
-          farmAddress: rawEnriched.farm?.farmAddress || farmDetail?.farmAddress || farmDetail?.data?.farmAddress || '',
+          farmAddress: rawEnriched.farm?.farmAddress || rawEnriched.farm_address || farmDetail?.farmAddress || farmDetail?.data?.farmAddress || '',
+          lat: rawEnriched.farm?.lat || rawEnriched.farm_lat || farmDetail?.lat || farmDetail?.data?.lat || null,
+          lng: rawEnriched.farm?.lng || rawEnriched.farm_lng || farmDetail?.lng || farmDetail?.data?.lng || null,
+          phone: rawEnriched.farm?.phone || farmDetail?.phone || farmDetail?.data?.phone || '',
         },
       }
-    : rawEnriched
+    : null
 
   const orders = (ordersRaw?.data || ordersRaw || []).filter(
     (o) => ['DRIVER_ASSIGNED', 'LOADING', 'IN_TRANSIT'].includes(o.status)
