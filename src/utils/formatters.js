@@ -1,16 +1,22 @@
 // ─── Pul formatlash ───────────────────────────────────────────────
 // 360000 → "360,000 so'm"
 export function formatCurrency(value) {
-  if (value == null || isNaN(value)) return '0 so\'m'
-  return new Intl.NumberFormat('uz-UZ', {
-    maximumFractionDigits: 0,
-  }).format(value) + ' so\'m'
+  if (value == null || isNaN(value)) return "0 so'm"
+  try {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value) + " so'm"
+  } catch {
+    return String(Math.round(Number(value))) + " so'm"
+  }
 }
 
 // 360000 → "360,000"
 export function formatNumber(value) {
   if (value == null || isNaN(value)) return '0'
-  return new Intl.NumberFormat('uz-UZ', { maximumFractionDigits: 0 }).format(value)
+  try {
+    return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)
+  } catch {
+    return String(Math.round(Number(value)))
+  }
 }
 
 // Sof foydani hisoblash: 12% soliq chegiriladi
