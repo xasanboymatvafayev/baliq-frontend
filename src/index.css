@@ -41,6 +41,25 @@ body {
   font-family: inherit;
 }
 
+/* Select option dark mode visibility fix */
+.soft-input option,
+select option {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+@media (prefers-color-scheme: light) {
+  .soft-input option,
+  select option {
+    background-color: #ffffff;
+    color: #0f172a;
+  }
+}
+.dark .soft-input option,
+.dark select option {
+  background-color: #1e293b;
+  color: #f1f5f9;
+}
+
 /* ─── BUTTONS ─── */
 .primary-button {
   @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5

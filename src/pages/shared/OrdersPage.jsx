@@ -17,9 +17,9 @@ function useStatusLabels() {
   return {
     PENDING: t.statusPending,
     CONFIRMED: t.statusConfirmed,
-    AWAITING_PAYMENT: t.paymentBonus,
-    DRIVER_ASSIGNED: t.liveTracking,
-    LOADING: t.loading,
+    AWAITING_PAYMENT: t.statusAwaitingPayment || "To'lov kutilmoqda",
+    DRIVER_ASSIGNED: t.statusDriverAssigned || 'Haydovchiga biriktirildi',
+    LOADING: t.statusLoading || 'Yuklanmoqda',
     IN_TRANSIT: t.statusInTransit,
     DELIVERED: t.statusDelivered,
     CANCELLED: t.statusCancelled,

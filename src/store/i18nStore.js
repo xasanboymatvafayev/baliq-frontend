@@ -6,10 +6,10 @@ export const translations = {
     // Nav
     dashboard: 'Dashboard', fishCatalog: 'Baliqlar katalogi', farmList: "Ferma ro'yxati", driverList: "Haydovchi ro'yxati",
     productDetail: 'Mahsulot tafsiloti', cart: 'Savatcha', myOrders: 'Buyurtmalarim',
-    chat: 'Chat', profile: 'Profil', paymentBonus: "To'lov & Bonus", security: 'Xavfsizlik',
+    chat: 'Chat', profile: 'Profil', paymentBonus: "To'lov kutilmoqda", security: 'Xavfsizlik',
     settings: 'Sozlamalar', fish: 'Baliqlar', addFish: "Baliq qo'shish", inventory: 'Ombor',
     orders: 'Buyurtmalar', customers: 'Mijozlar', balance: 'Balans', reports: 'Hisobotlar',
-    myOrdersDriver: 'Mening buyurtmalarim', liveTracking: 'Jonli tracking',
+    myOrdersDriver: 'Mening buyurtmalarim', liveTracking: 'Haydovchiga biriktirildi',
     farmRequests: "Ferma so'rovlari", driverRequests: "Haydovchi so'rovlari", users: 'Foydalanuvchilar',
     promoCodes: 'Promo kodlar', gpsMonitoring: 'GPS Monitoring', chatMonitoring: 'Chat monitoring',
     auditLog: 'Audit log', statistics: 'Statistika', netProfit: 'Sof foyda',
@@ -93,7 +93,8 @@ export const translations = {
     // Orders
     ordersTitle: 'Buyurtmalar', orderNumber: 'Buyurtma', statusPending: 'Kutilmoqda',
     statusConfirmed: 'Tasdiqlandi', statusDelivered: 'Yetkazildi', statusCancelled: 'Bekor qilindi',
-    statusInTransit: "Yo'lda", statusLoading: 'Yuklanmoqda', noOrders: 'Buyurtmalar yo\'q',
+    statusInTransit: "Yo'lda", statusLoading: 'Yuklanmoqda', statusDriverAssigned: 'Haydovchiga biriktirildi',
+    statusAwaitingPayment: "To'lov kutilmoqda", noOrders: 'Buyurtmalar yo\'q',
 
     // Profile
     profileTitle: 'Profil', editProfile: 'Tahrirlash', save: 'Saqlash', saving: 'Saqlanmoqda...',

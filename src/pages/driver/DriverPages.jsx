@@ -48,10 +48,14 @@ function parseCoords(coords) {
 function useStatusLabels() {
   const t = useT()
   return {
-    PENDING: t.statusPending, CONFIRMED: t.statusConfirmed,
-    AWAITING_PAYMENT: t.paymentBonus, DRIVER_ASSIGNED: t.liveTracking,
-    LOADING: t.loading, IN_TRANSIT: t.statusInTransit,
-    DELIVERED: t.statusDelivered, CANCELLED: t.statusCancelled,
+    PENDING: t.statusPending,
+    CONFIRMED: t.statusConfirmed,
+    AWAITING_PAYMENT: t.statusAwaitingPayment || "To'lov kutilmoqda",
+    DRIVER_ASSIGNED: t.statusDriverAssigned || 'Haydovchiga biriktirildi',
+    LOADING: t.statusLoading || 'Yuklanmoqda',
+    IN_TRANSIT: t.statusInTransit,
+    DELIVERED: t.statusDelivered,
+    CANCELLED: t.statusCancelled,
   }
 }
 const STATUS_COLORS = {
@@ -119,9 +123,22 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
       : null)
 
   if (status === 'DRIVER_ASSIGNED') {
-    const farmName = order.farm?.farmName || order.farm_name || 'Ferma'
-    const farmAddressRaw = order.farm?.farmAddress || order.farm?.location || order.farm_address || ''
-    const farmAddress = farmAddressRaw && farmAddressRaw !== farmName ? farmAddressRaw : ''
+    const farmName = order.farm?.farmName || order.farm?.name || order.farm_name || 'Ferma'
+    // Barcha ehtimoliy manzil maydonlari
+    const farmAddressRaw =
+      order.farm?.farmAddress ||
+      order.farm?.address ||
+      order.farm?.location ||
+      order.farm?.full_address ||
+      order.farm_address ||
+      order.farm_location ||
+      // region + district birlashtirish
+      (order.farm?.region && order.farm?.district
+        ? `${order.farm.district}, ${order.farm.region}, O'zbekiston`
+        : null) ||
+      (order.farm?.region ? `${order.farm.region}, O'zbekiston` : null) ||
+      ''
+    const farmAddress = farmAddressRaw && farmAddressRaw !== 'Ferma' ? farmAddressRaw : farmName !== 'Ferma' ? farmName : ''
 
     return (
       <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/10">
@@ -350,7 +367,17 @@ export function DriverOrders() {
             <h3 className="text-xl font-black">Buyurtma #{selected.id?.slice(-6)}</h3>
             <div className="grid gap-2 sm:grid-cols-2 text-sm">
               <div><span className="text-slate-500">Jami:</span> <b>{formatCurrency(enrichedSelected?.total ?? selected.total)}</b></div>
-              <div><span className="text-slate-500">Mijoz:</span> <b>{enrichedSelected?.customer_name || selected.customer_name || '—'}</b></div>
+              <div>
+                <span className="text-slate-500">Mijoz:</span>{' '}
+                <b>{
+                  enrichedSelected?.customer_name ||
+                  enrichedSelected?.customer?.name ||
+                  enrichedSelected?.customer?.firstName && `${enrichedSelected.customer.firstName} ${enrichedSelected.customer.lastName || ''}`.trim() ||
+                  selected.customer_name ||
+                  selected.user_name ||
+                  '—'
+                }</b>
+              </div>
             </div>
             {(enrichedSelected?.delivery_address || selected.delivery_address) && (
               <div className="text-sm"><span className="text-slate-500">Manzil:</span> <b>{enrichedSelected?.delivery_address || selected.delivery_address}</b></div>
