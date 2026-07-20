@@ -55,7 +55,23 @@ async function fetchRoute(fLat, fLng, tLat, tLng) {
   return data.routes[0]
 }
 
-export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClose, onArrivalConfirm }) {
+async function geocodeAddress(address) {
+  if (!address || !MAPBOX_TOKEN) return null
+  const encoded = encodeURIComponent(address)
+  const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encoded}.json?access_token=${MAPBOX_TOKEN}&limit=1&country=uz`
+  try {
+    const res = await fetch(url)
+    const data = await res.json()
+    const feature = data.features?.[0]
+    if (!feature) return null
+    const [lng, lat] = feature.center
+    return { lat, lng }
+  } catch {
+    return null
+  }
+}
+
+export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress, isFarm = false, onClose, onArrivalConfirm }) {
   const mapContainer = useRef(null)
   const mapRef       = useRef(null)
   const markerRef    = useRef(null)
@@ -70,11 +86,17 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
   const [myPos, setMyPos]               = useState(null)
   const [soundOn, setSoundOn]           = useState(true)
   const [arrived, setArrived]           = useState(false)
-  const [nearFarm, setNearFarm]         = useState(false)   // 100m da
+  const [nearFarm, setNearFarm]         = useState(false)
   const [confirmed, setConfirmed]       = useState(false)
   const [distToTarget, setDistToTarget] = useState(null)
+  const [resolvedCoords, setResolvedCoords] = useState(
+    toLatProp && toLngProp ? { lat: toLatProp, lng: toLngProp } : null
+  )
   const soundRef = useRef(true)
   useEffect(() => { soundRef.current = soundOn }, [soundOn])
+
+  const toLat = resolvedCoords?.lat ?? toLatProp
+  const toLng = resolvedCoords?.lng ?? toLngProp
 
   useEffect(() => {
     let destroyed = false
@@ -85,6 +107,25 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
           setError("Xarita sozlanmagan (VITE_MAPBOX_TOKEN yo'q)")
           setLoading(false)
           return
+        }
+
+        // Agar koordinatalar yo'q bo'lsa, manzildan geocoding qilamiz
+        if (!toLat || !toLng) {
+          if (toAddress) {
+            const geocoded = await geocodeAddress(toAddress)
+            if (!destroyed && geocoded) {
+              setResolvedCoords(geocoded)
+              return  // useEffect qayta ishlaydi resolvedCoords o'zgarganda
+            } else if (!destroyed) {
+              setError(`"${toAddress}" manzili xaritada topilmadi. Aniqroq manzil kiriting.`)
+              setLoading(false)
+              return
+            }
+          } else {
+            setError("Manzil yoki koordinatalar kiritilmagan.")
+            setLoading(false)
+            return
+          }
         }
 
         // CSS ni <link> orqali yuklaymiz
@@ -310,7 +351,7 @@ export function MapboxNavigator({ toLat, toLng, toAddress, isFarm = false, onClo
       if (mapRef.current) { mapRef.current.remove(); mapRef.current = null }
       window.speechSynthesis?.cancel()
     }
-  }, [toLat, toLng, isFarm])
+  }, [toLat, toLng, isFarm, resolvedCoords])
 
   const handleZoom = (direction) => {
     const map = mapRef.current

@@ -6,9 +6,10 @@ import { useAuthStore } from '../../store/authStore.js'
 import { OrderTimeline } from '../../components/orders/OrderTimeline.jsx'
 import { Pagination } from '../../components/common/Pagination.jsx'
 import { ReviewModal } from '../../components/common/ReviewModal.jsx'
+import { MapboxNavigator } from '../../components/common/MapboxNavigator.jsx'
 import { formatCurrency } from '../../utils/formatters.js'
 import { useState } from 'react'
-import { Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp, Star } from 'lucide-react'
+import { Navigation, Filter, CheckSquare, Square, Users, ChevronDown, ChevronUp, Star } from 'lucide-react'
 import { useT } from '../../store/i18nStore.js'
 
 function useStatusLabels() {
@@ -73,6 +74,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const [checkedIds, setCheckedIds] = useState([])
   const [showBatchPanel, setShowBatchPanel] = useState(false)
   const [reviewOrder, setReviewOrder] = useState(null)
+  const [navTarget, setNavTarget] = useState(null)
 
   const isAdmin = user?.role === 'admin' || user?.role === 'super-admin' || user?.role === 'manager'
 
@@ -217,13 +219,34 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       </div>
     )
 
-    if (role === 'customer' && status === 'IN_TRANSIT') return (
-      <div className="pt-4 border-t border-slate-200 dark:border-white/10">
-        <button className="primary-button w-full text-base py-3 !bg-emerald-600 hover:!bg-emerald-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })} disabled={driverStatusMutation.isPending}>
-          {driverStatusMutation.isPending ? 'Saqlanmoqda...' : '✅ Buyurtmani qabul qildim'}
-        </button>
-      </div>
-    )
+    if (role === 'customer' && status === 'IN_TRANSIT') {
+      const deliveryCoords = selected.delivery_coords
+        ? (() => {
+            const parts = String(selected.delivery_coords).split(',').map(Number)
+            return parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])
+              ? { lat: parts[0], lng: parts[1] } : null
+          })()
+        : (selected.delivery_lat && selected.delivery_lng)
+          ? { lat: Number(selected.delivery_lat), lng: Number(selected.delivery_lng) }
+          : null
+
+      return (
+        <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
+          {deliveryCoords && (
+            <button
+              className="primary-button w-full flex items-center justify-center gap-2 !bg-cyan-600 hover:!bg-cyan-700"
+              onClick={() => setNavTarget({ lat: deliveryCoords.lat, lng: deliveryCoords.lng, address: selected.delivery_address })}
+            >
+              <Navigation className="h-4 w-4" />
+              📍 Yetkazish manzilini ko'rish (xaritada)
+            </button>
+          )}
+          <button className="primary-button w-full text-base py-3 !bg-emerald-600 hover:!bg-emerald-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })} disabled={driverStatusMutation.isPending}>
+            {driverStatusMutation.isPending ? 'Saqlanmoqda...' : '✅ Buyurtmani qabul qildim'}
+          </button>
+        </div>
+      )
+    }
 
     if (role === 'customer' && status === 'DELIVERED') return (
       <div className="pt-4 border-t border-slate-200 dark:border-white/10">
@@ -283,6 +306,15 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
 
   return (
     <div className="space-y-6">
+      {navTarget && (
+        <MapboxNavigator
+          toLat={navTarget.lat}
+          toLng={navTarget.lng}
+          toAddress={navTarget.address}
+          isFarm={false}
+          onClose={() => setNavTarget(null)}
+        />
+      )}
       {reviewOrder && (
         <ReviewModal
           open={!!reviewOrder}

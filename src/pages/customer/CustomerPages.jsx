@@ -18,7 +18,7 @@ export function CustomerFishCatalog() { return <CatalogPage /> }
 export function CustomerProductDetail() { return <ProductDetailPage /> }
 export function CustomerCart() { return <CartPage /> }
 export function CustomerOrders() { return <OrdersPage title="Buyurtmalarim" /> }
-export function CustomerChat() { return <ChatPage title="Mijoz chat" /> }
+export function CustomerChat() { return <ChatPage title="Mijoz chat" role="customer" /> }
 export function CustomerProfile() { return <ProfilePage /> }
 export function CustomerSettings() { return <SettingsPage /> }
 

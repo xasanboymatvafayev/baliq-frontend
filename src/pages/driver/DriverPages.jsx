@@ -19,7 +19,7 @@ export function DriverDashboard() {
   return <DashboardPage title="Haydovchi Dashboard" subtitle="Biriktirilgan buyurtmalar, jonli tracking va mijoz/ferma chatlari." />
 }
 export function DriverLiveTracking() { return <GpsMonitoringPage /> }
-export function DriverChat() { return <ChatPage title="Haydovchi chat" /> }
+export function DriverChat() { return <ChatPage title="Haydovchi chat" role="driver" /> }
 export function DriverProfile() { return <ProfilePage /> }
 export function DriverSettings() { return <SettingsPage /> }
 
@@ -123,12 +123,6 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
     const farmAddressRaw = order.farm?.farmAddress || order.farm?.location || order.farm_address || ''
     const farmAddress = farmAddressRaw && farmAddressRaw !== farmName ? farmAddressRaw : ''
 
-    const navTarget = farmCoords
-      ? `https://www.google.com/maps/dir/?api=1&destination=${farmCoords.lat},${farmCoords.lng}`
-      : farmAddress
-        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farmAddress)}`
-        : null
-
     return (
       <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/10">
         <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">
@@ -142,19 +136,17 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
             <Navigation className="h-4 w-4" />
             🚜 Fermaga navigatsiya
           </button>
-        ) : navTarget ? (
-          <a
-            href={navTarget}
-            target="_blank"
-            rel="noopener noreferrer"
+        ) : farmAddress ? (
+          <button
             className="primary-button w-full flex items-center justify-center gap-2"
+            onClick={() => onOpenNav(null, null, farmAddress, true)}
           >
             <Navigation className="h-4 w-4" />
-            🚜 Fermaga yo'l ko'rsatish
-          </a>
+            🚜 Fermaga navigatsiya ({farmAddress.slice(0, 30)}{farmAddress.length > 30 ? '...' : ''})
+          </button>
         ) : (
           <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-700 dark:text-amber-300">
-            Ferma manzili yoki koordinatalari mavjud emas. Iltimos, administratorga murojaat qiling.
+            Ferma manzili kiritilmagan. Iltimos, ferma egasiga murojaat qiling.
           </div>
         )}
       </div>

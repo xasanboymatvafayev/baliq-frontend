@@ -82,7 +82,7 @@ function MessageBubble({ msg, isMe, showAvatar }) {
   )
 }
 
-export function ChatInterface() {
+export function ChatInterface({ role }) {
   const token = useAuthStore((s) => s.token)
   const user = useAuthStore((s) => s.user)
   const { activeChatId, setActiveChatId } = useChatStore()
@@ -199,9 +199,22 @@ export function ChatInterface() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
   }
 
-  const filteredRooms = rooms.filter((r) =>
-    r.name?.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const ROLE_LABELS = {
+    customer: ['mijoz', 'customer', 'buyurtma'],
+    driver: ['haydovchi', 'driver', 'yetkazish'],
+    'farm-owner': ['ferma', 'farm', 'fermer'],
+  }
+
+  const filteredRooms = rooms.filter((r) => {
+    const matchSearch = r.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    if (!matchSearch) return false
+    if (!role) return true
+    if (r.type && r.type === role) return true
+    if (r.room_type && r.room_type === role) return true
+    const keywords = ROLE_LABELS[role] || []
+    const nameLower = (r.name || '').toLowerCase()
+    return keywords.some((kw) => nameLower.includes(kw))
+  })
   const activeRoom = rooms.find((r) => r.id === activeChatId)
 
   return (

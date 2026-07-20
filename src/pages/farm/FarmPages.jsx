@@ -370,8 +370,7 @@ export function FarmOrders() {
   const t = useT()
   return <OrdersPage title="Ferma buyurtmalari" /> }
 export function FarmChat() {
-  const t = useT()
-  return <ChatPage title="Ferma chat" /> }
+  return <ChatPage title="Ferma chat" role="farm-owner" /> }
 export function FarmProfile() {
   const t = useT()
   return <ProfilePage /> }
