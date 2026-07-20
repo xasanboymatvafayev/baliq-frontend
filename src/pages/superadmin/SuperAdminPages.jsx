@@ -296,12 +296,49 @@ export function SystemSettings() {
   const pushToast = useToastStore((s) => s.pushToast)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [clearing, setClearing] = useState(false)
+  const [selectedCollections, setSelectedCollections] = useState([])
+  const [clearResult, setClearResult] = useState(null)
+
+  const { data: clearableData } = useQuery({
+    queryKey: ['clearable-collections'],
+    queryFn: () => httpClient.get('/settings/clearable-collections'),
+  })
+  const allCollections = clearableData?.collections || []
+
+  const toggleCollection = (name) => {
+    setSelectedCollections((prev) =>
+      prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name]
+    )
+  }
+
+  const toggleCategory = (category) => {
+    const inCat = allCollections.filter((c) => c.category === category).map((c) => c.name)
+    const allSelected = inCat.every((n) => selectedCollections.includes(n))
+    setSelectedCollections((prev) =>
+      allSelected
+        ? prev.filter((n) => !inCat.includes(n))
+        : Array.from(new Set([...prev, ...inCat]))
+    )
+  }
+
+  const selectAll = () => setSelectedCollections(allCollections.map((c) => c.name))
+  const deselectAll = () => setSelectedCollections([])
+
+  const categories = Array.from(new Set(allCollections.map((c) => c.category)))
 
   const handleClearDatabase = async () => {
+    if (selectedCollections.length === 0) {
+      pushToast({ title: 'Hech narsa tanlanmadi!', variant: 'error' })
+      return
+    }
     setClearing(true)
+    setClearResult(null)
     try {
-      const res = await httpClient.delete('/settings/clear-database')
+      const res = await httpClient.delete('/settings/clear-database', {
+        data: { collections: selectedCollections },
+      })
       pushToast({ title: res.message || 'Baza tozalandi!', variant: 'success' })
+      setClearResult(res)
       setShowClearConfirm(false)
     } catch (err) {
       pushToast({ title: err.message, variant: 'error' })
@@ -312,14 +349,6 @@ export function SystemSettings() {
 
   return (
     <div className="space-y-6">
-      <ConfirmModal
-        open={showClearConfirm}
-        title="Bazani tozalash"
-        description="DIQQAT! Bu amal barcha ferma, haydovchi, buyurtma va foydalanuvchi ma'lumotlarini o'chirib yuboradi. Faqat Super-Admin akkaunti saqlanib qoladi. Bu amalni BEKOR QILIB BO'LMAYDI!"
-        danger
-        onConfirm={handleClearDatabase}
-        onCancel={() => setShowClearConfirm(false)}
-      />
       <SettingsPage title="Tizim sozlamalari" />
       <div className="glass-card border border-rose-200 dark:border-rose-900/50 p-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -329,19 +358,103 @@ export function SystemSettings() {
               Xavfli zona
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              Barcha ma'lumotlarni o'chirish. Super-admin akkaunti saqlanib qoladi.
+              Bazani tanlab tozalash. Checkbox orqali kerakli jadvallarni tanlang. Super-admin akkaunti har doim saqlanadi.
             </p>
           </div>
           <button
-            className="px-5 py-2.5 rounded-2xl font-bold text-white bg-rose-500 hover:bg-rose-600 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-2xl font-bold text-white bg-rose-500 hover:bg-rose-600 flex items-center gap-2 disabled:opacity-50"
             onClick={() => setShowClearConfirm(true)}
-            disabled={clearing}
+            disabled={clearing || selectedCollections.length === 0}
           >
             <Trash2 className="h-4 w-4" />
-            {clearing ? 'Tozalanmoqda...' : 'Bazani tozalash'}
+            {clearing ? 'Tozalanmoqda...' : `Tozalash (${selectedCollections.length})`}
           </button>
         </div>
+
+        {allCollections.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20" onClick={selectAll}>
+              Hammasini tanlash
+            </button>
+            <button className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/20" onClick={deselectAll}>
+              Hammasini bekor qilish
+            </button>
+          </div>
+        )}
+
+        <div className="mt-4 space-y-4">
+          {categories.map((cat) => {
+            const items = allCollections.filter((c) => c.category === cat)
+            const allSelected = items.every((c) => selectedCollections.includes(c.name))
+            const someSelected = items.some((c) => selectedCollections.includes(c.name))
+            return (
+              <div key={cat} className="rounded-2xl border border-slate-200 dark:border-white/10 overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-2.5 bg-slate-50 dark:bg-white/5">
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    ref={(el) => el && (el.indeterminate = !allSelected && someSelected)}
+                    onChange={() => toggleCategory(cat)}
+                    className="h-4 w-4 rounded accent-rose-500"
+                  />
+                  <h4 className="font-bold text-sm">{cat}</h4>
+                  <span className="text-xs text-slate-400">({items.length})</span>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 p-3">
+                  {items.map((c) => (
+                    <label
+                      key={c.name}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer border transition ${
+                        selectedCollections.includes(c.name)
+                          ? 'border-rose-300 bg-rose-50 dark:bg-rose-900/20 dark:border-rose-700'
+                          : 'border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedCollections.includes(c.name)}
+                        onChange={() => toggleCollection(c.name)}
+                        className="h-4 w-4 rounded accent-rose-500"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold truncate">{c.label}</div>
+                        <div className="text-[10px] font-mono text-slate-400">{c.name}</div>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+
+        {clearResult && (
+          <div className="mt-4 rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 p-4">
+            <h4 className="font-bold text-emerald-700 dark:text-emerald-300 mb-2">Tozalash natijasi:</h4>
+            <div className="grid gap-1.5 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+              {clearResult.cleared?.map((r) => (
+                <div key={r.collection} className="flex justify-between gap-2 px-2 py-1 rounded bg-white/50 dark:bg-white/5">
+                  <span className="font-mono text-slate-600 dark:text-slate-300">{r.collection}</span>
+                  {r.error ? (
+                    <span className="text-rose-500">xato</span>
+                  ) : (
+                    <span className="font-bold text-emerald-600">{r.deleted} o'chirildi</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
+
+      <ConfirmModal
+        open={showClearConfirm}
+        title="Bazani tozalash"
+        description={`DIQQAT! Siz ${selectedCollections.length} ta jadvalni o'chirmoqchisiz. Bu amal tanlangan ma'lumotlarni butunlay o'chirib yuboradi va BEKOR QILIB BO'LMAYDI!`}
+        danger
+        onConfirm={handleClearDatabase}
+        onCancel={() => setShowClearConfirm(false)}
+      />
     </div>
   )
 }
