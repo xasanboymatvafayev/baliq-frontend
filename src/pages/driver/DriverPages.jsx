@@ -37,8 +37,8 @@ function distanceKm(lat1, lng1, lat2, lng2) {
 // ─── Koordinatni parse qilish ────────────────────────────────────
 function parseCoords(coords) {
   if (!coords) return null
-  const parts = String(coords).split(',').map(Number)
-  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+  const parts = String(coords).trim().split(/\s*,\s*/).map(Number)
+  if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[0] !== 0 && parts[1] !== 0) {
     return { lat: parts[0], lng: parts[1] }
   }
   return null
