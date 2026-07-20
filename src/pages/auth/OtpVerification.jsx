@@ -147,7 +147,14 @@ export function OtpVerification() {
         if (location.state?.pendingFarm) {
           const farmData = JSON.parse(localStorage.getItem('pending-farm-registration') || '{}')
           if (farmData.farmName) {
-            try { await httpClient.post('/farms', farmData); localStorage.removeItem('pending-farm-registration') } catch { /* ignore */ }
+            try {
+              await httpClient.post('/farms', farmData)
+              localStorage.removeItem('pending-farm-registration')
+            } catch (farmErr) {
+              // Xatoni log qilamiz lekin foydalanuvchini to'xtatmaymiz
+              console.error('[Farm create error]', farmErr?.message)
+              pushToast({ title: `Ferma so'rovi yuborishda xatolik: ${farmErr?.message || 'Internet muammosi'}. Keyinroq qayta urinib ko'ring.`, variant: 'error' })
+            }
           }
           pushToast({ title: t.lang === 'ru' ? 'Заявка отправлена!' : "So'rovingiz adminga yuborildi!", variant: 'success' })
           useAuthStore.getState().logout()

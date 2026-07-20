@@ -294,7 +294,12 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
             const now = Date.now()
             if (now - lastSentRef.current > 3000) {
               lastSentRef.current = now
-              const token = (() => { try { return JSON.parse(localStorage.getItem('auth-storage') || '{}')?.state?.token } catch { return null } })()
+              const token = (() => {
+              try {
+                const raw = localStorage.getItem('baliq-auth-session') || sessionStorage.getItem('baliq-auth-session')
+                return raw ? JSON.parse(raw)?.token : null
+              } catch { return null }
+            })()
               if (token) {
                 fetch(`${import.meta.env.VITE_API_BASE_URL || '/api'}/drivers/location`, {
                   method: 'POST',
