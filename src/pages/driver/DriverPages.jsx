@@ -120,7 +120,14 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
 
   if (status === 'DRIVER_ASSIGNED') {
     const farmName = order.farm?.farmName || order.farm_name || 'Ferma'
-    const farmAddress = order.farm?.farmAddress || order.farm?.location || order.farm_address || farmName
+    const farmAddressRaw = order.farm?.farmAddress || order.farm?.location || order.farm_address || ''
+    const farmAddress = farmAddressRaw && farmAddressRaw !== farmName ? farmAddressRaw : ''
+
+    const navTarget = farmCoords
+      ? `https://www.google.com/maps/dir/?api=1&destination=${farmCoords.lat},${farmCoords.lng}`
+      : farmAddress
+        ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farmAddress)}`
+        : null
 
     return (
       <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/10">
@@ -135,9 +142,9 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
             <Navigation className="h-4 w-4" />
             🚜 Fermaga navigatsiya
           </button>
-        ) : (
+        ) : navTarget ? (
           <a
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(farmAddress)}`}
+            href={navTarget}
             target="_blank"
             rel="noopener noreferrer"
             className="primary-button w-full flex items-center justify-center gap-2"
@@ -145,6 +152,10 @@ function DriverActions({ order, orders, onStatusChange, loading, myPosition, onO
             <Navigation className="h-4 w-4" />
             🚜 Fermaga yo'l ko'rsatish
           </a>
+        ) : (
+          <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-700 dark:text-amber-300">
+            Ferma manzili yoki koordinatalari mavjud emas. Iltimos, administratorga murojaat qiling.
+          </div>
         )}
       </div>
     )
