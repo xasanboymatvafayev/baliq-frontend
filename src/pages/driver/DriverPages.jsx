@@ -276,10 +276,36 @@ export function DriverOrders() {
     enabled: !!selected?.id,
   })
 
-  // Ro'yxat ma'lumotlari bilan detail ma'lumotlarni birlashtirish
-  const enrichedSelected = selected
+  // Agar farm ma'lumoti yetarli bo'lmasa, to'g'ridan farm API dan olish
+  const farmId = selected?.farm_id
+  const rawEnriched = selected
     ? { ...selected, ...(selectedDetail?.data || selectedDetail || {}) }
     : null
+  const hasFarmGps = !!(
+    parseCoords(rawEnriched?.farm?.gpsLocation) ||
+    parseCoords(rawEnriched?.farm_gps) ||
+    rawEnriched?.farm?.region
+  )
+  const { data: farmDetail } = useQuery({
+    queryKey: ['farm-detail', farmId],
+    queryFn: () => httpClient.get(`/farms/${farmId}`),
+    enabled: !!farmId && !hasFarmGps && !!selected,
+  })
+
+  // Ro'yxat ma'lumotlari bilan detail ma'lumotlarni birlashtirish
+  const enrichedSelected = rawEnriched && farmDetail
+    ? {
+        ...rawEnriched,
+        farm: {
+          ...(rawEnriched.farm || {}),
+          farmName: rawEnriched.farm?.farmName || farmDetail?.farmName || farmDetail?.data?.farmName || '',
+          gpsLocation: rawEnriched.farm?.gpsLocation || farmDetail?.gpsLocation || farmDetail?.data?.gpsLocation || '',
+          region: rawEnriched.farm?.region || farmDetail?.region || farmDetail?.data?.region || '',
+          district: rawEnriched.farm?.district || farmDetail?.district || farmDetail?.data?.district || '',
+          farmAddress: rawEnriched.farm?.farmAddress || farmDetail?.farmAddress || farmDetail?.data?.farmAddress || '',
+        },
+      }
+    : rawEnriched
 
   const orders = (ordersRaw?.data || ordersRaw || []).filter(
     (o) => ['DRIVER_ASSIGNED', 'LOADING', 'IN_TRANSIT'].includes(o.status)
