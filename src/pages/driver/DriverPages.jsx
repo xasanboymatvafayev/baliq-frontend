@@ -282,9 +282,10 @@ export function DriverOrders() {
   })
 
   // Agar farm ma'lumoti yetarli bo'lmasa, to'g'ridan farm API dan olish
-  // farm_id order'da yo'q bo'lsa items ichidan qidiramiz
+  // farm_id order'da yo'q bo'lsa items ichidan qidiramiz (guruhlangan buyurtmalar ham)
   const farmId = selected?.farm_id
     || selected?.items?.[0]?.farm_id
+    || selected?.items?.find?.(o => o?.farm_id)?.farm_id
     || selectedDetail?.farm_id
     || selectedDetail?.items?.[0]?.farm_id
     || selectedDetail?.data?.farm_id
@@ -311,6 +312,7 @@ export function DriverOrders() {
   const enrichedSelected = rawEnriched
     ? {
         ...rawEnriched,
+        farm_id: farmId || rawEnriched.farm_id || null,
         farm: {
           ...(rawEnriched.farm || {}),
           farmName: rawEnriched.farm?.farmName || rawEnriched.farm_name || farmDetail?.farmName || farmDetail?.data?.farmName || '',
