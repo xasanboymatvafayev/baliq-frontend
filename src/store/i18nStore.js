@@ -251,7 +251,7 @@ export const translations = {
     ordersCustomerViewAddr: "📍 Yetkazish manzilini ko'rish (xaritada)",
     ordersPaymentPage: "To'lov sahifasi ochildi ✅", ordersCancelledToast: 'Buyurtma bekor qilindi',
     ordersConfirmedToast: 'Buyurtma tasdiqlandi ✅', ordersRejectedToast: 'Buyurtma rad etildi',
-    ordersStatusLoading: 'Yuklanmoqda 📦', ordersStatusTransit: "Yo'lda 🚚", ordersStatusDelivered: 'Yetkazildi ✅",
+    ordersStatusLoading: 'Yuklanmoqda 📦', ordersStatusTransit: "Yo'lda 🚚", ordersStatusDelivered: 'Yetkazildi ✅',
     ordersStatusUpdated: 'Status yangilandi', ordersWarehouse: 'Ombor:', ordersStockTitle: 'Omborda:',
   },
 
