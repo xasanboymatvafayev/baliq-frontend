@@ -12,18 +12,26 @@ import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { useState } from 'react'
 import { X, MapPin } from 'lucide-react'
 
+import { useT } from '../../store/i18nStore.js'
+
 export function CustomerDashboard() {
-  return <DashboardPage title="Mijoz Dashboard" subtitle="Katalog, savatcha, buyurtmalar va chat holatini bitta oynada kuzating." /> }
+  const t = useT()
+  return <DashboardPage title={t.dashboard} subtitle={t.dashboardSubtitle || ''} /> }
 export function CustomerFishCatalog() { return <CatalogPage /> }
 export function CustomerProductDetail() { return <ProductDetailPage /> }
 export function CustomerCart() { return <CartPage /> }
-export function CustomerOrders() { return <OrdersPage title="Buyurtmalarim" /> }
-export function CustomerChat() { return <ChatPage title="Mijoz chat" role="customer" /> }
+export function CustomerOrders() {
+  const t = useT()
+  return <OrdersPage title={t.myOrders} /> }
+export function CustomerChat() {
+  const t = useT()
+  return <ChatPage title={t.chat} role="customer" /> }
 export function CustomerProfile() { return <ProfilePage /> }
 export function CustomerSettings() { return <SettingsPage /> }
 
 export function CustomerFarms() {
-  usePageTitle("Fermalar ro'yxati")
+  const t = useT()
+  usePageTitle(t.farmsTitle)
   const [selectedFarm, setSelectedFarm] = useState(null)
   const { data: farmsRaw, isLoading } = useQuery({
     queryKey: ['farms'],
@@ -39,6 +47,7 @@ export function CustomerFarms() {
           <div className="glass-card max-w-2xl w-full p-6 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-black">🏡 {selectedFarm.farmName}</h3>
+              {/* (i18n: farm modal) */}
               <button onClick={() => setSelectedFarm(null)} className="p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10">
                 <X className="h-5 w-5" />
               </button>
@@ -53,29 +62,30 @@ export function CustomerFarms() {
             )}
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-bold uppercase text-slate-500">Viloyat</p>
+                <p className="text-xs font-bold uppercase text-slate-500">{t.farmRegion}</p>
                 <p className="font-semibold">{selectedFarm.region}</p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase text-slate-500">Tuman</p>
+                <p className="text-xs font-bold uppercase text-slate-500">{t.farmDistrict}</p>
                 <p className="font-semibold">{selectedFarm.district}</p>
               </div>
               {selectedFarm.gpsLocation && (
                 <div className="sm:col-span-2">
                   <p className="text-xs font-bold uppercase text-slate-500 flex items-center gap-1"><MapPin className="h-3 w-3" /> GPS</p>
+                  {/* (i18n: farm modal gps) */}
                   <p className="font-mono text-sm">{selectedFarm.gpsLocation}</p>
                 </div>
               )}
             </div>
             {selectedFarm.owner_name && (
-              <div className="text-sm text-slate-500">Egasi: <b className="text-slate-700 dark:text-slate-300">{selectedFarm.owner_name}</b></div>
+              <div className="text-sm text-slate-500">{t.farmOwner}: <b className="text-slate-700 dark:text-slate-300">{selectedFarm.owner_name}</b></div>
             )}
           </div>
         </div>
       )}
 
-      <section className="glass-card p-6"><h2 className="text-3xl font-black">Fermalar</h2><p className="mt-2 text-slate-500">Tasdiqlangan fermalar</p></section>
-      {isLoading ? <div className="glass-card h-32 animate-pulse" /> : data.length === 0 ? <div className="glass-card p-12 text-center text-slate-500">Ferma topilmadi</div> : (
+      <section className="glass-card p-6"><h2 className="text-3xl font-black">{t.farmsTitle}</h2><p className="mt-2 text-slate-500">{t.farmsSubtitle}</p></section>
+      {isLoading ? <div className="glass-card h-32 animate-pulse" /> : data.length === 0 ? <div className="glass-card p-12 text-center text-slate-500">{t.farmNotFound}</div> : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((farm) => (
             <div
@@ -89,7 +99,7 @@ export function CustomerFarms() {
               <h3 className="text-lg font-black">{farm.farmName}</h3>
               <p className="mt-1 text-sm text-slate-500">{farm.region}, {farm.district}</p>
               <p className="mt-1 text-xs text-ocean-600">{farm.gpsLocation}</p>
-              <span className="mt-3 inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">APPROVED</span>
+              <span className="mt-3 inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">{t.farmApproved}</span>
             </div>
           ))}
         </div>

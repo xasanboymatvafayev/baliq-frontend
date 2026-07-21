@@ -4,38 +4,46 @@ import { Link } from 'react-router-dom'
 import { Fish, Truck, ShieldCheck, ArrowRight, Star, CheckCircle2, Zap, BarChart3, MessageSquare, MapPin } from 'lucide-react'
 import { ThemeToggle } from '../components/common/ThemeToggle.jsx'
 
-const STATS = [
-  { value: '500+', label: 'Faol ferma' },
-  { value: '12,000+', label: 'Yetkazilgan buyurtma' },
-  { value: '98%', label: 'Muvaffaqiyatli yetkazish' },
-  { value: '4.8 ★', label: "O'rtacha reyting" },
-]
+function useStats() {
+  const t = useT()
+  return [
+    { value: '500+', label: t.statActiveFarms },
+    { value: '12,000+', label: t.statDelivered },
+    { value: '98%', label: t.statSuccess },
+    { value: '4.8 ★', label: t.statRating },
+  ]
+}
 
-const FEATURES = [
-  { icon: Fish, color: 'from-ocean-500 to-cyan-600', title: 'Keng baliq katalogi', desc: "O'zbekiston bo'ylab 50+ baliq turi. Narx, og'irlik, ferma reytingi bilan filtrlash." },
-  { icon: Truck, color: 'from-violet-500 to-purple-700', title: 'Real-time GPS kuzatuv', desc: "Haydovchi qayerdaligini xaritada ko'ring. Yetkazish vaqtini aniq biling." },
-  { icon: ShieldCheck, color: 'from-emerald-500 to-green-700', title: "Xavfsiz to'lov", desc: "Click va Payme orqali onlayn to'lov. Telegram orqali invoice — bir bosish." },
-  { icon: MessageSquare, color: 'from-amber-500 to-orange-600', title: 'Jonli chat', desc: "Ferma, haydovchi va mijoz real-vaqtda muloqot qiladi. Hech narsa yo'qolmaydi." },
-  { icon: BarChart3, color: 'from-rose-500 to-pink-700', title: 'Kuchli analitika', desc: "Sotuv, daromad, mijozlar statistikasi — barchasi bir joyda." },
-  { icon: MapPin, color: 'from-sky-500 to-blue-700', title: "O'zbekiston bo'ylab", desc: "Toshkent, Samarqand, Buxoro va boshqa viloyatlardagi fermalar bilan bog'laning." },
-]
+function useFeatures() {
+  const t = useT()
+  return [
+    { icon: Fish, color: 'from-ocean-500 to-cyan-600', title: t.featCatalogTitle, desc: t.featCatalogDesc },
+    { icon: Truck, color: 'from-violet-500 to-purple-700', title: t.featGpsTitle, desc: t.featGpsDesc },
+    { icon: ShieldCheck, color: 'from-emerald-500 to-green-700', title: t.featPayTitle, desc: t.featPayDesc },
+    { icon: MessageSquare, color: 'from-amber-500 to-orange-600', title: t.featChatTitle, desc: t.featChatDesc },
+    { icon: BarChart3, color: 'from-rose-500 to-pink-700', title: t.featAnalyticsTitle, desc: t.featAnalyticsDesc },
+    { icon: MapPin, color: 'from-sky-500 to-blue-700', title: t.featRegionsTitle, desc: t.featRegionsDesc },
+  ]
+}
 
-const HOW = [
-  { step: '01', title: "Ro'yxatdan o'ting", desc: "Mijoz, fermer yoki haydovchi sifatida tizimga kirish." },
-  { step: '02', title: 'Mahsulot tanlang', desc: "Katalogdan baliq tanlang, ferma reytingini ko'ring." },
-  { step: '03', title: 'Buyurtma bering', desc: "Click yoki Payme orqali xavfsiz to'lov qiling." },
-  { step: '04', title: 'Eshigingizga yetkaziladi', desc: "GPS bilan kuzating, vaqtida oling." },
-]
+function useHow() {
+  const t = useT()
+  return [
+    { step: '01', title: t.step1Title, desc: t.step1Desc },
+    { step: '02', title: t.step2Title, desc: t.step2Desc },
+    { step: '03', title: t.step3Title, desc: t.step3Desc },
+    { step: '04', title: t.step4Title, desc: t.step4Desc },
+  ]
+}
 
 function useRoles() {
   const t = useT()
   return [
-  { emoji: '🧑‍💼', title: 'Mijoz', color: 'border-ocean-400', bg: 'bg-ocean-50 dark:bg-ocean-950/40', items: ['Baliq katalogi', 'Onlayn buyurtma', 'GPS kuzatuv', 'Chat & support'] },
-  { emoji: '🏡', title: 'Fermer', color: 'border-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40', items: ['Mahsulot boshqaruv', 'Buyurtmalar paneli', "Balans & to'lovlar", 'Hisobotlar'] },
-  { emoji: '🚚', title: 'Haydovchi', color: 'border-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/40', items: ["Buyurtmalar ro'yxati", 'GPS navigatsiya', 'Status yangilash', 'Daromad hisobi'] },
-]
+    { emoji: '🧑‍💼', title: t.roleCustomer, color: 'border-ocean-400', bg: 'bg-ocean-50 dark:bg-ocean-950/40', items: t.roleCustomerItems.split(',') },
+    { emoji: '🏡', title: t.roleFarmOwner, color: 'border-emerald-400', bg: 'bg-emerald-50 dark:bg-emerald-950/40', items: t.roleFarmerItems.split(',') },
+    { emoji: '🚚', title: t.roleDriver, color: 'border-violet-400', bg: 'bg-violet-50 dark:bg-violet-950/40', items: t.roleDriverItems.split(',') },
+  ]
 }
-
 
 function useInView(threshold = 0.15) {
   const ref = useRef(null)
@@ -77,6 +85,11 @@ export function LandingPage() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  const STATS = useStats()
+  const FEATURES = useFeatures()
+  const HOW = useHow()
+  const ROLES = useRoles()
+
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 overflow-x-hidden">
 
@@ -87,13 +100,13 @@ export function LandingPage() {
             <span className="rounded-2xl bg-ocean-600 p-2.5 text-white shadow-glow">
               <Fish className="h-5 w-5" />
             </span>
-            Baliq Savdosi
+            {t.brandName}
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle />
             <Link to="/login" className="secondary-button hidden sm:inline-flex">{t.login}</Link>
             <Link to="/login" className="primary-button">
-              Boshlash <ArrowRight className="h-4 w-4" />
+              {t.startBtn} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -114,38 +127,37 @@ export function LandingPage() {
           }}
         >
           <span className="inline-flex items-center gap-2 rounded-full border border-ocean-200 dark:border-ocean-800 bg-ocean-50 dark:bg-ocean-950/60 px-4 py-1.5 text-sm font-bold text-ocean-700 dark:text-ocean-300 mb-6">
-            <Zap className="h-3.5 w-3.5" /> O'zbekistoning #1 baliq savdo platformasi
+            <Zap className="h-3.5 w-3.5" /> {t.heroBadge}
           </span>
 
           <h1 className="text-5xl sm:text-7xl font-black leading-tight max-w-4xl mx-auto">
-            Toza baliq —{' '}
-            <span className="bg-gradient-to-r from-ocean-600 to-cyan-500 bg-clip-text text-transparent">fermadan</span>{' '}
-            to eshigingizga
+            {t.heroTitle1}{' '}
+            <span className="bg-gradient-to-r from-ocean-600 to-cyan-500 bg-clip-text text-transparent">{t.heroTitleAccent}</span>{' '}
+            {t.heroTitle2}
           </h1>
           <p className="mt-6 text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Fermerlar, haydovchilar va mijozlarni bir platformada birlashtiruvchi zamonaviy tizim.
-            GPS kuzatuv, onlayn to'lov va real-vaqt chat.
+            {t.heroDesc}
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-4">
             <Link
               to="/login"
               className="primary-button text-base px-8 py-3.5 shadow-xl shadow-ocean-500/30 hover:shadow-ocean-500/50 hover:scale-105 transition-all"
             >
-              Bepul boshlash <ArrowRight className="h-4 w-4" />
+              {t.freeStart} <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
               to="/farm-registration"
               className="secondary-button text-base px-8 py-3.5 hover:scale-105 transition-all"
             >
-              🏡 Ferma qo'shish
+              {t.addFarm}
             </Link>
           </div>
 
           {/* Trust badges */}
           <div className="mt-10 flex flex-wrap justify-center gap-6 text-xs text-slate-400 font-medium">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Bepul ro'yxatdan o'tish</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Xavfsiz to'lov</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> 24/7 qo'llab-quvvatlash</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> {t.trustFree}</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> {t.trustSecure}</span>
+            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> {t.trustSupport}</span>
           </div>
         </div>
       </section>
@@ -165,8 +177,8 @@ export function LandingPage() {
       {/* ── Features ── */}
       <section className="mx-auto max-w-7xl px-5 py-16">
         <AnimSection className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-black">Nima uchun Baliq Savdosi?</h2>
-          <p className="mt-3 text-slate-500">Hamma narsani bir joyda boshqaring</p>
+          <h2 className="text-3xl sm:text-4xl font-black">{t.whyTitle}</h2>
+          <p className="mt-3 text-slate-500">{t.whyDesc}</p>
         </AnimSection>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map(({ icon: Icon, color, title, desc }, i) => (
@@ -187,8 +199,8 @@ export function LandingPage() {
       <section className="bg-white dark:bg-slate-900/50 py-20">
         <div className="mx-auto max-w-7xl px-5">
           <AnimSection className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-black">Qanday ishlaydi?</h2>
-            <p className="mt-3 text-slate-500">4 qadamda toza baliq eshigingizga</p>
+            <h2 className="text-3xl sm:text-4xl font-black">{t.howTitle}</h2>
+            <p className="mt-3 text-slate-500">{t.howDesc}</p>
           </AnimSection>
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4 relative">
             {HOW.map(({ step, title, desc }, i) => (
@@ -210,11 +222,11 @@ export function LandingPage() {
       {/* ── Roles ── */}
       <section className="mx-auto max-w-7xl px-5 py-20">
         <AnimSection className="text-center mb-12">
-          <h2 className="text-3xl sm:text-4xl font-black">Kimlar foydalanadi?</h2>
-          <p className="mt-3 text-slate-500">Har bir foydalanuvchi uchun alohida panel</p>
+          <h2 className="text-3xl sm:text-4xl font-black">{t.rolesTitle}</h2>
+          <p className="mt-3 text-slate-500">{t.rolesDesc}</p>
         </AnimSection>
         <div className="grid gap-6 sm:grid-cols-3">
-          {useRoles().map(({ emoji, title, color, bg, items }, i) => (
+          {ROLES.map(({ emoji, title, color, bg, items }, i) => (
             <AnimSection key={title} delay={i * 100}>
               <div className={`rounded-3xl border-2 ${color} ${bg} p-6 h-full hover:shadow-xl transition-all duration-300 hover:-translate-y-1`}>
                 <div className="text-4xl mb-3 animate-float" style={{ animationDelay: `${i * 0.5}s` }}>{emoji}</div>
@@ -239,17 +251,16 @@ export function LandingPage() {
           <div className="absolute right-0 top-0 h-64 w-64 rounded-full bg-ocean-400/20 blur-3xl -z-10 animate-pulse-soft" />
           <div className="absolute left-0 bottom-0 h-48 w-48 rounded-full bg-violet-400/15 blur-3xl -z-10 animate-float" />
           <div className="text-5xl mb-4 animate-float">🐟</div>
-          <h2 className="text-3xl sm:text-4xl font-black">Bugun boshlang</h2>
+          <h2 className="text-3xl sm:text-4xl font-black">{t.ctaTitle}</h2>
           <p className="mt-3 text-slate-500 max-w-xl mx-auto leading-relaxed">
-            Ferma sifatida ro'yxatdan o'ting yoki mijoz sifatida birinchi buyurtmangizni bering.
-            Ro'yxatdan o'tish bepul va 2 daqiqa oladi.
+            {t.ctaDesc}
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Link to="/login" className="primary-button text-base px-10 py-3.5 shadow-xl shadow-ocean-500/30 hover:scale-105 transition-all">
-              Hoziroq kirish <ArrowRight className="h-4 w-4" />
+              {t.ctaLogin} <ArrowRight className="h-4 w-4" />
             </Link>
             <Link to="/farm-registration" className="secondary-button text-base px-8 py-3.5 hover:scale-105 transition-all">
-              Ferma bo'lib qo'shiling
+              {t.ctaJoinFarm}
             </Link>
           </div>
         </div>
@@ -262,12 +273,12 @@ export function LandingPage() {
             <span className="rounded-xl bg-ocean-600 p-2 text-white">
               <Fish className="h-4 w-4" />
             </span>
-            Baliq Savdosi
+            {t.brandName}
           </Link>
-          <p className="text-xs text-slate-400">© 2026 Baliq Savdosi. Barcha huquqlar himoyalangan.</p>
+          <p className="text-xs text-slate-400">{t.footerCopyright}</p>
           <div className="flex items-center gap-1 text-xs text-slate-400">
             <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400" />
-            <span>O'zbekiston, 2026</span>
+            <span>{t.footerCountry}</span>
           </div>
         </div>
       </footer>

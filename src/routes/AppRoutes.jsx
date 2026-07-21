@@ -50,9 +50,11 @@ import {
   adminNavigation, customerNavigation, driverNavigation,
   farmNavigation, managerNavigation, superAdminNavigation,
 } from './navigation.js'
+import { useT } from '../store/i18nStore.js'
 
 export function AppRoutes() {
   const location = useLocation()
+  const t = useT()
   return (
     <Routes location={location} key={location.pathname}>
       {/* Ochiq sahifalar */}
@@ -73,7 +75,7 @@ export function AppRoutes() {
       {/* Himoyalangan sahifalar */}
       <Route path="/customer" element={
         <ProtectedRoute>
-          <DashboardLayout navigation={customerNavigation} title="Mijoz paneli" />
+          <DashboardLayout navigation={customerNavigation} title={t.customerPanelTitle} />
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -92,7 +94,7 @@ export function AppRoutes() {
 
       <Route path="/farm" element={
         <ProtectedRoute>
-          <DashboardLayout navigation={farmNavigation} title="Ferma paneli" />
+          <DashboardLayout navigation={farmNavigation} title={t.farmPanelTitle} />
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -110,7 +112,7 @@ export function AppRoutes() {
 
       <Route path="/driver" element={
         <ProtectedRoute>
-          <DashboardLayout navigation={driverNavigation} title="Haydovchi paneli" />
+          <DashboardLayout navigation={driverNavigation} title={t.driverPanelTitle} />
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -124,7 +126,7 @@ export function AppRoutes() {
 
       <Route path="/admin" element={
         <ProtectedRoute>
-          <DashboardLayout navigation={adminNavigation} title="Admin paneli" />
+          <DashboardLayout navigation={adminNavigation} title={t.adminPanelTitle} />
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -147,7 +149,7 @@ export function AppRoutes() {
 
       <Route path="/manager" element={
         <ProtectedRoute>
-          <DashboardLayout navigation={managerNavigation} title="Menejer paneli" />
+          <DashboardLayout navigation={managerNavigation} title={t.managerPanelTitle} />
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="dashboard" replace />} />
@@ -162,7 +164,7 @@ export function AppRoutes() {
 
       <Route path="/super-admin" element={
         <ProtectedRoute>
-          <DashboardLayout navigation={superAdminNavigation} title="Super Admin" />
+          <DashboardLayout navigation={superAdminNavigation} title={t.superAdminPanelTitle} />
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="system-statistics" replace />} />

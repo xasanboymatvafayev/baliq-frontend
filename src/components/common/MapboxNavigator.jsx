@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { Navigation, X, Volume2, VolumeX, Loader2, CheckCircle2, Plus, Minus, Maximize2 } from 'lucide-react'
+import { useT } from '../../store/i18nStore.js'
 
 const MAPBOX_TOKEN = import.meta.env.VITE_MAPBOX_TOKEN || ''
 
@@ -72,6 +73,7 @@ async function geocodeAddress(address) {
 }
 
 export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress, isFarm = false, onClose, onArrivalConfirm }) {
+  const t = useT()
   const mapContainer = useRef(null)
   const mapRef       = useRef(null)
   const markerRef    = useRef(null)
@@ -117,12 +119,12 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
               setResolvedCoords(geocoded)
               return  // useEffect qayta ishlaydi resolvedCoords o'zgarganda
             } else if (!destroyed) {
-              setError(`"${toAddress}" manzili xaritada topilmadi. Aniqroq manzil kiriting.`)
+              setError(`"${toAddress}" ${t.navAddressNotFound}`)
               setLoading(false)
               return
             }
           } else {
-            setError("Manzil yoki koordinatalar kiritilmagan.")
+            setError(t.navNoAddress)
             setLoading(false)
             return
           }
@@ -146,7 +148,7 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
           const existing = document.getElementById('mapbox-gl-script')
           if (existing) {
             existing.addEventListener('load', () => resolve(window.mapboxgl))
-            existing.addEventListener('error', () => reject(new Error("Mapbox skripti yuklanmadi")))
+            existing.addEventListener('error', () => reject(new Error(t.navMapScriptError)))
             return
           }
           const script = document.createElement('script')
@@ -155,7 +157,7 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
           script.async = true
           script.onload = () => {
             if (window.mapboxgl) resolve(window.mapboxgl)
-            else reject(new Error("Mapbox global obyekt topilmadi"))
+            else reject(new Error(t.navMapGlobalError))
           }
           script.onerror = () => reject(new Error("Mapbox skripti yuklanmadi - internetni tekshiring"))
           document.head.appendChild(script)
@@ -163,7 +165,7 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
 
         if (destroyed || !mapContainer.current) return
         if (!mapboxgl || typeof mapboxgl.Map !== 'function') {
-          throw new Error("Mapbox kutubxonasi noto'g'ri yuklandi")
+          throw new Error(t.navMapInvalidLoad)
         }
 
         mapboxgl.accessToken = MAPBOX_TOKEN
@@ -227,7 +229,7 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
         // Agar style/load 10 soniyada kelmasa - xato ko'rsatamiz
         const loadTimeout = setTimeout(() => {
           if (!destroyed && !loadedRef.current) {
-            setError("Xarita yuklanmadi. Internet aloqasini tekshiring yoki qayta urinib ko'ring.")
+            setError(t.navMapError)
             setLoading(false)
           }
         }, 10000)
@@ -261,13 +263,13 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
 
           if (noGps) {
             // GPS yo'q — xarita ochiq, faqat banner ko'rsatiladi
-            setGpsWarning("📍 GPS aniqlanmadi — xaritada faqat manzil ko'rsatilmoqda")
+            setGpsWarning(t.navGpsWarning)
           } else if (routeData) {
             const firstStep = translate(routeData.legs[0]?.steps[0]?.maneuver?.instruction || '')
             if (firstStep && soundRef.current) speak(firstStep)
           }
           } catch (e) {
-            setError("Xarita yuklashda xato yuz berdi.")
+            setError(t.navMapLoadError)
           }
         })
 
@@ -275,7 +277,7 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
           if (!loadedRef.current) {
             clearTimeout(loadTimeout)
             if (!destroyed) {
-              setError("Xaritada xato yuz berdi. Qayta urinib ko'ring.")
+              setError(t.navMapGeneralError)
               setLoading(false)
             }
           }
@@ -316,13 +318,13 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
             // Fermaga 100m
             if (isFarm && d <= 100 && !nearFarm && !confirmed) {
               setNearFarm(true)
-              if (soundRef.current) speak("Fermaga yetib keldingiz! Yukni yuklashni boshlang.")
+              if (soundRef.current) speak(t.navFarmArrivalSpeak)
             }
 
             // Manzilga 50m — yetib keldi
             if (d <= 50 && !arrived) {
               setArrived(true)
-              if (soundRef.current) speak('Manzilga yetib keldingiz!')
+              if (soundRef.current) speak(t.navArrivedSpeak)
             }
 
             // Qadam yangilash
@@ -401,17 +403,17 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             {loading
-              ? <p style={{ color: '#94a3b8', margin: 0, fontSize: 14 }}>GPS va yo'l hisoblanmoqda...</p>
+              ? <p style={{ color: '#94a3b8', margin: 0, fontSize: 14 }}>{t.navCalculating}</p>
               : error
               ? <p style={{ color: '#f87171', margin: 0, fontSize: 14 }}>⚠️ {error}</p>
               : gpsWarning
               ? <p style={{ color: '#fbbf24', margin: 0, fontSize: 13, fontWeight: 700 }}>{gpsWarning}</p>
               : arrived
-              ? <p style={{ color: '#86efac', fontWeight: 900, margin: 0, fontSize: 16 }}>Manzilga yetib keldingiz! 🎉</p>
+              ? <p style={{ color: '#86efac', fontWeight: 900, margin: 0, fontSize: 16 }}>{t.navArrived}</p>
               : nearFarm
-              ? <p style={{ color: '#fcd34d', fontWeight: 900, margin: 0, fontSize: 15 }}>Fermaga 100m yaqin!</p>
+              ? <p style={{ color: '#fcd34d', fontWeight: 900, margin: 0, fontSize: 15 }}>{t.navNearFarm}</p>
               : <p style={{ color: 'white', fontWeight: 800, margin: 0, fontSize: 15, lineHeight: 1.3 }}>
-                  {instr || "Yo'lni boshlang"}
+                  {instr || t.navStart}
                 </p>
             }
             {route && !loading && !arrived && !nearFarm && (
@@ -443,10 +445,10 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
         {route && !loading && (
           <div style={{ display: 'flex', gap: 10, marginTop: 10 }}>
             {[
-              { label: 'Masofa', value: fmtDist(route.distance) },
-              { label: 'Vaqt',   value: fmtTime(route.duration) },
-              { label: 'Qadam',  value: `${currentStep+1}/${steps.length}` },
-              ...(distToTarget != null ? [{ label: 'Qoldi', value: fmtDist(distToTarget) }] : []),
+              {label: t.navDistance, value: fmtDist(route.distance) },
+              { label: t.navTime,   value: fmtTime(route.duration) },
+              { label: t.navStep,  value: `${currentStep+1}/${steps.length}` },
+              ...(distToTarget != null ? [{ label: t.navRemaining, value: fmtDist(distToTarget) }] : []),
             ].map(({ label, value }) => (
               <div key={label} style={{
                 background: 'rgba(255,255,255,0.08)', borderRadius: 8,
@@ -478,10 +480,10 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
               animation: 'pulse 1.5s infinite',
             }}
           >
-            🏡 Fermaga keldim — Yuklashni boshlash
+            {t.navFarmArrival}
           </button>
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 11, textAlign: 'center', marginTop: 6 }}>
-            Status avtomatik "Yuklanmoqda" ga o'tadi
+            {t.navFarmArrivalHint}
           </p>
         </div>
       )}
@@ -559,7 +561,7 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
         }}>
           <div style={{ fontSize: 48 }}>🗺️</div>
           <Loader2 size={36} color="#7c3aed" style={{ animation: 'spin 1s linear infinite' }} />
-          <p style={{ color: '#94a3b8', fontSize: 14 }}>GPS va yo'nalish hisoblanmoqda...</p>
+          <p style={{ color: '#94a3b8', fontSize: 14 }}>{t.navCalculating}</p>
         </div>
       )}
 
@@ -588,7 +590,7 @@ export function MapboxNavigator({ toLat: toLatProp, toLng: toLngProp, toAddress,
                 color: 'white', fontWeight: 800, fontSize: 14, cursor: 'pointer',
               }}
             >
-              Yopish va qayta urinish
+              {t.navCloseRetry}
             </button>
           </div>
         </div>
