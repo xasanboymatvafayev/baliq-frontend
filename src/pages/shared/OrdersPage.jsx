@@ -377,7 +377,7 @@ export function OrdersPage({ title }) {
         <div className="glass-card p-6 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
             <h3 className="text-xl font-bold">{t.ordersTitle || 'Buyurtma'} #{selected.id?.slice(-6)}</h3>
-            <button className="secondary-button" onClick={() => setSelected(null)}>{t.ordersBack}
+            <button className="secondary-button" onClick={() => setSelected(null)}>{t.ordersBack}</button>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 text-sm">
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
@@ -394,7 +394,7 @@ export function OrdersPage({ title }) {
             </div>
           </div>
           {selected.customer_name && <div className="text-sm"><span className="text-slate-500">{t.ordersCustomer}</span> <b>{selected.customer_name}</b></div>}
-          {selected.delivery_address && <div className="text-sm"><span className="text-slate-500">{t.ordersAddress}</span> <b>{selected.delivery_address}</b></div>
+          {selected.delivery_address && <div className="text-sm"><span className="text-slate-500">{t.ordersAddress}</span> <b>{selected.delivery_address}</b></div>}
           {selected.delivery_coords && <div className="text-sm font-mono text-xs text-slate-400">📍 {selected.delivery_coords}</div>}
           <OrderTimeline currentStatus={selected.status} />
           <div className="space-y-2">
