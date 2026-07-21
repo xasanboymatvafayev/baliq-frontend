@@ -11,6 +11,7 @@ import { CardSkeleton } from '../../components/common/LoadingSkeleton.jsx'
 import { useT } from '../../store/i18nStore.js'
 
 function StarRating({ rating = 0, count = 0 }) {
+  const t = useT()
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map(s => (
@@ -18,7 +19,7 @@ function StarRating({ rating = 0, count = 0 }) {
           className={s <= Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'fill-transparent text-slate-200 dark:text-white/10'} />
       ))}
       <span className="text-[11px] font-medium text-slate-400 ml-0.5">
-        {rating > 0 ? rating.toFixed(1) : 'Yangi'}{count > 0 && ` (${count})`}
+        {rating > 0 ? rating.toFixed(1) : t.newBadge}{count > 0 && ` (${count})`}
       </span>
     </div>
   )
@@ -51,13 +52,13 @@ function FishCard({ fish, onAdd, onDetail }) {
         <div className="absolute top-2.5 left-2.5 flex items-center gap-1 rounded-full border border-amber-200/80 dark:border-amber-700/50 bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-1">
           <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
           <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400">
-            {rating > 0 ? rating.toFixed(1) : 'Yangi'}
+            {rating > 0 ? rating.toFixed(1) : t.newBadge}
           </span>
         </div>
         {/* Stock badge */}
         {inStock && fish.stock <= 20 && (
           <div className="absolute top-2.5 right-2.5 rounded-full bg-amber-500 px-2 py-0.5 text-[10px] font-black text-white">
-            Kam: {fish.stock}{fish.unit}
+            {t.lowStock} {fish.stock}{fish.unit}
           </div>
         )}
         {/* Out of stock */}
@@ -177,7 +178,7 @@ export function CatalogPage() {
       stock: fish.stock ?? null,
       image_url: fish.image_url || null,
     })
-    pushToast({ title: `${fish.name} savatchaga qo'shildi ✅`, variant: 'success' })
+    pushToast({ title: `${fish.name} ${t.addedToCart} ✅`, variant: 'success' })
   }
 
   const clearFilters = () => { setSort(''); setMinPrice(''); setMaxPrice(''); setCategory('') }
@@ -190,7 +191,7 @@ export function CatalogPage() {
           <div>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white">{t.catalog}</h2>
             <p className="text-[14px] text-slate-400 mt-0.5">
-              {isLoading ? '{t.loading}' : `${fishList.length} ta baliq topildi`}
+              {isLoading ? t.loading : `${fishList.length} ${t.fishFound}`}
             </p>
           </div>
           <div className="flex items-center gap-2 flex-1 justify-end min-w-0 max-w-sm">
@@ -212,7 +213,7 @@ export function CatalogPage() {
               }`}
             >
               <SlidersHorizontal className="h-4 w-4" />
-              <span className="hidden sm:inline">Filter</span>
+              <span className="hidden sm:inline">{t.filter}</span>
               {hasActiveFilter && <span className="h-2 w-2 rounded-full bg-white/80 animate-pulse" />}
             </button>
           </div>
@@ -259,7 +260,7 @@ export function CatalogPage() {
             </div>
             {hasActiveFilter && (
               <button onClick={clearFilters} className="flex items-center gap-1.5 text-xs font-bold text-rose-500 hover:text-rose-600 transition">
-                <X className="h-3.5 w-3.5" /> Filtrlarni tozalash
+                <X className="h-3.5 w-3.5" /> {t.clearFilters}
               </button>
             )}
           </div>
@@ -292,10 +293,10 @@ export function CatalogPage() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-100 dark:bg-white/[0.05]">
             <span className="text-4xl">🐟</span>
           </div>
-          <p className="text-[16px] font-bold text-slate-500">Baliq topilmadi</p>
-          <p className="mt-1 text-[13px] text-slate-400">Boshqa kalit so'z yoki filtr bilan qidiring</p>
+          <p className="text-[16px] font-bold text-slate-500">{t.noResults}</p>
+          <p className="mt-1 text-[13px] text-slate-400">{t.noResultsDesc2}</p>
           <button onClick={() => { setSearch(''); clearFilters() }} className="secondary-button mt-4">
-            <X className="h-4 w-4" /> Tozalash
+            <X className="h-4 w-4" /> {t.clearFilters}
           </button>
         </div>
       ) : (

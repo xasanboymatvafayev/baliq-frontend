@@ -58,7 +58,7 @@ function StarDisplay({ rating = 0, size = 16 }) {
 // ─── Asosiy sahifa ───────────────────────────────────────────────
 export function ProductDetailPage() {
   const t = useT()
-  usePageTitle('Mahsulot tafsiloti')
+  usePageTitle(t.productDetail)
   const { id } = useParams()
   const navigate = useNavigate()
   const addItem = useCartStore((s) => s.addItem)
@@ -101,17 +101,17 @@ export function ProductDetailPage() {
       setReviewSent(true)
       setMyRating(0)
       setMyComment('')
-      pushToast({ title: 'Reytingiz qabul qilindi ✅', variant: 'success' })
+      pushToast({ title: t.reviewSentToast, variant: 'success' })
       queryClient.invalidateQueries(['fish-reviews', id])
       queryClient.invalidateQueries(['fish', id])
     },
-    onError: (err) => pushToast({ title: err?.response?.data?.detail || 'Xato', variant: 'error' }),
+    onError: (err) => pushToast({ title: err?.response?.data?.detail || t.errorOccurred, variant: 'error' }),
   })
 
   const handleAdd = () => {
     if (!fish) return
     addItem({ id: fish.id, name: fish.name, price: fish.price, unit: fish.unit, quantity: 1, fish_id: fish.id })
-    pushToast({ title: `${fish.name} savatchaga qo'shildi ✅`, variant: 'success' })
+    pushToast({ title: `${fish.name} ${t.addedToCart} ✅`, variant: 'success' })
   }
 
   const avgRating = reviews.length
@@ -127,7 +127,7 @@ export function ProductDetailPage() {
 
   if (error || !fish) return (
     <div className="glass-card p-12 text-center">
-      <p className="text-slate-500">Mahsulot topilmadi.</p>
+      <p className="text-slate-500">{t.productNotFound}</p>
       <button className="primary-button mt-4" onClick={() => navigate(-1)}>{t.back}</button>
     </div>
   )
@@ -135,7 +135,7 @@ export function ProductDetailPage() {
   return (
     <div className="space-y-6">
       <button className="secondary-button inline-flex items-center gap-2" onClick={() => navigate(-1)}>
-        <ArrowLeft className="h-4 w-4" /> Orqaga
+        <ArrowLeft className="h-4 w-4" /> {t.back}
       </button>
 
       {/* ─── Baliq ma'lumotlari ─── */}
@@ -152,7 +152,7 @@ export function ProductDetailPage() {
         {/* Malumotlar */}
         <div className="space-y-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-ocean-600">{fish.category || 'Baliq'}</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-ocean-600">{fish.category || t.fishCategoryDefault}</p>
             <h2 className="mt-2 text-4xl font-black">{fish.name}</h2>
             {(fish.farm_name || farm?.farmName) && (
               <p className="mt-1 text-sm text-slate-500 flex items-center gap-1">
@@ -165,10 +165,10 @@ export function ProductDetailPage() {
           <div className="flex items-center gap-3">
             <StarDisplay rating={avgRating} size={20} />
             <span className="font-black text-lg text-amber-500">
-              {avgRating > 0 ? avgRating.toFixed(1) : 'Yangi'}
+              {avgRating > 0 ? avgRating.toFixed(1) : t.newBadge}
             </span>
             <span className="text-sm text-slate-500">
-              {reviews.length > 0 ? `${reviews.length} ta sharh` : 'Hali sharh yo\'q'}
+              {reviews.length > 0 ? `${reviews.length} ${t.reviewsCount}` : t.noReviewsYet}
             </span>
           </div>
 
@@ -178,15 +178,15 @@ export function ProductDetailPage() {
 
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl bg-slate-100 p-4 dark:bg-white/5">
-              <p className="text-xs text-slate-500">Narx</p>
+              <p className="text-xs text-slate-500">{t.price}</p>
               <p className="text-xl font-black text-ocean-600">{formatCurrency(fish.price)}/{fish.unit}</p>
             </div>
             <div className="rounded-2xl bg-slate-100 p-4 dark:bg-white/5">
-              <p className="text-xs text-slate-500">Zaxira</p>
+              <p className="text-xs text-slate-500">{t.stockLabel}</p>
               <p className="font-bold">{fish.stock} {fish.unit}</p>
             </div>
             <div className="rounded-2xl bg-slate-100 p-4 dark:bg-white/5">
-              <p className="text-xs text-slate-500">Kategoriya</p>
+              <p className="text-xs text-slate-500">{t.categoryLabel}</p>
               <p className="font-bold">{fish.category || '—'}</p>
             </div>
           </div>
@@ -197,7 +197,7 @@ export function ProductDetailPage() {
             disabled={!fish.stock || fish.stock <= 0}
           >
             <ShoppingCart className="h-5 w-5" />
-            {fish.stock > 0 ? "Savatchaga qo'shish" : "Zaxirada yo'q"}
+            {fish.stock > 0 ? t.addToCartBtn : t.outOfStockBtn}
           </button>
         </div>
       </section>
@@ -205,7 +205,7 @@ export function ProductDetailPage() {
       {/* ─── Ferma haqida ─── */}
       {(farm || fish.farm) && (
         <section className="glass-card p-6 space-y-4">
-          <h3 className="text-xl font-black">🏡 Ferma haqida</h3>
+          <h3 className="text-xl font-black">🏡 {t.aboutFarm}</h3>
           <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
             {/* Ferma rasmlari */}
             <div className="flex gap-2 flex-wrap">
@@ -263,9 +263,9 @@ export function ProductDetailPage() {
               <div className="flex items-center gap-2 pt-1">
                 <StarDisplay rating={avgRating} size={15} />
                 <span className="text-sm font-bold text-amber-500">
-                  {avgRating > 0 ? avgRating.toFixed(1) : 'Yangi ferma'}
+                  {avgRating > 0 ? avgRating.toFixed(1) : t.newFarm}
                 </span>
-                <span className="text-xs text-slate-400">• {reviews.length} ta sharh</span>
+                <span className="text-xs text-slate-400">• {reviews.length} {t.reviewsCount}</span>
               </div>
             </div>
           </div>
@@ -274,17 +274,17 @@ export function ProductDetailPage() {
 
       {/* ─── Sharhlar ─── */}
       <section className="glass-card p-6 space-y-5">
-        <h3 className="text-xl font-black">💬 Sharhlar va reyting</h3>
+        <h3 className="text-xl font-black">💬 {t.reviewsAndRating}</h3>
 
         {/* Sharh yozish (faqat customer) */}
         {(role === 'customer' || role === 'farm-owner') && !reviewSent && (
           <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-4 space-y-3 border border-slate-200 dark:border-white/10">
-            <p className="font-bold text-sm">Ferma reytingini qo'ying:</p>
+            <p className="font-bold text-sm">{t.setFarmRating}</p>
             <StarInput value={myRating} onChange={setMyRating} />
             <textarea
               className="soft-input w-full resize-none"
               rows={3}
-              placeholder="Izohlangiz (ixtiyoriy)..."
+              placeholder={t.commentPlaceholder}
               value={myComment}
               onChange={(e) => setMyComment(e.target.value)}
             />
@@ -293,7 +293,7 @@ export function ProductDetailPage() {
               onClick={() => reviewMutation.mutate()}
               disabled={!myRating || reviewMutation.isPending}
             >
-              {reviewMutation.isPending ? 'Yuborilmoqda...' : '⭐ Reyting qo\'yish'}
+              {reviewMutation.isPending ? t.sendingRating : `⭐ ${t.submitRating}`}
             </button>
           </div>
         )}
@@ -301,7 +301,7 @@ export function ProductDetailPage() {
         {reviewSent && (
           <div className="rounded-2xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 p-4 flex items-center gap-3">
             <CheckCircle2 className="h-5 w-5 text-green-600 shrink-0" />
-            <p className="text-sm font-semibold text-green-700 dark:text-green-300">Reytingiz qabul qilindi!</p>
+            <p className="text-sm font-semibold text-green-700 dark:text-green-300">{t.ratingAccepted}</p>
           </div>
         )}
 
@@ -309,7 +309,7 @@ export function ProductDetailPage() {
         {reviews.length === 0 ? (
           <div className="py-8 text-center text-slate-400">
             <div className="text-4xl mb-2">💬</div>
-            Hali sharh yo'q. Birinchi bo'ling!
+            {t.noReviewsYet}
           </div>
         ) : (
           <div className="space-y-3">
@@ -320,7 +320,7 @@ export function ProductDetailPage() {
                     <div className="h-8 w-8 rounded-full bg-ocean-100 dark:bg-ocean-900/30 flex items-center justify-center text-sm font-black text-ocean-700">
                       {(r.user_name || r.firstName || 'M').slice(0, 1).toUpperCase()}
                     </div>
-                    <span className="font-bold text-sm">{r.user_name || r.firstName || 'Mijoz'}</span>
+                    <span className="font-bold text-sm">{r.user_name || r.firstName || t.customer}</span>
                   </div>
                   <StarDisplay rating={r.rating} size={14} />
                 </div>

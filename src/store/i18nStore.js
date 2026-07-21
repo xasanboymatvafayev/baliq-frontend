@@ -128,7 +128,19 @@ export const translations = {
     // Catalog filters
     catalog: 'Katalog', filter: 'Filter', sort: 'Saralash', sortBy: 'Saralash:',
     priceAsc: 'Arzon → Qimmat', priceDesc: 'Qimmat → Arzon',
-    minPrice: 'Min narx', maxPrice: 'Max narx',
+    minPrice: 'Min narx', maxPrice: 'Max narx', ratingDesc: "Reyting bo'yicha",
+    newBadge: 'Yangi', lowStock: 'Kam:', addedToCart: "savatchaga qo'shildi",
+    fishFound: 'ta baliq topildi', clearFilters: 'Filtrlarni tozalash',
+    noResultsDesc2: "Boshqa kalit so'z yoki filtr bilan qidiring",
+    productNotFound: 'Mahsulot topilmadi', price: 'Narx', stockLabel: 'Zaxira',
+    categoryLabel: 'Kategoriya', addToCartBtn: "Savatchaga qo'shish",
+    outOfStockBtn: "Zaxirada yo'q", aboutFarm: 'Ferma haqida',
+    newFarm: 'Yangi ferma', reviewsAndRating: 'Sharhlar va reyting',
+    setFarmRating: "Ferma reytingini qo'ying:", commentPlaceholder: 'Izohlangiz (ixtiyoriy)...',
+    submitRating: "Reyting qo'yish", ratingAccepted: 'Reytingiz qabul qilindi!',
+    noReviewsYet: "Hali sharh yo'q. Birinchi bo'ling!", reviewsCount: 'ta sharh',
+    customer: 'Mijoz', errorOccurred: 'Xato', fishCategoryDefault: 'Baliq',
+    sendingRating: 'Yuborilmoqda...', reviewSentToast: 'Reytingiz qabul qilindi ✅',
 
     // Review
     reviewTitle: 'Baho berish', reviewPlaceholder: 'Izoh yozing...',
@@ -326,7 +338,19 @@ export const translations = {
     // Catalog filters
     catalog: 'Каталог', filter: 'Фильтр', sort: 'Сортировка', sortBy: 'Сортировать:',
     priceAsc: 'По возрастанию цены', priceDesc: 'По убыванию цены',
-    minPrice: 'Мин. цена', maxPrice: 'Макс. цена',
+    minPrice: 'Мин. цена', maxPrice: 'Макс. цена', ratingDesc: 'По рейтингу',
+    newBadge: 'Новая', lowStock: 'Мало:', addedToCart: 'добавлен в корзину',
+    fishFound: 'рыбы найдено', clearFilters: 'Очистить фильтры',
+    noResultsDesc2: 'Попробуйте другой запрос или фильтр',
+    productNotFound: 'Товар не найден', price: 'Цена', stockLabel: 'Запас',
+    categoryLabel: 'Категория', addToCartBtn: 'Добавить в корзину',
+    outOfStockBtn: 'Нет в наличии', aboutFarm: 'О ферме',
+    newFarm: 'Новая ферма', reviewsAndRating: 'Отзывы и оценки',
+    setFarmRating: 'Оцените ферму:', commentPlaceholder: 'Ваш комментарий (необязательно)...',
+    submitRating: 'Оценить', ratingAccepted: 'Ваш отзыв принят!',
+    noReviewsYet: 'Отзывов пока нет. Будьте первым!', reviewsCount: 'отзывов',
+    customer: 'Клиент', errorOccurred: 'Ошибка', fishCategoryDefault: 'Рыба',
+    sendingRating: 'Отправка...', reviewSentToast: 'Ваш рейтинг принят ✅',
 
     // Review
     reviewTitle: 'Оставить отзыв', reviewPlaceholder: 'Напишите отзыв...',
