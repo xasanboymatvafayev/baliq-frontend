@@ -216,7 +216,7 @@ export const translations = {
     notifEmptyDesc: 'Yangi buyurtmalar kelganda shu yerda ko\'rinadi',
     notifPushOff: "📵 Push bildirishnomalar o'chirilgan",
     notifPushOffDesc: 'Yangi buyurtmalar haqida xabar oling', notifEnable: 'Yoqish',
-    notifSoundOff: "Ovozni o'chirish", notifSoundOn: 'Ovozni yoqish", notifMarkAllRead: "Hammasini o'qildi",
+    notifSoundOff: "Ovozni o'chirish", notifSoundOn: 'Ovozni yoqish', notifMarkAllRead: "Hammasini o'qildi",
     notifEnabled: 'Bildirishnomalar yoqildi! Yangi buyurtmalar haqida xabar olasiz.',
     notifNewOrder: '🆕 Yangi buyurtma keldi!', notifNewOrderMsg: 'tasdiqlashni kuting',
     notifOrderConfirmed: 'Buyurtma tasdiqlandi', notifDriverAssigned: 'Haydovchi biriktirildi',
