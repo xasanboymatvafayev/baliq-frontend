@@ -60,7 +60,7 @@ function StatusBadge({ status }) {
 
 const PAGE_SIZE = 10
 
-export function OrdersPage({ title = 'Buyurtmalar' }) {
+export function OrdersPage({ title }) {
   const t = useT()
   usePageTitle(title)
   const pushToast = useToastStore((state) => state.pushToast)
@@ -110,7 +110,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     mutationFn: ({ orderId, driverId, taxPercent }) =>
       httpClient.post('/finance/admin/assign-with-tax', { order_id: orderId, driver_id: driverId, tax_percent: parseInt(taxPercent) }),
     onSuccess: (data) => {
-      pushToast({ title: `Biriktirildi! Soliq: ${data.tax_amount?.toLocaleString()} so'm`, variant: 'success' })
+      pushToast({ title: `${t.ordersAssignedToast} ${data.tax_amount?.toLocaleString()} so'm`, variant: 'success' })
       queryClient.invalidateQueries(['orders']); setSelected(null); setSelectedDriverId(''); setTaxPercent('')
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
@@ -119,7 +119,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
   const batchAssignMutation = useMutation({
     mutationFn: ({ orderIds, driverId }) => orderService.batchAssignDriver({ order_ids: orderIds, driver_id: driverId }),
     onSuccess: () => {
-      pushToast({ title: `${checkedIds.length} ta buyurtma driverga yuborildi ✅`, variant: 'success' })
+      pushToast({ title: `${checkedIds.length} ${t.ordersBatchSent}`, variant: 'success' })
       queryClient.invalidateQueries(['orders']); setCheckedIds([]); setShowBatchPanel(false); setSelectedDriverId('')
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
@@ -127,40 +127,40 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
 
   const resendInvoiceMutation = useMutation({
     mutationFn: ({ orderId, provider }) => httpClient.post('/payments/create-link', { order_id: orderId, provider }),
-    onSuccess: (data) => { if (data?.url) window.open(data.url, '_blank'); pushToast({ title: "To'lov sahifasi ochildi ✅", variant: 'success' }) },
+    onSuccess: (data) => { if (data?.url) window.open(data.url, '_blank'); pushToast({ title: t.ordersPaymentPage, variant: 'success' }) },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
   const cancelMutation = useMutation({
     mutationFn: (id) => orderService.updateStatus(id, { status: 'CANCELLED' }),
-    onSuccess: () => { pushToast({ title: 'Buyurtma bekor qilindi', variant: 'success' }); queryClient.invalidateQueries(['orders']); setSelected(null) },
+    onSuccess: () => { pushToast({ title: t.ordersCancelledToast, variant: 'success' }); queryClient.invalidateQueries(['orders']); setSelected(null) },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
   const confirmMutation = useMutation({
     mutationFn: (id) => orderService.updateStatus(id, { status: 'CONFIRMED' }),
-    onSuccess: () => { pushToast({ title: 'Buyurtma tasdiqlandi ✅', variant: 'success' }); queryClient.invalidateQueries(['orders']); setSelected(null) },
+    onSuccess: () => { pushToast({ title: t.ordersConfirmedToast, variant: 'success' }); queryClient.invalidateQueries(['orders']); setSelected(null) },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
   const rejectMutation = useMutation({
     mutationFn: (id) => orderService.updateStatus(id, { status: 'CANCELLED' }),
-    onSuccess: () => { pushToast({ title: 'Buyurtma rad etildi', variant: 'error' }); queryClient.invalidateQueries(['orders']); setSelected(null) },
+    onSuccess: () => { pushToast({ title: t.ordersRejectedToast, variant: 'error' }); queryClient.invalidateQueries(['orders']); setSelected(null) },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
   const driverStatusMutation = useMutation({
     mutationFn: ({ id, status }) => orderService.updateStatus(id, { status }),
     onSuccess: (_, { status }) => {
-      const labels = { LOADING: 'Yuklanmoqda 📦', IN_TRANSIT: "Yo'lda 🚚", DELIVERED: 'Yetkazildi ✅' }
-      pushToast({ title: labels[status] || 'Status yangilandi', variant: 'success' })
+      const labels = { LOADING: t.ordersStatusLoading, IN_TRANSIT: t.ordersStatusTransit, DELIVERED: t.ordersStatusDelivered }
+      pushToast({ title: labels[status] || t.ordersStatusUpdated, variant: 'success' })
       queryClient.invalidateQueries(['orders']); setSelected(null)
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
   })
 
   const toggleCheck = (id, status) => {
-    if (status !== 'CONFIRMED') { pushToast({ title: 'Faqat "Tasdiqlandi" statusidagi buyurtmalarni tanlang', variant: 'error' }); return }
+    if (status !== 'CONFIRMED') { pushToast({ title: t.ordersOnlyConfirmed, variant: 'error' }); return }
     setCheckedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
   }
 
@@ -172,26 +172,26 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     if (role === 'farm-owner' && status === 'PENDING') return (
       <div className="flex gap-3 pt-4 border-t border-slate-200 dark:border-white/10">
         <button className="primary-button" onClick={() => confirmMutation.mutate(selected.id)} disabled={confirmMutation.isPending}>
-          {confirmMutation.isPending ? 'Tasdiqlanmoqda...' : '✅ Tasdiqlash'}
+          {confirmMutation.isPending ? t.ordersConfirming : t.ordersConfirm}
         </button>
         <button className="danger-button" onClick={() => rejectMutation.mutate(selected.id)} disabled={rejectMutation.isPending}>
-          {rejectMutation.isPending ? 'Rad etilmoqda...' : '❌ Rad etish'}
+          {rejectMutation.isPending ? t.ordersRejecting : t.ordersReject}
         </button>
       </div>
     )
 
     if (role === 'driver') {
       const driverBtns = {
-        DRIVER_ASSIGNED: { label: '📦 Qabul qilish (Fermaga bordim)', next: 'LOADING', cls: '' },
-        LOADING: { label: "🚚 Yo'lga chiqdim", next: 'IN_TRANSIT', cls: '!bg-cyan-600 hover:!bg-cyan-700' },
-        IN_TRANSIT: { label: '✅ Yetkazildi', next: 'DELIVERED', cls: '!bg-emerald-600 hover:!bg-emerald-700' },
+        DRIVER_ASSIGNED: { label: t.ordersDriverAccept, next: 'LOADING', cls: '' },
+        LOADING: { label: t.ordersDriverStart, next: 'IN_TRANSIT', cls: '!bg-cyan-600 hover:!bg-cyan-700' },
+        IN_TRANSIT: { label: t.ordersDriverDelivered, next: 'DELIVERED', cls: '!bg-emerald-600 hover:!bg-emerald-700' },
       }
       const btn = driverBtns[status]
       if (!btn) return null
       return (
         <div className="pt-4 border-t border-slate-200 dark:border-white/10">
           <button className={`primary-button w-full text-base py-3 ${btn.cls}`} onClick={() => driverStatusMutation.mutate({ id: selected.id, status: btn.next })} disabled={driverStatusMutation.isPending}>
-            {driverStatusMutation.isPending ? "O'zgartirilmoqda..." : btn.label}
+            {driverStatusMutation.isPending ? t.ordersDriverStatus : btn.label}
           </button>
         </div>
       )
@@ -200,13 +200,13 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     if (role === 'customer' && status === 'AWAITING_PAYMENT') return (
       <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
         <div className="rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 p-3 text-sm text-amber-700 dark:text-amber-300">
-          💳 Click yoki Payme orqali to'lovni amalga oshiring. To'lov tasdiqlangach buyurtma fermerga yuboriladi.
+          {t.ordersCustomerPayDesc}
         </div>
         <button className="primary-button w-full" onClick={() => resendInvoiceMutation.mutate({ orderId: selected.id, provider: selected.payment_method || 'click' })} disabled={resendInvoiceMutation.isPending}>
-          {resendInvoiceMutation.isPending ? 'Ochilmoqda...' : "💳 To'lov sahifasini ochish"}
+          {resendInvoiceMutation.isPending ? t.ordersCustomerPayOpening : t.ordersCustomerPay}
         </button>
         <button className="danger-button w-full" onClick={() => cancelMutation.mutate(selected.id)} disabled={cancelMutation.isPending}>
-          {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Buyurtmani bekor qilish'}
+          {cancelMutation.isPending ? t.ordersCancelling : t.ordersCustomerCancel}
         </button>
       </div>
     )
@@ -214,7 +214,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
     if (role === 'customer' && status === 'PENDING') return (
       <div className="pt-4 border-t border-slate-200 dark:border-white/10">
         <button className="danger-button" onClick={() => cancelMutation.mutate(selected.id)} disabled={cancelMutation.isPending}>
-          {cancelMutation.isPending ? 'Bekor qilinmoqda...' : 'Bekor qilish'}
+          {cancelMutation.isPending ? t.ordersCancelling : t.ordersCancel}
         </button>
       </div>
     )
@@ -238,11 +238,11 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
               onClick={() => setNavTarget({ lat: deliveryCoords.lat, lng: deliveryCoords.lng, address: selected.delivery_address })}
             >
               <Navigation className="h-4 w-4" />
-              📍 Yetkazish manzilini ko'rish (xaritada)
+              {t.ordersCustomerViewAddr}
             </button>
           )}
           <button className="primary-button w-full text-base py-3 !bg-emerald-600 hover:!bg-emerald-700" onClick={() => driverStatusMutation.mutate({ id: selected.id, status: 'DELIVERED' })} disabled={driverStatusMutation.isPending}>
-            {driverStatusMutation.isPending ? 'Saqlanmoqda...' : '✅ Buyurtmani qabul qildim'}
+            {driverStatusMutation.isPending ? t.ordersCustomerSaving : t.ordersCustomerReceived}
           </button>
         </div>
       )
@@ -255,45 +255,45 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
           onClick={() => setReviewOrder(selected)}
         >
           <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
-          Baho berish
+          {t.ordersCustomerReview}
         </button>
       </div>
     )
 
     if (isAdmin && status === 'CONFIRMED') return (
       <div className="pt-4 border-t border-slate-200 dark:border-white/10 space-y-3">
-        <h4 className="font-bold">🚚 Haydovchi biriktirish</h4>
+        <h4 className="font-bold">{t.ordersAssignDriver}</h4>
         {drivers.length === 0 ? (
-          <p className="text-sm text-slate-500">Tasdiqlangan haydovchi topilmadi</p>
+          <p className="text-sm text-slate-500">{t.ordersNoDrivers}</p>
         ) : (
           <div className="space-y-3">
             <select className="soft-input w-full" value={selectedDriverId} onChange={(e) => setSelectedDriverId(e.target.value)}>
-              <option value="">Haydovchini tanlang...</option>
+              <option value="">{t.ordersSelectDriver}</option>
               {drivers.map((d) => <option key={d.id} value={d.user_id || d.id}>{d.firstName} {d.lastName} — {d.plateNumber} ({d.capacity} kg)</option>)}
             </select>
             <div>
-              <label className="text-sm font-bold text-slate-600 dark:text-slate-300">Soliq foizi *</label>
+              <label className="text-sm font-bold text-slate-600 dark:text-slate-300">{t.ordersTaxPercent}</label>
               <div className="relative mt-1">
-                <input type="number" min={0} max={100} className="soft-input w-full pr-10" placeholder="Masalan: 10" value={taxPercent} onChange={(e) => setTaxPercent(e.target.value)} />
+                <input type="number" min={0} max={100} className="soft-input w-full pr-10" placeholder={t.ordersTaxHint} value={taxPercent} onChange={(e) => setTaxPercent(e.target.value)} />
                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-bold">%</span>
               </div>
               {taxPercent && selected.total > 0 && (
                 <p className="text-xs text-slate-500 mt-1">
-                  Soliq: <b className="text-rose-500">{Math.round(selected.total * taxPercent / 100).toLocaleString()} so'm</b>
-                  {' '}· Fermerga: <b className="text-emerald-600">{Math.round(selected.total - selected.total * taxPercent / 100).toLocaleString()} so'm</b>
+                  {t.ordersTaxCalc} <b className="text-rose-500">{Math.round(selected.total * taxPercent / 100).toLocaleString()} so'm</b>
+                  {' '}· {t.ordersFarmerGets} <b className="text-emerald-600">{Math.round(selected.total - selected.total * taxPercent / 100).toLocaleString()} so'm</b>
                 </p>
               )}
             </div>
             <button
               className="primary-button w-full"
               onClick={() => {
-                if (!selectedDriverId) { pushToast({ title: 'Haydovchini tanlang', variant: 'error' }); return }
-                if (taxPercent === '' || taxPercent < 0 || taxPercent > 100) { pushToast({ title: "Soliq foizini 0-100 oralig'ida kiriting", variant: 'error' }); return }
+                if (!selectedDriverId) { pushToast({ title: t.ordersSelectDriverErr, variant: 'error' }); return }
+                if (taxPercent === '' || taxPercent < 0 || taxPercent > 100) { pushToast({ title: t.ordersTaxErr, variant: 'error' }); return }
                 assignDriverMutation.mutate({ orderId: selected.id, driverId: selectedDriverId, taxPercent })
               }}
               disabled={assignDriverMutation.isPending || !selectedDriverId || taxPercent === ''}
             >
-              {assignDriverMutation.isPending ? 'Biriktirilmoqda...' : 'Biriktirish'}
+              {assignDriverMutation.isPending ? t.ordersAssigning : t.ordersAssign}
             </button>
           </div>
         )}
@@ -333,14 +333,14 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
               className={`flex items-center gap-2 rounded-2xl px-4 py-2 text-sm font-bold transition border ${showBatchPanel ? 'bg-purple-600 text-white border-purple-600' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20'}`}
               onClick={() => { setShowBatchPanel((v) => !v); setCheckedIds([]) }}
             >
-              <Users className="h-4 w-4" /> Ko'p buyurtma → Driver
+              <Users className="h-4 w-4" /> {t.ordersBatchTitle}
               {showBatchPanel ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
           )}
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-slate-500" />
             <select className="soft-input text-sm" value={statusFilter} onChange={(e) => { setStatusFilter(e.target.value); setPage(1) }}>
-              <option value="">Barcha statuslar</option>
+              <option value="">{t.ordersAll}</option>
               {Object.entries(STATUS_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
             </select>
           </div>
@@ -351,22 +351,22 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
         <div className="glass-card p-5 border-2 border-purple-300 dark:border-purple-700 space-y-4">
           <div className="flex items-center gap-2">
             <Users className="h-5 w-5 text-purple-600" />
-            <h3 className="font-black text-purple-700 dark:text-purple-300">Ko'p buyurtmani birlashtirib driverga yuborish</h3>
+            <h3 className="font-black text-purple-700 dark:text-purple-300">{t.ordersBatchPanelTitle}</h3>
           </div>
-          <p className="text-sm text-slate-500">"Tasdiqlandi" statusidagi buyurtmalarni belgilang va bitta driverga yuboring.</p>
+          <p className="text-sm text-slate-500">{t.ordersBatchDesc}</p>
           {checkedIds.length > 0 && (
             <div className="rounded-2xl bg-purple-50 dark:bg-purple-900/20 p-3 text-sm font-semibold text-purple-700 dark:text-purple-300">
-              ✅ {checkedIds.length} ta buyurtma tanlandi
+              ✅ {checkedIds.length} {t.ordersBatchSelected}
             </div>
           )}
           {checkedIds.length >= 2 && (
             <div className="flex gap-3">
               <select className="soft-input flex-1" value={selectedDriverId} onChange={(e) => setSelectedDriverId(e.target.value)}>
-                <option value="">Haydovchini tanlang...</option>
+                <option value="">{t.ordersSelectDriver}</option>
                 {drivers.map((d) => <option key={d.id} value={d.user_id || d.id}>{d.firstName} {d.lastName} — {d.plateNumber} ({d.capacity} kg)</option>)}
               </select>
-              <button className="primary-button !bg-purple-600 hover:!bg-purple-700" onClick={() => { if (!selectedDriverId) { pushToast({ title: 'Haydovchini tanlang', variant: 'error' }); return } batchAssignMutation.mutate({ orderIds: checkedIds, driverId: selectedDriverId }) }} disabled={batchAssignMutation.isPending}>
-                {batchAssignMutation.isPending ? 'Yuborilmoqda...' : `${checkedIds.length} ta → Driver`}
+              <button className="primary-button !bg-purple-600 hover:!bg-purple-700" onClick={() => { if (!selectedDriverId) { pushToast({ title: t.ordersSelectDriverErr, variant: 'error' }); return } batchAssignMutation.mutate({ orderIds: checkedIds, driverId: selectedDriverId }) }} disabled={batchAssignMutation.isPending}>
+                {batchAssignMutation.isPending ? t.ordersBatchSending : `${checkedIds.length} ${t.ordersBatchSend}`}
               </button>
             </div>
           )}
@@ -376,29 +376,29 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
       {selected ? (
         <div className="glass-card p-6 space-y-4 animate-fade-in">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-bold">Buyurtma #{selected.id?.slice(-6)}</h3>
-            <button className="secondary-button" onClick={() => setSelected(null)}>← Orqaga</button>
+            <h3 className="text-xl font-bold">{t.ordersTitle || 'Buyurtma'} #{selected.id?.slice(-6)}</h3>
+            <button className="secondary-button" onClick={() => setSelected(null)}>{t.ordersBack}
           </div>
           <div className="grid gap-3 sm:grid-cols-3 text-sm">
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
-              <p className="text-xs text-slate-500 mb-1">Jami summa</p>
+              <p className="text-xs text-slate-500 mb-1">{t.ordersTotal}</p>
               <p className="font-black text-lg">{formatCurrency(selected.total)}</p>
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
-              <p className="text-xs text-slate-500 mb-1">Status</p>
+              <p className="text-xs text-slate-500 mb-1">{t.ordersStatus}</p>
               <StatusBadge status={selected.status} />
             </div>
             <div className="rounded-2xl bg-slate-50 dark:bg-white/5 p-3">
-              <p className="text-xs text-slate-500 mb-1">Sana</p>
+              <p className="text-xs text-slate-500 mb-1">{t.ordersDate}</p>
               <p className="font-bold">{new Date(selected.created_at).toLocaleDateString('uz')}</p>
             </div>
           </div>
-          {selected.customer_name && <div className="text-sm"><span className="text-slate-500">Mijoz:</span> <b>{selected.customer_name}</b></div>}
-          {selected.delivery_address && <div className="text-sm"><span className="text-slate-500">Manzil:</span> <b>{selected.delivery_address}</b></div>}
+          {selected.customer_name && <div className="text-sm"><span className="text-slate-500">{t.ordersCustomer}</span> <b>{selected.customer_name}</b></div>}
+          {selected.delivery_address && <div className="text-sm"><span className="text-slate-500">{t.ordersAddress}</span> <b>{selected.delivery_address}</b></div>
           {selected.delivery_coords && <div className="text-sm font-mono text-xs text-slate-400">📍 {selected.delivery_coords}</div>}
           <OrderTimeline currentStatus={selected.status} />
           <div className="space-y-2">
-            <h4 className="font-bold">Mahsulotlar:</h4>
+            <h4 className="font-bold">{t.ordersProducts}</h4>
             {selected.items?.map((item, i) => (
               <div key={i} className="flex justify-between rounded-2xl bg-slate-50 dark:bg-white/5 px-4 py-2.5 text-sm">
                 <span className="font-medium">{item.fish_name}</span>
@@ -418,7 +418,7 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
         <div className="glass-card p-12 text-center">
           <div className="text-5xl mb-3">📋</div>
           <p className="text-slate-500 font-medium">
-            {statusFilter ? `"${STATUS_LABELS[statusFilter]}" statusida buyurtma yo'q` : "Buyurtmalar hali yo'q"}
+            {statusFilter ? `${STATUS_LABELS[statusFilter]} — ${t.ordersNoStatus}` : t.ordersNoOrders}
           </p>
         </div>
       ) : (
@@ -431,8 +431,8 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
                     {showBatchPanel && isAdmin && <th className="p-4 w-10"></th>}
                     <th className="p-4">ID</th>
                     <th className="p-4">{t.total}</th>
-                    <th className="p-4">Status</th>
-                    <th className="p-4 hidden sm:table-cell">Sana</th>
+                    <th className="p-4">{t.ordersStatus}</th>
+                    <th className="p-4 hidden sm:table-cell">{t.ordersDate}</th>
                     <th className="p-4"></th>
                   </tr>
                 </thead>
@@ -451,14 +451,14 @@ export function OrdersPage({ title = 'Buyurtmalar' }) {
                       <td className="p-4"><StatusBadge status={order.status} /></td>
                       <td className="p-4 text-slate-500 hidden sm:table-cell text-xs">{new Date(order.created_at).toLocaleDateString('uz')}</td>
                       <td className="p-4 flex items-center gap-2">
-                        <button className="secondary-button text-xs px-3 py-1.5" onClick={() => setSelected(order)}>Ko'rish →</button>
+                        <button className="secondary-button text-xs px-3 py-1.5" onClick={() => setSelected(order)}>{t.ordersView}</button>
                         {user?.role === 'customer' && order.status === 'DELIVERED' && (
                           <button
                             className="flex items-center gap-1 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 text-amber-700 dark:text-amber-300 text-xs font-bold px-2.5 py-1.5 hover:bg-amber-100 transition"
                             onClick={() => setReviewOrder(order)}
                           >
                             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                            Baho
+                            {t.ordersCustomerReviewShort}
                           </button>
                         )}
                       </td>

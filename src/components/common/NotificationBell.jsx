@@ -3,6 +3,7 @@ import { Bell, X, CheckCheck, Volume2, VolumeX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { getSocket } from '../../services/socketClient.js'
 import { useAuthStore } from '../../store/authStore.js'
+import { useT } from '../../store/i18nStore.js'
 
 // ─── Qattiq rington ovozi ────────────────────────────────────────
 function playChime() {
@@ -77,13 +78,21 @@ function getRoute(role, navType) {
   return map[role]?.[navType] || map[role]?.default || '/'
 }
 
-const STATUS_INFO = {
+const STATUS_INFO_UZ = {
   CONFIRMED:       { icon: '✅', title: 'Buyurtma tasdiqlandi',    type: 'success', nav: 'order' },
   DRIVER_ASSIGNED: { icon: '🚚', title: 'Haydovchi biriktirildi', type: 'info',    nav: 'order' },
   LOADING:         { icon: '📦', title: 'Mahsulot yuklanmoqda',    type: 'info',    nav: 'order' },
   IN_TRANSIT:      { icon: '🛣️', title: "Buyurtma yo'lda",        type: 'info',    nav: 'order' },
   DELIVERED:       { icon: '🎉', title: 'Buyurtma yetkazildi!',    type: 'success', nav: 'order' },
   CANCELLED:       { icon: '❌', title: 'Buyurtma bekor qilindi',  type: 'error',   nav: 'order' },
+}
+const STATUS_INFO_RU = {
+  CONFIRMED:       { icon: '✅', title: 'Заказ подтверждён',    type: 'success', nav: 'order' },
+  DRIVER_ASSIGNED: { icon: '🚚', title: 'Назначен водитель',     type: 'info',    nav: 'order' },
+  LOADING:         { icon: '📦', title: 'Товар загружается',     type: 'info',    nav: 'order' },
+  IN_TRANSIT:      { icon: '🛣️', title: 'Заказ в пути',          type: 'info',    nav: 'order' },
+  DELIVERED:       { icon: '🎉', title: 'Заказ доставлен!',      type: 'success', nav: 'order' },
+  CANCELLED:       { icon: '❌', title: 'Заказ отменён',          type: 'error',   nav: 'order' },
 }
 
 const TYPE_COLORS = {
@@ -93,8 +102,14 @@ const TYPE_COLORS = {
   warning: 'border-l-amber-500 bg-amber-50/70 dark:bg-amber-900/10',
 }
 
-function timeAgo(iso) {
+function timeAgo(iso, lang) {
   const s = Math.floor((Date.now() - new Date(iso)) / 1000)
+  if (lang === 'ru') {
+    if (s < 60) return `${s} сек назад`
+    if (s < 3600) return `${Math.floor(s/60)} мин назад`
+    if (s < 86400) return `${Math.floor(s/3600)} ч назад`
+    return `${Math.floor(s/86400)} дн назад`
+  }
   if (s < 60) return `${s}s oldin`
   if (s < 3600) return `${Math.floor(s/60)} daq oldin`
   if (s < 86400) return `${Math.floor(s/3600)} soat oldin`
@@ -105,6 +120,7 @@ export function NotificationBell() {
   const navigate  = useNavigate()
   const token     = useAuthStore((s) => s.token)
   const role      = useAuthStore((s) => s.role)
+  const t         = useT()
   const [notifications, setNotifications] = useState([])
   const [showPanel, setShowPanel]         = useState(false)
   const [unreadCount, setUnreadCount]     = useState(0)
@@ -137,7 +153,7 @@ export function NotificationBell() {
       setPermission(res)
       if (res === 'granted') {
         if (soundRef.current) playChime()
-        sendPush('Baliq Savdosi 🐟', 'Bildirishnomalar yoqildi! Yangi buyurtmalar haqida xabar olasiz.')
+        sendPush('Baliq Savdosi 🐟', t.notifEnabled)
       }
     } catch (_) {}
   }, [])
@@ -159,10 +175,11 @@ export function NotificationBell() {
     const socket = getSocket(token)
     socket.connect()
 
+    const STATUS_INFO = t.lang === 'ru' ? STATUS_INFO_RU : STATUS_INFO_UZ
     const handlers = {
       notification: (data) => {
         addNotif({
-          title: data.title || 'Yangi bildirishnoma',
+          title: data.title || t.notifNewNotif,
           message: data.message || '',
           type: data.type || 'info',
           navType: data.nav_type || 'default',
@@ -170,10 +187,10 @@ export function NotificationBell() {
         })
       },
       order_status_changed: (data) => {
-        const info = STATUS_INFO[data.status] || { icon: '🔔', title: 'Buyurtma yangilandi', type: 'info', nav: 'order' }
+        const info = STATUS_INFO[data.status] || { icon: '🔔', title: t.notifOrderUpdated, type: 'info', nav: 'order' }
         addNotif({
           title: info.title,
-          message: `Buyurtma #${String(data.order_id || '').slice(-6)} ${info.icon}`,
+          message: `#${String(data.order_id || '').slice(-6)} ${info.icon}`,
           type: info.type,
           navType: info.nav,
           orderId: data.order_id,
@@ -181,8 +198,8 @@ export function NotificationBell() {
       },
       new_order: (data) => {
         addNotif({
-          title: '🆕 Yangi buyurtma keldi!',
-          message: `Buyurtma #${String(data.order_id || '').slice(-6)} — tasdiqlashni kuting`,
+          title: t.notifNewOrder,
+          message: `#${String(data.order_id || '').slice(-6)} — ${t.notifNewOrderMsg}`,
           type: 'info',
           navType: 'new_order',
           orderId: data.order_id,
@@ -190,8 +207,8 @@ export function NotificationBell() {
       },
       driver_assigned: (data) => {
         addNotif({
-          title: '🚚 Haydovchi biriktirildi',
-          message: `Buyurtma #${String(data.order_id || '').slice(-6)} uchun haydovchi tayinlandi`,
+          title: `🚚 ${t.notifDriverAssigned}`,
+          message: `#${String(data.order_id || '').slice(-6)} — ${t.notifDriverAssignedMsg}`,
           type: 'info',
           navType: 'order',
           orderId: data.order_id,
@@ -203,7 +220,7 @@ export function NotificationBell() {
     return () => {
       Object.entries(handlers).forEach(([ev, fn]) => socket.off(ev, fn))
     }
-  }, [token, addNotif])
+  }, [token, addNotif, t])
 
   // ─── Panel tashqarisini click ────────────────────────────────
   useEffect(() => {
@@ -247,7 +264,7 @@ export function NotificationBell() {
           setShowPanel((v) => !v)
           if (!showPanel && unreadCount > 0) markAllRead()
         }}
-        aria-label="Bildirishnomalar"
+        aria-label={t.notifTitle}
       >
         <Bell className={`h-4.5 w-4.5 ${unreadCount > 0 ? 'text-ocean-600 dark:text-ocean-400' : ''}`} />
         {/* Badge */}
@@ -270,7 +287,7 @@ export function NotificationBell() {
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-slate-100 dark:border-white/[0.06] shrink-0">
             <div className="flex items-center gap-2">
               <Bell className="h-4 w-4 text-ocean-600" />
-              <h4 className="font-black text-sm">Bildirishnomalar</h4>
+              <h4 className="font-black text-sm">{t.notifTitle}</h4>
               {unreadCount > 0 && (
                 <span className="rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-black text-white">{unreadCount}</span>
               )}
@@ -279,12 +296,12 @@ export function NotificationBell() {
               <button
                 onClick={() => { setSoundOn((v) => !v) }}
                 className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition"
-                title={soundOn ? "Ovozni o'chirish" : 'Ovozni yoqish'}
+                title={soundOn ? t.notifSoundOff : t.notifSoundOn}
               >
                 {soundOn ? <Volume2 className="h-3.5 w-3.5" /> : <VolumeX className="h-3.5 w-3.5 text-rose-400" />}
               </button>
               {notifications.length > 0 && (
-                <button onClick={markAllRead} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition" title="Hammasini o'qildi">
+                <button onClick={markAllRead} className="p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-400 transition" title={t.notifMarkAllRead}>
                   <CheckCheck className="h-3.5 w-3.5" />
                 </button>
               )}
@@ -298,14 +315,14 @@ export function NotificationBell() {
           {permission !== 'granted' && (
             <div className="mx-3 mt-3 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 p-3 flex items-center justify-between gap-2 shrink-0">
               <div>
-                <p className="text-xs font-bold text-amber-800 dark:text-amber-200">📵 Push bildirishnomalar o'chirilgan</p>
-                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">Yangi buyurtmalar haqida xabar oling</p>
+                <p className="text-xs font-bold text-amber-800 dark:text-amber-200">{t.notifPushOff}</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">{t.notifPushOffDesc}</p>
               </div>
               <button
                 className="shrink-0 rounded-xl bg-amber-500 px-3 py-1.5 text-xs font-black text-white transition hover:bg-amber-600"
                 onClick={handleAskPermission}
               >
-                Yoqish
+                {t.notifEnable}
               </button>
             </div>
           )}
@@ -315,8 +332,8 @@ export function NotificationBell() {
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="text-5xl mb-3">🔕</div>
-                <p className="text-sm font-semibold text-slate-500">Bildirishnomalar yo'q</p>
-                <p className="text-xs text-slate-400 mt-1">Yangi buyurtmalar kelganda shu yerda ko'rinadi</p>
+                <p className="text-sm font-semibold text-slate-500">{t.notifEmpty}</p>
+                <p className="text-xs text-slate-400 mt-1">{t.notifEmptyDesc}</p>
               </div>
             ) : (
               <div className="py-1">
@@ -343,7 +360,7 @@ export function NotificationBell() {
                           {n.message}
                         </p>
                       )}
-                      <p className="text-[10px] text-slate-400 mt-1 pl-4">{timeAgo(n.createdAt)}</p>
+                      <p className="text-[10px] text-slate-400 mt-1 pl-4">{timeAgo(n.createdAt, t.lang)}</p>
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); removeOne(n.id) }}

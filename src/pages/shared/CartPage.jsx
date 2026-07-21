@@ -428,14 +428,14 @@ export function CartPage() {
                         if (cur < maxQty) updateQuantity(item.id, cur + 1)
                       }}
                       disabled={item.stock != null && (parseFloat(item.quantity) || 0) >= item.stock}
-                      title={item.stock != null ? `Omborda: ${item.stock} ${item.unit || 'kg'}` : undefined}
+                        title={item.stock != null ? (t.lang === 'ru' ? `На складе: ${item.stock} ${item.unit || 'kg'}` : `Omborda: ${item.stock} ${item.unit || 'kg'}`) : undefined}
                     >
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   {item.stock != null && (
                     <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 text-right w-full">
-                      Ombor: {item.stock} {item.unit || 'kg'}
+                      {t.lang === 'ru' ? `Склад: ${item.stock} ${item.unit || 'kg'}` : `Ombor: ${item.stock} ${item.unit || 'kg'}`}
                     </p>
                   )}
                   <p className="w-28 text-right font-black shrink-0 hidden sm:block text-sm">{formatCurrency(item.price * item.quantity)}</p>
