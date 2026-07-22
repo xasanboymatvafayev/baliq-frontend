@@ -84,6 +84,7 @@ function Tab({ active, onClick, children }) {
 
 // ── Finance settings ──────────────────────────────────────────────────
 function FinanceSettings({ settings }) {
+  const t = useT()
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [clickKey, setClickKey] = useState('')
@@ -92,10 +93,10 @@ function FinanceSettings({ settings }) {
   const saveMutation = useMutation({
     mutationFn: (data) => httpClient.patch('/finance/settings', data),
     onSuccess: () => {
-      pushToast({ title: 'Saqlandi ✅', variant: 'success' })
+      pushToast({ title: t.lang === 'ru' ? 'Сохранено ✅' : 'Saqlandi ✅', variant: 'success' })
       queryClient.invalidateQueries(['finance-settings'])
     },
-    onError: (e) => pushToast({ title: e?.response?.data?.detail || 'Xato', variant: 'error' }),
+    onError: (e) => pushToast({ title: e?.response?.data?.detail || (t.lang === 'ru' ? 'Ошибка' : 'Xato'), variant: 'error' }),
   })
 
   return (
@@ -299,11 +300,11 @@ export function AdminWithdrawPage() {
   const payMutation = useMutation({
     mutationFn: (id) => httpClient.post(`/finance/admin/withdraw-requests/${id}/pay`, {}),
     onSuccess: () => {
-      pushToast({ title: "To'lov tasdiqlandi va fermerga xabar yuborildi ✅", variant: 'success' })
+      pushToast({ title: t.lang === 'ru' ? 'Платёж подтверждён, фермер уведомлён ✅' : "To'lov tasdiqlandi va fermerga xabar yuborildi ✅", variant: 'success' })
       queryClient.invalidateQueries(['withdraw-requests'])
       setSelected(null)
     },
-    onError: (e) => pushToast({ title: e?.response?.data?.detail || 'Xato', variant: 'error' }),
+    onError: (e) => pushToast({ title: e?.response?.data?.detail || (t.lang === 'ru' ? 'Ошибка' : 'Xato'), variant: 'error' }),
   })
 
   if (isLoading) return (
