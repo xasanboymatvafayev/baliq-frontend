@@ -6,7 +6,7 @@ export const translations = {
     // Nav
     dashboard: 'Dashboard', fishCatalog: 'Baliqlar katalogi', farmList: "Ferma ro'yxati", driverList: "Haydovchi ro'yxati",
     productDetail: 'Mahsulot tafsiloti', cart: 'Savatcha', myOrders: 'Buyurtmalarim',
-    chat: 'Chat', profile: 'Profil', paymentBonus: "To'lov kutilmoqda", security: 'Xavfsizlik',
+    chat: 'Chat', profile: 'Profil', paymentBonus: "To'lov va bonus", security: 'Xavfsizlik',
     settings: 'Sozlamalar', fish: 'Baliqlar', addFish: "Baliq qo'shish", inventory: 'Ombor',
     orders: 'Buyurtmalar', customers: 'Mijozlar', balance: 'Balans', reports: 'Hisobotlar',
     myOrdersDriver: 'Mening buyurtmalarim', liveTracking: 'Haydovchiga biriktirildi',
@@ -254,6 +254,16 @@ export const translations = {
     ordersConfirmedToast: 'Buyurtma tasdiqlandi ✅', ordersRejectedToast: 'Buyurtma rad etildi',
     ordersStatusLoading: 'Yuklanmoqda 📦', ordersStatusTransit: "Yo'lda 🚚", ordersStatusDelivered: 'Yetkazildi ✅',
     ordersStatusUpdated: 'Status yangilandi', ordersWarehouse: 'Ombor:', ordersStockTitle: 'Omborda:',
+
+    // Qo'shimcha lokalizatsiya (hardcoded matnlar o'rniga)
+    profileDeleteAccountTitle: "Akkauntni o'chirish", profileDeleteAccountDesc: "Bu amalni bekor qilib bo'lmaydi",
+    profileChangePasswordTitle: "Parolni o'zgartirish",
+    paymentChooseMethod: "To'lov usulini tanlang", paymentNoWaitingOrders: "To'lov kutayotgan buyurtma yo'q",
+    paymentPromoDesc: 'Chegirma kodini kiriting va tejang',
+    gpsDriversList: "Haydovchilar ro'yxati", gpsIdle: "Bo'sh",
+    driverNoOrdersYet: 'Hozircha buyurtma yo\'q',
+    farmWithdrawable: 'Yechib olish mumkin', farmComesAfterDelivery: "Yetkazilgandan so'ng keladi",
+    farmSavedCard: 'Saqlangan karta', farmOrdersTaxReport: 'Buyurtmalar va soliq hisobi',
   },
 
   ru: {
@@ -507,6 +517,16 @@ export const translations = {
     ordersCancelledToast: 'Заказ отменён', ordersConfirmedToast: 'Заказ подтверждён ✅', ordersRejectedToast: 'Заказ отклонён',
     ordersStatusLoading: 'Загрузка 📦', ordersStatusTransit: 'В пути 🚚', ordersStatusDelivered: 'Доставлено ✅',
     ordersStatusUpdated: 'Статус обновлён', ordersWarehouse: 'Склад:', ordersStockTitle: 'На складе:',
+
+    // Дополнительная локализация
+    profileDeleteAccountTitle: 'Удалить аккаунт', profileDeleteAccountDesc: 'Это действие нельзя отменить',
+    profileChangePasswordTitle: 'Изменить пароль',
+    paymentChooseMethod: 'Выберите способ оплаты', paymentNoWaitingOrders: 'Нет заказов, ожидающих оплаты',
+    paymentPromoDesc: 'Введите промокод и экономьте',
+    gpsDriversList: 'Список водителей', gpsIdle: 'Свободен',
+    driverNoOrdersYet: 'Пока нет заказов',
+    farmWithdrawable: 'Можно вывести', farmComesAfterDelivery: 'Поступит после доставки',
+    farmSavedCard: 'Сохранённая карта', farmOrdersTaxReport: 'Заказы и расчёт налога',
   },
 }
 

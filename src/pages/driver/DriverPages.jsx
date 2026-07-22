@@ -488,7 +488,7 @@ export function DriverOrders() {
       ) : displayOrders.length === 0 ? (
         <div className="glass-card p-12 text-center">
           <div className="text-5xl mb-3">🚚</div>
-          <p className="text-slate-500">Hozircha buyurtma yo'q</p>
+          <p className="text-slate-500">{t.driverNoOrdersYet}</p>
         </div>
       ) : (
         <div className="space-y-3">

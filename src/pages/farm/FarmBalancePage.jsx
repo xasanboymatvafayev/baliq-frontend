@@ -136,12 +136,12 @@ export function FarmBalancePage() {
         <div className="glass-card p-5 border-l-4 border-l-emerald-500">
           <p className="text-xs font-bold text-slate-500 uppercase">Mavjud</p>
           <p className="text-2xl font-black text-emerald-600 mt-1">{formatCurrency(bal.available_amount)}</p>
-          <p className="text-xs text-slate-400">Yechib olish mumkin</p>
+          <p className="text-xs text-slate-400">{t.farmWithdrawable}</p>
         </div>
         <div className="glass-card p-5 border-l-4 border-l-amber-500">
           <p className="text-xs font-bold text-slate-500 uppercase">Kutilmoqda</p>
           <p className="text-2xl font-black text-amber-600 mt-1">{formatCurrency(bal.pending_amount)}</p>
-          <p className="text-xs text-slate-400">Yetkazilgandan so'ng keladi</p>
+          <p className="text-xs text-slate-400">{t.farmComesAfterDelivery}</p>
         </div>
         <div className="glass-card p-5 border-l-4 border-l-slate-400">
           <p className="text-xs font-bold text-slate-500 uppercase">Yechib olingan</p>
@@ -169,7 +169,7 @@ export function FarmBalancePage() {
                 <div className="rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 p-3 flex items-center gap-3">
                   <CreditCard className="h-5 w-5 text-emerald-600" />
                   <div>
-                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">Saqlangan karta</p>
+                    <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{t.farmSavedCard}</p>
                     <p className="text-xs text-emerald-600">{savedCard.card.card_number} · {savedCard.card.card_holder}</p>
                   </div>
                   <button className="ml-auto text-xs font-bold text-emerald-600 underline"
@@ -260,7 +260,7 @@ export function FarmBalancePage() {
       {tab === 'monitoring' && (
         <div className="glass-card overflow-hidden">
           <div className="p-4 border-b border-slate-200 dark:border-white/10">
-            <h4 className="font-black">Buyurtmalar va soliq hisobi</h4>
+            <h4 className="font-black">{t.farmOrdersTaxReport}</h4>
           </div>
           {bal.monitoring?.length === 0 ? (
             <EmptyState icon="📦" title="Hali buyurtma yo'q" description="Buyurtma yetkazilgach soliq hisobi shu yerda ko'rinadi" />

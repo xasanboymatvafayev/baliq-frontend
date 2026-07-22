@@ -345,7 +345,7 @@ export function GpsMonitoringPage() {
           {/* Driverlar ro'yxati */}
           <div className="glass-card overflow-hidden">
             <div className="p-3 border-b border-slate-200 dark:border-white/10">
-              <h4 className="font-bold text-sm">Haydovchilar ro'yxati</h4>
+              <h4 className="font-bold text-sm">{t.gpsDriversList}</h4>
             </div>
             {isLoading ? (
               <div className="p-4 space-y-2">
@@ -385,7 +385,7 @@ export function GpsMonitoringPage() {
                         </span>
                       )}
                       {!isActive && (
-                        <span className="shrink-0 text-[10px] text-slate-400">Bo'sh</span>
+                        <span className="shrink-0 text-[10px] text-slate-400">{t.gpsIdle}</span>
                       )}
                     </button>
                   )
@@ -402,7 +402,7 @@ export function GpsMonitoringPage() {
             </div>
             <div className="glass-card p-3 text-center">
               <p className="text-2xl font-black text-slate-500">{idle.length}</p>
-              <p className="text-xs text-slate-500 mt-0.5">Bo'sh</p>
+              <p className="text-xs text-slate-500 mt-0.5">{t.gpsIdle}</p>
             </div>
           </div>
         </div>

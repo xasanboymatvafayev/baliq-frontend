@@ -150,7 +150,7 @@ export function PaymentPage() {
 
               {/* Payment buttons */}
               <div className="p-5 space-y-3">
-                <p className="text-xs font-black uppercase tracking-wider text-slate-400">To'lov usulini tanlang</p>
+                <p className="text-xs font-black uppercase tracking-wider text-slate-400">{t.paymentChooseMethod}</p>
                 <div className="grid grid-cols-2 gap-3">
                   {/* Click */}
                   <button
@@ -216,7 +216,7 @@ export function PaymentPage() {
                   <p className="mt-1 text-xs text-amber-600">{bonus.balance} / 1000</p>
                 </div>
               ) : orders.length === 0 ? (
-                <p className="text-sm text-slate-500">To'lov kutayotgan buyurtma yo'q</p>
+                <p className="text-sm text-slate-500">{t.paymentNoWaitingOrders}</p>
               ) : (
                 <div className="space-y-3">
                   <select className="soft-input w-full" value={selectedOrderId} onChange={e => setSelectedOrderId(e.target.value)}>
@@ -288,7 +288,7 @@ export function PaymentPage() {
               </div>
               <div>
                 <h3 className="text-xl font-black">Promo-kod</h3>
-                <p className="text-sm text-slate-500">Chegirma kodini kiriting va tejang</p>
+                <p className="text-sm text-slate-500">{t.paymentPromoDesc}</p>
               </div>
             </div>
 

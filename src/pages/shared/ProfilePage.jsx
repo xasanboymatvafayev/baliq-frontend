@@ -144,8 +144,8 @@ function DeleteAccountModal({ open, onClose }) {
             <AlertTriangle className="h-6 w-6 text-rose-600 dark:text-rose-400" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-rose-600">Akkauntni o'chirish</h3>
-            <p className="text-sm text-slate-500">Bu amalni bekor qilib bo'lmaydi</p>
+            <h3 className="text-xl font-black text-rose-600">{t.profileDeleteAccountTitle}</h3>
+            <p className="text-sm text-slate-500">{t.profileDeleteAccountDesc}</p>
           </div>
         </div>
 
@@ -225,7 +225,7 @@ function ChangePasswordSection() {
         <div className="p-2 rounded-xl bg-ocean-100 dark:bg-ocean-900/30 text-ocean-600 dark:text-ocean-400">
           <Lock className="h-5 w-5" />
         </div>
-        <h3 className="text-xl font-black">Parolni o'zgartirish</h3>
+        <h3 className="text-xl font-black">{t.profileChangePasswordTitle}</h3>
       </div>
       <p className="mt-1 mb-5 text-sm text-slate-500">Xavfsizlik uchun vaqti-vaqti bilan parolingizni yangilang.</p>
 
