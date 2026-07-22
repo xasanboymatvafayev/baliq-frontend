@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { usePageTitle } from '../../hooks/usePageTitle.js'
 import { useToastStore } from '../../store/toastStore.js'
+import { useT } from '../../store/i18nStore.js'
 import { DashboardPage } from '../shared/DashboardPage.jsx'
 import { GpsMonitoringPage } from '../shared/GpsMonitoringPage.jsx'
 import { OrdersPage } from '../shared/OrdersPage.jsx'
@@ -72,6 +73,7 @@ function CardListSkeleton({ count = 3 }) {
 
 // ── Confirm modal (dark-mode-safe) ────────────────────────────────────
 function ConfirmModal({ open, title, description, onConfirm, onCancel, loading }) {
+  const t = useT()
   if (!open) return null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -84,9 +86,9 @@ function ConfirmModal({ open, title, description, onConfirm, onCancel, loading }
         </div>
         <p className="text-slate-600 dark:text-slate-400 text-sm">{description}</p>
         <div className="flex gap-3 justify-end pt-1">
-          <button className="secondary-button" onClick={onCancel} disabled={loading}>Bekor qilish</button>
+          <button className="secondary-button" onClick={onCancel} disabled={loading}>{t.cancel}</button>
           <button className="danger-button" onClick={onConfirm} disabled={loading}>
-            {loading ? "O'chirilmoqda..." : "Ha, o'chirish"}
+            {loading ? (t.lang === 'ru' ? 'Удаление...' : "O'chirilmoqda...") : (t.lang === 'ru' ? 'Да, удалить' : "Ha, o'chirish")}
           </button>
         </div>
       </div>
@@ -228,6 +230,7 @@ function DriverDetailModal({ driver, open, onClose, onApprove, onReject, approvi
 // ── Farm Requests ─────────────────────────────────────────────────────
 export function AdminFarmRequests() {
   usePageTitle("Ferma so'rovlari")
+  const t = useT()
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [selectedFarm, setSelectedFarm] = useState(null)
@@ -240,7 +243,7 @@ export function AdminFarmRequests() {
   const approve = useMutation({
     mutationFn: (id) => httpClient.post(`/farms/${id}/approve`),
     onSuccess: () => {
-      pushToast({ title: 'Ferma tasdiqlandi. Fermerga Telegram xabar yuborildi.', variant: 'success' })
+      pushToast({ title: t.lang === 'ru' ? 'Ферма подтверждена. Фермеру отправлено Telegram-сообщение.' : 'Ferma tasdiqlandi. Fermerga Telegram xabar yuborildi.', variant: 'success' })
       setSelectedFarm(null)
       queryClient.invalidateQueries(['farm-requests'])
     },
@@ -249,7 +252,7 @@ export function AdminFarmRequests() {
   const reject = useMutation({
     mutationFn: (id) => httpClient.post(`/farms/${id}/reject`, { reason: 'Admin tomonidan rad etildi' }),
     onSuccess: () => {
-      pushToast({ title: 'Ferma rad etildi. Fermerga xabar yuborildi.', variant: 'error' })
+      pushToast({ title: t.lang === 'ru' ? 'Ферма отклонена. Фермеру отправлено сообщение.' : 'Ferma rad etildi. Fermerga xabar yuborildi.', variant: 'error' })
       setSelectedFarm(null)
       queryClient.invalidateQueries(['farm-requests'])
     },
@@ -302,6 +305,7 @@ export function AdminFarmRequests() {
 // ── Driver Requests ───────────────────────────────────────────────────
 export function AdminDriverRequests() {
   usePageTitle("Haydovchi so'rovlari")
+  const t = useT()
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [selectedDriver, setSelectedDriver] = useState(null)
@@ -314,7 +318,7 @@ export function AdminDriverRequests() {
   const approve = useMutation({
     mutationFn: (id) => httpClient.post(`/drivers/${id}/approve`),
     onSuccess: () => {
-      pushToast({ title: 'Haydovchi tasdiqlandi. Telegram xabar yuborildi.', variant: 'success' })
+      pushToast({ title: t.lang === 'ru' ? 'Водитель подтверждён. Telegram-сообщение отправлено.' : 'Haydovchi tasdiqlandi. Telegram xabar yuborildi.', variant: 'success' })
       setSelectedDriver(null)
       queryClient.invalidateQueries(['driver-requests'])
     },
@@ -323,7 +327,7 @@ export function AdminDriverRequests() {
   const reject = useMutation({
     mutationFn: (id) => httpClient.post(`/drivers/${id}/reject`, { reason: 'Admin tomonidan rad etildi' }),
     onSuccess: () => {
-      pushToast({ title: 'Rad etildi. Haydovchiga xabar yuborildi.', variant: 'error' })
+      pushToast({ title: t.lang === 'ru' ? 'Отклонено. Водителю отправлено сообщение.' : 'Rad etildi. Haydovchiga xabar yuborildi.', variant: 'error' })
       setSelectedDriver(null)
       queryClient.invalidateQueries(['driver-requests'])
     },
@@ -373,6 +377,7 @@ export function AdminDriverRequests() {
 // ── Users ─────────────────────────────────────────────────────────────
 export function AdminUsers() {
   usePageTitle('Foydalanuvchilar')
+  const t = useT()
   const pushToast = useToastStore((s) => s.pushToast)
   const queryClient = useQueryClient()
   const [deleteTarget, setDeleteTarget] = useState(null)

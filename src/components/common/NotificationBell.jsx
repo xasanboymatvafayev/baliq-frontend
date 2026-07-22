@@ -79,20 +79,28 @@ function getRoute(role, navType) {
 }
 
 const STATUS_INFO_UZ = {
+  PENDING:         { icon: '⏳', title: 'Buyurtma kutilmoqda',      type: 'info',    nav: 'order' },
   CONFIRMED:       { icon: '✅', title: 'Buyurtma tasdiqlandi',    type: 'success', nav: 'order' },
   DRIVER_ASSIGNED: { icon: '🚚', title: 'Haydovchi biriktirildi', type: 'info',    nav: 'order' },
   LOADING:         { icon: '📦', title: 'Mahsulot yuklanmoqda',    type: 'info',    nav: 'order' },
   IN_TRANSIT:      { icon: '🛣️', title: "Buyurtma yo'lda",        type: 'info',    nav: 'order' },
   DELIVERED:       { icon: '🎉', title: 'Buyurtma yetkazildi!',    type: 'success', nav: 'order' },
+  COMPLETED:       { icon: '✅', title: 'Buyurtma yakunlandi',     type: 'success', nav: 'order' },
   CANCELLED:       { icon: '❌', title: 'Buyurtma bekor qilindi',  type: 'error',   nav: 'order' },
+  REJECTED:        { icon: '🚫', title: 'Buyurtma rad etildi',    type: 'error',   nav: 'order' },
+  EXPIRED:         { icon: '⏰', title: 'Buyurtma muddati tugadi', type: 'warning', nav: 'order' },
 }
 const STATUS_INFO_RU = {
+  PENDING:         { icon: '⏳', title: 'Заказ ожидает',           type: 'info',    nav: 'order' },
   CONFIRMED:       { icon: '✅', title: 'Заказ подтверждён',    type: 'success', nav: 'order' },
   DRIVER_ASSIGNED: { icon: '🚚', title: 'Назначен водитель',     type: 'info',    nav: 'order' },
   LOADING:         { icon: '📦', title: 'Товар загружается',     type: 'info',    nav: 'order' },
   IN_TRANSIT:      { icon: '🛣️', title: 'Заказ в пути',          type: 'info',    nav: 'order' },
   DELIVERED:       { icon: '🎉', title: 'Заказ доставлен!',      type: 'success', nav: 'order' },
+  COMPLETED:       { icon: '✅', title: 'Заказ завершён',        type: 'success', nav: 'order' },
   CANCELLED:       { icon: '❌', title: 'Заказ отменён',          type: 'error',   nav: 'order' },
+  REJECTED:        { icon: '🚫', title: 'Заказ отклонён',        type: 'error',   nav: 'order' },
+  EXPIRED:         { icon: '⏰', title: 'Срок заказа истёк',      type: 'warning', nav: 'order' },
 }
 
 const TYPE_COLORS = {
