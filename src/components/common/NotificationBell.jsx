@@ -1,9 +1,27 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Bell, X, CheckCheck, Volume2, VolumeX } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { getSocket } from '../../services/socketClient.js'
 import { useAuthStore } from '../../store/authStore.js'
 import { useT } from '../../store/i18nStore.js'
+
+// Realtime hodisa turlariga qarab qaysi react-query keshlarini yangilash kerakligi.
+// Shu orqali Orders / Bonus / Finance / Farmer / Driver / Admin sahifalari
+// foydalanuvchi qo'lda "refresh" qilmasdan avtomatik yangilanadi.
+const REALTIME_QUERY_KEYS = [
+  ['orders'], ['order-timeline'], ['approved-drivers'],
+  ['bonus-balance'], ['pending-orders-pay'],
+  ['admin-balance'], ['finance-settings'], ['withdraw-requests'], ['driver-requests'],
+  ['driver-orders'], ['order-detail'], ['manager-orders'],
+  ['farm-balance'], ['farm-orders-report'], ['driver-locations'],
+]
+
+function invalidateForEvent(queryClient) {
+  for (const key of REALTIME_QUERY_KEYS) {
+    queryClient.invalidateQueries({ queryKey: key })
+  }
+}
 
 // ─── Qattiq rington ovozi ────────────────────────────────────────
 function playChime() {
@@ -125,7 +143,8 @@ function timeAgo(iso, lang) {
 }
 
 export function NotificationBell() {
-  const navigate  = useNavigate()
+  const navigate    = useNavigate()
+  const queryClient = useQueryClient()
   const token     = useAuthStore((s) => s.token)
   const role      = useAuthStore((s) => s.role)
   const t         = useT()
@@ -186,6 +205,7 @@ export function NotificationBell() {
     const STATUS_INFO = t.lang === 'ru' ? STATUS_INFO_RU : STATUS_INFO_UZ
     const handlers = {
       notification: (data) => {
+        invalidateForEvent(queryClient)
         addNotif({
           title: data.title || t.notifNewNotif,
           message: data.message || '',
@@ -195,6 +215,7 @@ export function NotificationBell() {
         })
       },
       order_status_changed: (data) => {
+        invalidateForEvent(queryClient)
         const info = STATUS_INFO[data.status] || { icon: '🔔', title: t.notifOrderUpdated, type: 'info', nav: 'order' }
         addNotif({
           title: info.title,
@@ -205,6 +226,7 @@ export function NotificationBell() {
         })
       },
       new_order: (data) => {
+        invalidateForEvent(queryClient)
         addNotif({
           title: t.notifNewOrder,
           message: `#${String(data.order_id || '').slice(-6)} — ${t.notifNewOrderMsg}`,
@@ -214,6 +236,7 @@ export function NotificationBell() {
         })
       },
       driver_assigned: (data) => {
+        invalidateForEvent(queryClient)
         addNotif({
           title: `🚚 ${t.notifDriverAssigned}`,
           message: `#${String(data.order_id || '').slice(-6)} — ${t.notifDriverAssignedMsg}`,
@@ -228,7 +251,7 @@ export function NotificationBell() {
     return () => {
       Object.entries(handlers).forEach(([ev, fn]) => socket.off(ev, fn))
     }
-  }, [token, addNotif, t])
+  }, [token, addNotif, t, queryClient])
 
   // ─── Panel tashqarisini click ────────────────────────────────
   useEffect(() => {
