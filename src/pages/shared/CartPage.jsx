@@ -405,7 +405,7 @@ export function CartPage() {
                       inputMode="decimal"
                       min={1}
                       max={item.stock ?? undefined}
-                      className="w-14 text-center font-bold text-sm bg-transparent outline-none text-slate-800 dark:text-white"
+                      className="w-14 text-center font-bold text-sm bg-transparent outline-none text-slate-800 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:m-0 [&::-webkit-inner-spin-button]:m-0"
                       value={item.quantity}
                       onChange={(e) => {
                         const v = e.target.value
