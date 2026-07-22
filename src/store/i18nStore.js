@@ -96,6 +96,7 @@ export const translations = {
     statusInTransit: "Yo'lda", statusLoading: 'Yuklanmoqda', statusDriverAssigned: 'Haydovchiga biriktirildi',
     statusAwaitingPayment: "To'lov kutilmoqda", noOrders: 'Buyurtmalar yo\'q',
     statusProcessing: 'Ishlov berilmoqda', statusCompleted: 'Yakunlandi', statusRejected: 'Rad etildi',
+    statusExpired: 'Muddati tugadi',
 
     // Profile
     profileTitle: 'Profil', editProfile: 'Tahrirlash', save: 'Saqlash', saving: 'Saqlanmoqda...',
@@ -349,6 +350,7 @@ export const translations = {
     statusInTransit: 'В пути', statusLoading: 'Загрузка', statusDriverAssigned: 'Назначен водитель',
     statusAwaitingPayment: 'Ожидание оплаты', noOrders: 'Заказов нет',
     statusProcessing: 'В обработке', statusCompleted: 'Завершён', statusRejected: 'Отклонён',
+    statusExpired: 'Срок истёк',
 
     // Profile
     profileTitle: 'Профиль', editProfile: 'Редактировать', save: 'Сохранить', saving: 'Сохранение...',

@@ -22,7 +22,10 @@ function useStatusLabels() {
     LOADING: t.statusLoading || 'Yuklanmoqda',
     IN_TRANSIT: t.statusInTransit,
     DELIVERED: t.statusDelivered,
+    COMPLETED: t.statusCompleted,
     CANCELLED: t.statusCancelled,
+    REJECTED: t.statusRejected,
+    EXPIRED: t.statusExpired,
   }
 }
 
@@ -34,7 +37,10 @@ const STATUS_COLORS = {
   LOADING: 'bg-orange-100 text-orange-800 dark:bg-orange-500/20 dark:text-orange-300 border border-orange-200 dark:border-orange-500/30',
   IN_TRANSIT: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-500/20 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30',
   DELIVERED: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-500/30',
+  COMPLETED: 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300 border border-green-200 dark:border-green-500/30',
   CANCELLED: 'bg-rose-100 text-rose-800 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-200 dark:border-rose-500/30',
+  REJECTED: 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300 border border-red-200 dark:border-red-500/30',
+  EXPIRED: 'bg-gray-100 text-gray-800 dark:bg-gray-500/20 dark:text-gray-300 border border-gray-200 dark:border-gray-500/30',
 }
 
 const STATUS_DOTS = {
@@ -45,7 +51,10 @@ const STATUS_DOTS = {
   LOADING: 'bg-orange-500',
   IN_TRANSIT: 'bg-cyan-500 animate-pulse',
   DELIVERED: 'bg-emerald-500',
+  COMPLETED: 'bg-green-500',
   CANCELLED: 'bg-rose-500',
+  REJECTED: 'bg-red-500',
+  EXPIRED: 'bg-gray-500',
 }
 
 function StatusBadge({ status }) {
@@ -110,7 +119,7 @@ export function OrdersPage({ title }) {
     mutationFn: ({ orderId, driverId, taxPercent }) =>
       httpClient.post('/finance/admin/assign-with-tax', { order_id: orderId, driver_id: driverId, tax_percent: parseInt(taxPercent) }),
     onSuccess: (data) => {
-      pushToast({ title: `${t.ordersAssignedToast} ${data.tax_amount?.toLocaleString()} so'm`, variant: 'success' })
+      pushToast({ title: `${t.ordersAssignedToast} ${data.tax_amount?.toLocaleString()} ${t.somPrice}`, variant: 'success' })
       queryClient.invalidateQueries(['orders']); setSelected(null); setSelectedDriverId(''); setTaxPercent('')
     },
     onError: (err) => pushToast({ title: err?.response?.data?.detail || err.message, variant: 'error' }),
@@ -279,8 +288,8 @@ export function OrdersPage({ title }) {
               </div>
               {taxPercent && selected.total > 0 && (
                 <p className="text-xs text-slate-500 mt-1">
-                  {t.ordersTaxCalc} <b className="text-rose-500">{Math.round(selected.total * taxPercent / 100).toLocaleString()} so'm</b>
-                  {' '}· {t.ordersFarmerGets} <b className="text-emerald-600">{Math.round(selected.total - selected.total * taxPercent / 100).toLocaleString()} so'm</b>
+                  {t.ordersTaxCalc} <b className="text-rose-500">{Math.round(selected.total * taxPercent / 100).toLocaleString()} {t.somPrice}</b>
+                  {' '}· {t.ordersFarmerGets} <b className="text-emerald-600">{Math.round(selected.total - selected.total * taxPercent / 100).toLocaleString()} {t.somPrice}</b>
                 </p>
               )}
             </div>
