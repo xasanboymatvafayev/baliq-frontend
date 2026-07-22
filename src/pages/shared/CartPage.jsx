@@ -387,6 +387,11 @@ export function CartPage() {
                   <div className="flex-1 min-w-0">
                     <p className="font-bold truncate">{item.name}</p>
                     <p className="text-sm text-ocean-600 dark:text-ocean-400 font-semibold">{formatNumber(item.price)} {t.somPrice}/{item.unit || 'kg'}</p>
+                    {item.stock != null && (
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                        {t.lang === 'ru' ? `Склад: ${item.stock} ${item.unit || 'kg'}` : `Ombor: ${item.stock} ${item.unit || 'kg'}`}
+                      </p>
+                    )}
                   </div>
                   <div className="flex items-center gap-1 shrink-0 bg-slate-100 dark:bg-white/5 rounded-2xl p-1">
                     <button
@@ -433,11 +438,6 @@ export function CartPage() {
                       <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  {item.stock != null && (
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 text-right w-full">
-                      {t.lang === 'ru' ? `Склад: ${item.stock} ${item.unit || 'kg'}` : `Ombor: ${item.stock} ${item.unit || 'kg'}`}
-                    </p>
-                  )}
                   <p className="w-28 text-right font-black shrink-0 hidden sm:block text-sm">{formatCurrency(item.price * item.quantity)}</p>
                   <button
                     className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition shrink-0"
