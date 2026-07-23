@@ -28,17 +28,26 @@ body {
   transform: translateY(-1px);
 }
 
-/* ─── INPUTS ─── */
-.soft-input {
-  @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900
-         outline-none transition-all duration-150 placeholder:text-slate-400
-         hover:border-ocean-300
-         focus:border-ocean-500 focus:bg-white focus:ring-2 focus:ring-ocean-500/10
-         dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white
-         dark:placeholder:text-slate-600
-         dark:hover:border-ocean-600/40
-         dark:focus:border-ocean-500 dark:focus:bg-white/[0.07] dark:focus:ring-ocean-500/15;
-  font-family: inherit;
+/* ─── INPUTS ───
+   @layer components ichida e'lon qilinadi, shunda Tailwind utility
+   klasslari (masalan pl-10, pr-10 — qidiruv ikonkasi uchun) to'g'ri
+   ustunlik bilan .soft-input'ning px-4'sini bosib o'tadi. Aks holda
+   .soft-input CSS faylda "@tailwind utilities" dan KEYIN yozilgani
+   uchun uning padding-left qiymati pl-10 kabi utility klasslarni
+   "yutib yuborardi" — natijada qidiruv ikonkasi matn ustiga chiqib
+   qolardi (Chat qidirish, Profil, Katalog va h.k.). */
+@layer components {
+  .soft-input {
+    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900
+           outline-none transition-all duration-150 placeholder:text-slate-400
+           hover:border-ocean-300
+           focus:border-ocean-500 focus:bg-white focus:ring-2 focus:ring-ocean-500/10
+           dark:border-white/[0.08] dark:bg-white/[0.04] dark:text-white
+           dark:placeholder:text-slate-600
+           dark:hover:border-ocean-600/40
+           dark:focus:border-ocean-500 dark:focus:bg-white/[0.07] dark:focus:ring-ocean-500/15;
+    font-family: inherit;
+  }
 }
 
 /* Select option dark mode visibility fix */
