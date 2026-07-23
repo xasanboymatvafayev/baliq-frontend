@@ -102,6 +102,7 @@ function AvatarUpload({ profile, onUpload }) {
 
 // === O'chirish modali ===
 function DeleteAccountModal({ open, onClose }) {
+  const t = useT()
   const pushToast = useToastStore((s) => s.pushToast)
   const logout = useAuthStore((s) => s.logout)
   const user = useAuthStore((s) => s.user)
@@ -190,6 +191,7 @@ function DeleteAccountModal({ open, onClose }) {
 
 // === Parolni o'zgartirish ===
 function ChangePasswordSection() {
+  const t = useT()
   const pushToast = useToastStore((s) => s.pushToast)
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
