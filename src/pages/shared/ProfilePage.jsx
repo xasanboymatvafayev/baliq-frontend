@@ -12,14 +12,15 @@ import { useT } from '../../store/i18nStore.js'
 
 // === Avatar Upload ===
 function AvatarUpload({ profile, onUpload }) {
+  const t = useT()
   const fileRef = useRef(null)
   const [preview, setPreview] = useState(null)
   const [uploading, setUploading] = useState(false)
   const pushToast = useToastStore((s) => s.pushToast)
 
   const initials = [profile?.firstName, profile?.lastName]
-    .filter(Boolean)
-    .map((n) => n[0].toUpperCase())
+    .filter((n) => typeof n === 'string' && n.trim().length > 0)
+    .map((n) => n.trim()[0].toUpperCase())
     .join('') || '?'
 
   const avatarUrl = preview || profile?.avatar_url
@@ -91,7 +92,7 @@ function AvatarUpload({ profile, onUpload }) {
           className="mt-2 flex items-center gap-1.5 text-sm font-semibold text-ocean-600 hover:text-ocean-500 transition-colors disabled:opacity-50"
         >
           <Upload className="h-3.5 w-3.5" />
-          {uploading ? '{t.loading}' : "Rasmni o'zgartirish"}
+          {uploading ? (t.loading || 'Yuklanmoqda...') : "Rasmni o'zgartirish"}
         </button>
         <p className="text-xs text-slate-400 mt-0.5">JPG, PNG, max 5MB</p>
       </div>
@@ -293,7 +294,7 @@ export function ProfilePage() {
   })
 
   useEffect(() => {
-    if (profile) reset(profile)
+    if (profile && typeof profile === 'object' && !Array.isArray(profile)) reset(profile)
   }, [profile, reset])
 
   const mutation = useMutation({
